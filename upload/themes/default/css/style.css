@@ -4,7 +4,8 @@
 
 body {
 	font:12px/1.5 "Lucida Grande",Helvetica,Arial,sans-serif;
-	padding-top: 15px;
+	margin: 0;
+	padding: 0;
 }
 a {
 	color:#00597F;
@@ -19,7 +20,9 @@ a:hover {
 	background:url("../images/logo.png") no-repeat scroll 0 0 transparent;
 	font:30px/2.2 "lucida grande",arial,helvetica,sans-serif;
 	height:55px;
+	width:200px;
 	text-indent:-99999px;
+	display: block;
 }
 
 #login {
@@ -352,3 +355,162 @@ td.formleft, td.formright {
 .purple #slatenav ul li a{display:block;float:left;color:#FBDAFA;text-decoration:none;padding:14px 22px 0 22px;height:28px;}
 .purple #slatenav ul li a:hover,.purple #slatenav ul li a.current{color:#fff;background:transparent url(../images/purpleslate_backgroundOVER.gif) no-repeat top center;}
 /* ---------------------- END Purpleslate nav ---------------------- */
+
+/* ---------------------- Responsive Fluid Layout ---------------------- */
+
+/* Fluid Container - Full Width */
+.container-fluid {
+	width: 100%;
+	max-width: 100%;
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+/* Header Row - Logo and Login */
+.header-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 10px 20px 5px 20px;
+}
+
+.header-logo {
+	flex: 0 0 auto;
+}
+
+.header-login {
+	flex: 0 0 auto;
+	text-align: right;
+}
+
+/* Navigation Row */
+.nav-row {
+	width: 100%;
+}
+
+/* Main Content Row - 20%/80% Split with gap */
+.main-row {
+	display: flex;
+	flex-direction: row;
+	padding: 10px 20px;
+	gap: 20px;
+}
+
+/* Sidebar - 20% width, appears first in HTML for mobile stacking */
+.sidebar {
+	flex: 0 0 20%;
+	max-width: 20%;
+	padding: 10px 0;
+	order: 1;
+}
+
+/* Body Content - 80% width with panel styling */
+.body-content {
+	flex: 0 0 80%;
+	max-width: 80%;
+	padding: 0 15px 15px 15px;
+	order: 2;
+	background: #F2F2F2;
+	border: 1px solid #ccc;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+	align-self: stretch;
+}
+
+/* Article title as panel header */
+.body-content h1 {
+	font-size: 18px;
+	margin: 0 -15px 15px -15px;
+	padding: 10px 15px;
+	border-bottom: 1px solid #ccc;
+	background: #F2F2F2;
+}
+
+/* Sidebar item margin adjustment for fluid layout */
+#sidebar .item {
+	margin: 0 0 10px 10px;
+}
+
+/* Footer */
+.container-fluid .footer {
+	border-top: 1px solid #ccc;
+	padding: 10px 20px;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+/* Responsive - Stack at 720px and below */
+@media screen and (max-width: 720px) {
+	/* Stack main content vertically */
+	.main-row {
+		flex-direction: column;
+		padding: 10px;
+	}
+	
+	/* Sidebar above content (100% width on mobile) */
+	.sidebar {
+		flex: 0 0 100%;
+		max-width: 100%;
+		order: 1;
+		padding: 10px 0;
+	}
+	
+	/* Content below sidebar (100% width on mobile) */
+	.body-content {
+		flex: 0 0 100%;
+		max-width: 100%;
+		order: 2;
+		padding: 0 15px 15px 15px;
+		background: #F2F2F2;
+		border: 1px solid #ccc;
+		-moz-border-radius: 5px;
+		-webkit-border-radius: 5px;
+		border-radius: 5px;
+	}
+	
+	/* Mobile article title as panel header */
+	.body-content h1 {
+		margin: 0 -15px 15px -15px;
+		padding: 10px 15px;
+	}
+	
+	/* Reset sidebar item margins for mobile */
+	#sidebar .item {
+		margin: 0 0 10px 0;
+	}
+	
+	/* Header adjustments for mobile */
+	.header-row {
+		flex-direction: column;
+		padding: 10px;
+	}
+	
+	.header-logo,
+	.header-login {
+		text-align: center;
+		width: 100%;
+	}
+	
+	/* Navigation adjustments */
+	#slatenav ul {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+	
+	#slatenav ul li {
+		float: none;
+		display: inline-block;
+	}
+	
+	.blue #slatenav ul li a,
+	.green #slatenav ul li a,
+	.red #slatenav ul li a,
+	.purple #slatenav ul li a {
+		padding: 14px 15px 0 15px;
+	}
+}
+
+/* ---------------------- END Responsive Fluid Layout ---------------------- */

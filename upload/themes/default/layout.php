@@ -10,47 +10,47 @@
 </head>
 <body>
 
-<div class="container_12">
+<div class="container-fluid">
 
-	<div class="grid_6" id="logo">
-		<h1><a href="http://68kb.com">{kb:settings:get name="site_title"}</a></h1>
+	<div class="header-row">
+		<div class="header-logo" id="logo">
+			<h1><a href="http://68kb.com">{kb:settings:get name="site_title"}</a></h1>
+		</div>
+		<div class="header-login" id="login">
+			{kb:themes:embed file="inc/user_nav"}
+		</div>
 	</div>
-	<div class="grid_6" id="login">
-		{kb:themes:embed file="inc/user_nav"}
-	</div>
-	<div class="clear"></div>
 
-	<div class="grid_12 blue">
+	<div class="nav-row blue">
 		<div id="slatenav">
 			{kb:themes:embed file="inc/top_nav"}
 		</div>
 	</div>
-	<div class="clear"></div>
 
-	<div class="grid_8 body">
-		{kb:themes:body}
-	</div>
+	<div class="main-row">
+		<div class="sidebar" id="sidebar">
+			<div class="item">
+				<h3>Search</h3>
+				{kb:search:form class="search_form" show_categories="no"}
+					<input type="text" name="keywords" value="Search" onfocus="if (this.value==this.defaultValue) this.value='';" />
+					{kb:cats}
+					<input type="submit" name="submit" value="Seach!" />
+				{/kb:search:form}
+				<a href="{kb:site:link}search">Advanced Search</a>
+			</div>
 
-	<div class="grid_4" id="sidebar">
-		<div class="item">
-			<h3>Search</h3>
-			{kb:search:form class="search_form" show_categories="no"}
-				<input type="text" name="keywords" value="Search" onfocus="if (this.value==this.defaultValue) this.value='';" />
-				{kb:cats}
-				<input type="submit" name="submit" value="Seach!" />
-			{/kb:search:form}
-			<a href="{kb:site:link}search">Advanced Search</a>
+			<div class="item">
+				<h3>Categories</h3>
+				{kb:categories:cat_list show_total="yes"}
+			</div>
 		</div>
 
-		<div class="item">
-			<h3>Categories</h3>
-			{kb:categories:cat_list show_total="yes"}
+		<div class="body-content body">
+			{kb:themes:body}
 		</div>
 	</div>
 
-	<div class="clear"></div>
-
-	<div class="grid_12 footer">
+	<div class="footer">
 		<p>
 			&copy; <?php echo date("Y"); ?> {kb:settings:get name="site_title"}<br />
 			Time: {elapsed_time} - Memory: {memory_usage}

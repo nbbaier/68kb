@@ -5,7 +5,10 @@ if ($this->events->active_hook('articles/form'))
 }
 else
 {
-	echo '<script src="js/js-quicktags/js_quicktags.js" type="text/javascript"></script>';
+	echo '<link href="' . base_url() . 'js/summernote/summernote-lite.min.css" rel="stylesheet">';
+	echo '<link href="' . base_url() . 'js/prism/prism.css" rel="stylesheet">';
+	echo '<script src="' . base_url() . 'js/summernote/summernote-lite.min.js"></script>';
+	echo '<script src="' . base_url() . 'js/prism/prism.js"></script>';
 }
 ?>
 
@@ -22,7 +25,7 @@ else
 ?>
 <?php echo form_open_multipart($this->uri->uri_string(), 'class="crud"'); ?>
 <div id="form">
-	<div class="grid_9">
+	<div class="grid_10">
 
 		<div class="row1">
 			<?php echo form_label(lang('lang_title'). ': <em>('.lang('lang_required').')</em>', 'article_title'); ?>
@@ -35,13 +38,11 @@ else
 
 		<div class="row1">
 			<?php echo form_label(lang('lang_short_description'). ':', 'article_short_desc'); ?>
-			<div class="toolbar"><script type="text/javascript">if(typeof edToolbar=='function') edToolbar('cat_description');</script></div>
 			<?php echo form_textarea('article_short_desc', set_value('article_short_desc', @$row['article_short_desc']), 'id="article_short_desc" class="shortdesc"'); ?>
 		</div>
 
 		<div class="row2">
 			<?php echo form_label(lang('lang_description'). ':', 'article_description'); ?>
-			<div class="toolbar"><script type="text/javascript">if(typeof edToolbar=='function') edToolbar('cat_description');</script></div>
 			<?php echo form_textarea('article_description', set_value('article_description', @$row['article_description']), 'id="article_description" class="inputtext"'); ?>
 		</div>
 
@@ -50,7 +51,7 @@ else
 		<input type="hidden" name="article_id" value="<?php echo @$row['article_id']; ?>" />
 
 	</div>
-	<div class="grid_7 inline">
+	<div class="grid_6 inline">
 		<?php if ($action == 'edit'): ?>
 		<div class="row2">
 			<label for="article_author"><?php echo lang('lang_author'); ?>:</label>
@@ -130,12 +131,50 @@ else
 
 <script type="text/javascript" charset="utf-8">
 $(document).ready(function() {
+	// Check if Summernote is loaded
+	if (typeof $.fn.summernote === 'undefined') {
+		console.error('Summernote not loaded - check file paths');
+		return;
+	}
+	
+	console.log('Summernote loaded successfully');
+	
+	// Initialize Summernote for Short Description
+	$('#article_short_desc').summernote({
+		height: 150,
+		toolbar: [
+			['style', ['bold', 'italic', 'underline', 'clear']],
+			['font', ['color']],
+			['para', ['ul', 'ol']],
+			['insert', ['link', 'codeblock']],
+			['view', ['codeview']]
+		],
+		codemirror: {
+			theme: 'default'
+		}
+	});
+	
+	// Initialize Summernote for Description
+	$('#article_description').summernote({
+		height: 300,
+		toolbar: [
+			['style', ['bold', 'italic', 'underline', 'clear']],
+			['font', ['color']],
+			['para', ['ul', 'ol']],
+			['insert', ['link', 'codeblock']],
+			['view', ['codeview']]
+		],
+		codemirror: {
+			theme: 'default'
+		}
+	});
+
 	$(".search").keyup(function() {
 				var searchbox = $(this).val();
 				var dataString = 'searchword='+ searchbox;
 				if(searchbox != '') {
 					$.ajax({
-					type: "POST",
+						type: "POST",
 						url: "<?php echo site_url('admin/users/search'); ?>",
 						data: dataString,
 						cache: false,

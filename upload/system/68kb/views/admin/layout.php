@@ -4,7 +4,7 @@
 <head profile="http://gmpg.org/xfn/11">
 	<title><?php echo $site_title; ?></title>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-	<script type="text/javascript" src="<?php echo base_url();?>js/jquery.js"></script>
+	<script type="text/javascript" src="<?php echo base_url();?>js/jquery-3.7.1.min.js"></script>
 	<script type="text/javascript" src="<?php echo base_url();?>js/tooltip.js"></script>
 	<link  href="<?php echo $template;?>css/style.css" rel="stylesheet" type="text/css" />
 	<?php echo $head_data; ?>  
