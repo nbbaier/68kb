@@ -42,6 +42,7 @@ class Admin extends Admin_Controller {
 			show_error(lang('not_authorized'));
 		}
 		
+		$this->data = new stdClass();
 		$this->data->nav = 'addons';
 	}
 	

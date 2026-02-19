@@ -34,12 +34,12 @@ class Controller extends CI_Base {
 	 *
 	 * Calls the initialize() function
 	 */
-	function Controller()
-	{	
-		parent::CI_Base();
+	function __construct()
+	{
+		parent::__construct();
 
 		// Assign all the class objects that were instantiated by the
-		// bootstrap file (CodeIgniter.php) to local class variables 
+		// bootstrap file (CodeIgniter.php) to local class variables
 		// so that CI can run as one big super object.
 		foreach (is_loaded() as $var => $class)
 		{
@@ -51,8 +51,9 @@ class Controller extends CI_Base {
 	 	if (is_php('5.0.0') == TRUE)
 		{
 			$this->load =& load_class('Loader', 'core');
-			
-			$this->load->_base_classes =& is_loaded();
+
+			$loaded_classes = is_loaded();
+			$this->load->_base_classes =& $loaded_classes;
 			
 			$this->load->_ci_autoloader();
 		}

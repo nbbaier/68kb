@@ -44,6 +44,7 @@ class Admin extends Admin_Controller {
 		$this->categories_library->category_tree($cats);
 		$this->_cat_data = $this->categories_library->get_categories();
 		
+		$this->data = new stdClass();
 		$this->data->nav = 'articles';
 	}
 	

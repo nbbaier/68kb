@@ -48,9 +48,9 @@ class CI_Xmlrpcs extends CI_Xmlrpc
 	//  Constructor, more or less
 	//-------------------------------------
 
-	function CI_Xmlrpcs($config=array())
-	{	
-		parent::CI_Xmlrpc();
+	function __construct($config=array())
+	{
+		parent::__construct();
 		$this->set_system_methods();
 	
 		if (isset($config['functions']) && is_array($config['functions']))
@@ -507,7 +507,8 @@ class CI_Xmlrpcs extends CI_Xmlrpc
 		elseif ( ! $methName = $call->me['struct']['methodName'])
 			return $this->multicall_error('nomethod');
 		
-		list($scalar_type,$scalar_value)=each($methName->me);
+		$scalar_type = key($methName->me);
+		$scalar_value = current($methName->me);
 		$scalar_type = $scalar_type == $this->xmlrpcI4 ? $this->xmlrpcInt : $scalar_type;
 			
 		if ($methName->kindOf() != 'scalar' OR $scalar_type != 'string')
@@ -519,8 +520,8 @@ class CI_Xmlrpcs extends CI_Xmlrpc
 		elseif ($params->kindOf() != 'array')
 			return $this->multicall_error('notarray');
 			
-		list($a,$b)=each($params->me);
-		$numParams = count($b);
+		$arr_data = current($params->me);
+		$numParams = count($arr_data);
 
 		$msg = new XML_RPC_Message($scalar_value);
 		for ($i = 0; $i < $numParams; $i++)

@@ -384,7 +384,7 @@ class Articles_model extends CI_model
 	 */
 	function get_article_by_uri($uri)
 	{
-		$this->db->from('articles')->where('article_uri', $uri)->where('article_display', 'Y');
+		$this->db->from('articles')->where('article_uri', $uri)->where('article_display', 'y');
 		$query = $this->db->get();
 		if ($query->num_rows > 0)
 		{
@@ -505,7 +505,7 @@ class Articles_model extends CI_model
 		$number = (int)$number;
 		$this->db->select('article_uri,article_title')
 					->from('articles')
-					->where('article_display', 'Y')
+					->where('article_display', 'y')
 					->orderby('article_hits', 'DESC')
 					->limit($number);
 		$query = $this->db->get();
@@ -532,7 +532,7 @@ class Articles_model extends CI_model
 		$number = (int)$number;
 		$this->db->select('article_uri,article_title')
 					->from('articles')
-					->where('article_display', 'Y')
+					->where('article_display', 'y')
 					->orderby('article_rating', 'DESC')
 					->limit($number);
 		$query = $this->db->get();

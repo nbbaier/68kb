@@ -69,34 +69,34 @@ class MY_Loader extends CI_Loader
 	}
 
 	/** Load a module helper **/
-	public function helper($helper) {
-		if (is_array($helper))
-			return $this->helpers($helper);
+	public function helper($helpers = array()) {
+		if (is_array($helpers))
+			return $this->helpers($helpers);
 
-		if (isset($this->_ci_helpers[$helper]))
+		if (isset($this->_ci_helpers[$helpers]))
 			return;
 
-		list($path, $_helper) = Modules::find($helper.'_helper', $this->_module, 'helpers/');
+		list($path, $_helper) = Modules::find($helpers.'_helper', $this->_module, 'helpers/');
 
 		if ($path === FALSE)
-			return parent::helper($helper);
+			return parent::helper($helpers);
 
 		Modules::load_file($_helper, $path);
 		$this->_ci_helpers[$_helper] = TRUE;
 	}
 
 	/** Load an array of helpers **/
-	public function helpers($helpers) {
+	public function helpers($helpers = array()) {
 		foreach ($helpers as $_helper) $this->helper($_helper);
 	}
 
 	/** Load a module language file **/
-	public function language($langfile, $lang = '', $return = FALSE)	{
-		return self::$APP->lang->load($langfile, $lang, $return, TRUE, $this->_module);
+	public function language($langfile = '', $idiom = '', $return = FALSE, $add_suffix = TRUE, $alt_path = '')	{
+		return self::$APP->lang->load($langfile, $idiom, $return, $add_suffix, $alt_path);
 	}
 
 	/** Load a module library **/
-	public function library($library, $params = NULL, $object_name = NULL) {
+	public function library($library = '', $params = NULL, $object_name = NULL) {
 
 		// If it's an array, load em all
 		if (is_array($library))
@@ -316,7 +316,7 @@ class MX_Config extends CI_Config
 
 class MX_Language extends CI_Lang
 {
-	public function load($langfile, $lang = '', $return = FALSE, $_module = NULL, $alt_path = '')	
+	public function load($langfile = '', $idiom = '', $return = FALSE, $add_suffix = TRUE, $alt_path = '')
 	{
 		if (is_array($langfile))
 		{
@@ -324,24 +324,24 @@ class MX_Language extends CI_Lang
 		}
 
 		$deft_lang = MY_Loader::$APP->config->item('language');
-		$idiom = ($lang == '') ? $deft_lang : $lang;
+		$idiom = ($idiom == '') ? $deft_lang : $idiom;
 
 		if (in_array($langfile.'_lang'.EXT, $this->is_loaded, TRUE))
 		{
 			return $this->language;
 		}
 			
-		$_module || $_module = MY_Loader::$APP->router->fetch_module();
+		$_module = MY_Loader::$APP->router->fetch_module();
 		list($path, $_langfile) = Modules::find($langfile.'_lang', $_module, 'language/', $idiom);
 		
 		if ($alt_path != '')
 		{
 			//include($alt_path.'language/'.$idiom.'/'.$langfile);
-			if ($lang = parent::load($langfile, $idiom, $return, TRUE, $alt_path)) return $lang;
+			if ($lang = parent::load($langfile, $idiom, $return, $add_suffix, $alt_path)) return $lang;
 		}
 		elseif ($path === FALSE) 
 		{
-			if ($lang = parent::load($langfile, $lang, $return)) return $lang;
+			if ($lang = parent::load($langfile, $idiom, $return, $add_suffix, $alt_path)) return $lang;
 		} 
 		else 
 		{

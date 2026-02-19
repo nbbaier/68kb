@@ -5,26 +5,14 @@
 | Base Site URL
 |--------------------------------------------------------------------------
 |
-| URL to your CodeIgniter root. Typically this will be your base URL,
+| URL to your 68kb root. Typically this will be your base URL,
 | WITH a trailing slash:
 |
 |	http://example.com/
 |
 */
-$config['base_url'] = "http://".$_SERVER['HTTP_HOST'];
-$config['base_url'] .= preg_replace('@/+$@','',dirname($_SERVER['SCRIPT_NAME'])).'/';
+$config['base_url'] = "http://localhost:8000\/";
 
-/*
-|--------------------------------------------------------------------------
-| Allow Add-Ons
-|--------------------------------------------------------------------------
-|
-| By setting this to FALSE you can prevent all add-ons from working. This
-| is useful if you are experiencing a problem and think it is caused by an
-| add-on.
-|
-*/
-$config['allow_addons'] = TRUE;
 
 /*
 |--------------------------------------------------------------------------
@@ -49,6 +37,18 @@ $config['index_page'] = "index.php";
 |
 */
 $config['allowed_types'] = 'pdf|txt|zip|gif|jpg|png';
+
+/*
+|--------------------------------------------------------------------------
+| Allow Add-Ons
+|--------------------------------------------------------------------------
+|
+| By setting this to FALSE you can prevent all add-ons from working. This
+| is useful if you are experiencing a problem and think it is caused by an 
+| add-on.
+|
+*/
+$config['allow_addons'] = TRUE;
 
 /*
 |--------------------------------------------------------------------------
@@ -113,7 +113,7 @@ $config['charset'] = "UTF-8";
 | setting this variable to TRUE (boolean).  See the user guide for details.
 |
 */
-$config['enable_hooks'] = TRUE;
+$config['enable_hooks'] = FALSE;
 
 
 /*
@@ -242,7 +242,7 @@ $config['cache_path'] = APPPATH .'cache/';
 | enabled you MUST set an encryption key.  See the user guide for info.
 |
 */
-$config['encryption_key'] = "";
+$config['encryption_key'] = "jHkNImmHXFZhs3uB";
 
 /*
 |--------------------------------------------------------------------------
@@ -256,11 +256,11 @@ $config['encryption_key'] = "";
 | 'time_to_update'		= how many seconds between CI refreshing Session Information
 |
 */
-$config['sess_cookie_name']		= 'kb';
+$config['sess_cookie_name']		= 'kbsession';
 $config['sess_expiration']		= 7200;
 $config['sess_encrypt_cookie']	= FALSE;
 $config['sess_use_database']	= FALSE;
-$config['sess_table_name']		= 'ci_sessions';
+$config['sess_table_name']		= 'sessions';
 $config['sess_match_ip']		= FALSE;
 $config['sess_match_useragent']	= TRUE;
 $config['sess_time_to_update'] 	= 300;
@@ -298,7 +298,7 @@ $config['global_xss_filtering'] = FALSE;
 | checked on a submitted form. If you are accepting user data, it is strongly
 | recommended CSRF protection be enabled.
 */
-$config['csrf_protection'] = FALSE;
+$config['csrf_protection'] = TRUE;
 
 
 /*
@@ -361,47 +361,48 @@ $config['rewrite_short_tags'] = FALSE;
 $config['proxy_ips'] = '';
 
 /*
-|--------------------------------------------------------------------------
-| Enable/Disable Migrations
-|--------------------------------------------------------------------------
-|
-| Migrations are disabled by default for security reasons.
-| You should enable migrations whenever you intend to do a schema migration
-| and disable it back when you're done.
-|
-| Some more severe security measures might take place in future releases.
-|
-*/
-$config["migrations_enabled"] = TRUE;
+ |--------------------------------------------------------------------------
+ | Enable/Disable Migrations
+ |--------------------------------------------------------------------------
+ |
+ | Migrations are disabled by default for security reasons.
+ | You should enable migrations whenever you intend to do a schema migration
+ | and disable it back when you're done.
+ |
+ | Some more severe security measures might take place in future releases.
+ |
+ */
+ $config["migrations_enabled"] = TRUE;
 
-/*
-|--------------------------------------------------------------------------
-| Migrations Path
-|--------------------------------------------------------------------------
-|
-| Path to your migrations folder.
-| Typically, it will be within your application path.
-| Also, writing permission is required within the migrations path.
-|
-*/
-$config["migrations_path"] = ROOTPATH . "setup/migrations/";
+ /*
+ |--------------------------------------------------------------------------
+ | Migrations Path
+ |--------------------------------------------------------------------------
+ |
+ | Path to your migrations folder.
+ | Typically, it will be within your application path.
+ | Also, writing permission is required within the migrations path.
+ |
+ */
+ $config["migrations_path"] = ROOTPATH . "setup/migrations/";
 
-/*
-|--------------------------------------------------------------------------
-| Migrations version
-|--------------------------------------------------------------------------
-|
-| This is used to set the default migration for this code base.
-| Sometimes you want the system to automaticly migrate the database
-| to the most current migration. Or there might be higher migrations
-| that are not part of the production env. Setting the migration does
-| does nothing here. It is a way for a programer to check the config.
-|
-| On login you might want to do something like this
-| $this->migrate->version($this->config->item('migrations_version'));
-|
-*/
-$config["migrations_version"] = 0;
+
+ /*
+ |--------------------------------------------------------------------------
+ | Migrations version
+ |--------------------------------------------------------------------------
+ |
+ | This is used to set the default migration for this code base.
+ | Sometimes you want the system to automaticly migrate the database
+ | to the most current migration. Or there might be higher migrations
+ | that are not part of the production env. Setting the migration does
+ | does nothing here. It is a way for a programer to check the config.
+ |
+ | On login you might want to do something like this
+ | $this->migrate->version($this->config->item('migrations_version'));
+ |
+ */
+ $config["migrations_version"] = 0;
 
 /* End of file config.php */
 /* Location: ./application/config/config.php */

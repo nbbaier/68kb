@@ -35,6 +35,7 @@ class Admin_glossary extends Admin_Controller {
 			show_error(lang('not_authorized'));
 		}
 		
+		$this->data = new stdClass();
 		$this->data->nav = 'articles';
 	}
 	

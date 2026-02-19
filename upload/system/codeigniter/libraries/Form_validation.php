@@ -41,13 +41,13 @@ class CI_Form_validation {
 	 * Constructor
 	 *
 	 */	
-	function CI_Form_validation($rules = array())
-	{	
+	function __construct($rules = array())
+	{
 		$this->CI =& get_instance();
-		
+
 		// Validation rules can be stored in a config file.
 		$this->_config_rules = $rules;
-		
+
 		// Automatically load the form helper
 		$this->CI->load->helper('form');
 
@@ -56,7 +56,7 @@ class CI_Form_validation {
 		{
 			mb_internal_encoding($this->CI->config->item('charset'));
 		}
-	
+
 		log_message('debug', "Form Validation Class Initialized");
 	}
 	

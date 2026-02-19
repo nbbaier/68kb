@@ -305,6 +305,12 @@ class Users_model extends CI_Model {
 	{
 		$listing_owner_id = (int) $listing_owner_id;
 		
+		// Return 0 if listings table doesn't exist (KB doesn't have listings module)
+		if ( ! $this->db->table_exists('listings'))
+		{
+			return 0;
+		}
+		
 		$this->db->where('listing_owner_id', $listing_owner_id);
 		$this->db->from('listings');
 		

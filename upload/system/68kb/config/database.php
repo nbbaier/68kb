@@ -12,20 +12,14 @@
 | EXPLANATION OF VARIABLES
 | -------------------------------------------------------------------
 |
-|	['hostname'] The hostname of your database server.
-|	['username'] The username used to connect to the database
-|	['password'] The password used to connect to the database
-|	['database'] The name of the database you want to connect to
-|	['dbdriver'] The database type. ie: mysql.  Currently supported:
-				 mysql, mysqli, postgre, odbc, mssql, sqlite, oci8
+|	['database'] The full path to the SQLite database file
+|	['dbdriver'] The database type. Set to pdo_sqlite for SQLite.
 |	['dbprefix'] You can add an optional prefix, which will be added
 |				 to the table name when using the  Active Record class
 |	['pconnect'] TRUE/FALSE - Whether to use a persistent connection
 |	['db_debug'] TRUE/FALSE - Whether database errors should be displayed.
 |	['cache_on'] TRUE/FALSE - Enables/disables query caching
 |	['cachedir'] The path to the folder where cache files should be stored
-|	['char_set'] The character set used in communicating with the database
-|	['dbcollat'] The character collation used in communicating with the database
 |	['swap_pre'] A default table prefix that should be swapped with the dbprefix
 |	['autoinit'] Whether or not to automatically initialize the database.
 |	['stricton'] TRUE/FALSE - forces "Strict Mode" connections
@@ -41,22 +35,27 @@
 $active_group = "default";
 $active_record = TRUE;
 
-$db['default']['hostname'] = "localhost";
-$db['default']['username'] = "root";
-$db['default']['password'] = "";
-$db['default']['database'] = "68kb_v2";
-$db['default']['dbdriver'] = "mysql";
+$db['default']['database'] = "C:/Users/umair-pc/Desktop/MyProjects/68kb/upload/database/68kb.sqlite";
+$db['default']['dbdriver'] = "pdo_sqlite";
 $db['default']['dbprefix'] = "kb_";
 
-$db['default']['pconnect'] = TRUE;
+/*
+|--------------------------------------------------------------------------
+| More Database Settings
+|--------------------------------------------------------------------------
+|
+| You can edit the ones below but generally should be left the same.
+| http://codeigniter.com/user_guide/database/configuration.html
+|
+*/
+$db['default']['pconnect'] = FALSE;
 $db['default']['db_debug'] = TRUE;
 $db['default']['cache_on'] = FALSE;
 $db['default']['cachedir'] = "";
-$db['default']['char_set'] = "utf8";
-$db['default']['dbcollat'] = "utf8_general_ci";
 $db['default']['swap_pre'] = "kb_";
 $db['default']['autoinit'] = TRUE;
 $db['default']['stricton'] = FALSE;
 
+
 /* End of file database.php */
-/* Location: ./upload/includes/68kb/config/database.php */ 
+/* Location: ./application/config/database.php */

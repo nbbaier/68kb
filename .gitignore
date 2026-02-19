@@ -7,3 +7,7 @@ upload/system/codeigniter/system/logs/*
 !upload/system/codeigniter/system/logs/index.html
 /*.buildpath
 /*.project
+
+# Agent documentation
+.claude/
+docs/

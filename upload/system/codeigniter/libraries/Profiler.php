@@ -46,7 +46,7 @@ class CI_Profiler {
 										'config'
 										);
 
- 	function CI_Profiler($config = array())
+ 	function __construct($config = array())
  	{
  		$this->CI =& get_instance();
  		$this->CI->load->language('profiler');

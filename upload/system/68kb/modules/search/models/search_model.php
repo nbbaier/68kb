@@ -203,7 +203,7 @@ class Search_model extends CI_Model
 
 		if (isset($search_options['category']) OR isset($search_options['article_category']))
 		{
-			$this->db->join('article2cat', 'article_id = article_id_rel', 'right');
+			$this->db->join('article2cat', 'article_id = article_id_rel', 'inner');
 		}
 
 		// Call any hooks and add them to the where clause.

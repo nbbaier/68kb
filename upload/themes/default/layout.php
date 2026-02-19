@@ -52,8 +52,7 @@
 
 	<div class="grid_12 footer">
 		<p>
-			&copy; <?php echo date("Y"); ?> {kb:settings:get name="site_title"} -
-			Powered by <a href="http://68kb.com">68 Knowledge Base</a><br />
+			&copy; <?php echo date("Y"); ?> {kb:settings:get name="site_title"}<br />
 			Time: {elapsed_time} - Memory: {memory_usage}
 		</p>
 	</div>

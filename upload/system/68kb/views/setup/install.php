@@ -19,13 +19,13 @@
 				<tr>
 					<td class="left"><?php echo APPPATH.'config/database.php'; ?></td>
 					<td class="right">
-						<?php echo $db_path; ?>
+						<?php echo $db_config_writable; ?>
 					</td>
 				</tr>
 			</table>
-			
+
 			<br />
-			
+
 			<table width="90%" align="center" cellpadding="5" cellspacing="0" class="modules">
 				<tr>
 					<th colspan="2">Database Settings:</th>
@@ -35,37 +35,19 @@
 				}
 				?>
 				<tr>
-					<td width="50%" class="row1">Database Name</td>
+					<td width="50%" class="row1">SQLite Database Path</td>
 					<td width="50%" class="row1">
-						<?php echo form_input('db_name', set_value('db_name')); ?>
-					</td>
-				</tr>
-				<tr>
-					<td class="row2">Database Hostname</td>
-					<td class="row2">
-						<?php echo form_input('db_hostname', set_value('db_hostname', 'localhost')); ?>
-					</td>
-				</tr>
-				<tr>
-					<td width="50%" class="row1">Database Username</td>
-					<td width="50%" class="row1">
-						<?php echo form_input('db_username', set_value('db_username')); ?>
-					</td>
-				</tr>
-				<tr>
-					<td width="50%" class="row1">Database Password</td>
-					<td width="50%" class="row1">
-						<?php echo form_input('db_password', set_value('db_password')); ?>
+						<?php echo form_input('db_path', set_value('db_path', $db_path)); ?>
 					</td>
 				</tr>
 				<tr>
 					<td width="50%" class="row1">Database Prefix</td>
 					<td width="50%" class="row1">
-						<?php echo form_input('db_prefix', set_value('db_prefix'), 'ice_'); ?>
+						<?php echo form_input('db_prefix', set_value('db_prefix', 'kb_')); ?>
 					</td>
 				</tr>
 			</table>
-			
+
 			<p align="right">
 				<?php
 					if (isset($error) && $error==TRUE) {

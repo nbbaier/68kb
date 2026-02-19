@@ -45,7 +45,12 @@ if ( ! function_exists('form_open'))
 		// CSRF
 		if ($CI->config->item('csrf_protection') === TRUE)
 		{
-			$form .= form_hidden($CI->security->csrf_token_name, $CI->security->csrf_hash);
+			// Debug: Compare the hashes
+			$input_hash = $CI->input->security->csrf_hash;
+			$ci_hash = $CI->security->csrf_hash;
+			$cookie_hash = isset($_COOKIE[$CI->security->csrf_token_name]) ? $_COOKIE[$CI->security->csrf_token_name] : 'not set';
+			$form .= "<!-- DEBUG: input_hash=$input_hash, ci_hash=$ci_hash, cookie=$cookie_hash -->";
+			$form .= form_hidden($CI->input->security->csrf_token_name, $input_hash);
 		}
 		
 		return $form;

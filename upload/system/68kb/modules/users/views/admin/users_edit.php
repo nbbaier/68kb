@@ -110,15 +110,6 @@ if($notes)
 			</div>
 		</fieldset>
 		<fieldset>
-			<legend><?php echo lang('lang_stats'); ?></legend>
-			<ul id="stats">
-				<li>Total Spent: <?php echo format_money($total_order_amount); ?></li>
-				<li>Total Orders: <?php echo $total_orders; ?></li>
-				<li>Listings Placed: <?php echo $row['user_listings']; ?></li>
-				<li>Active Listings: <?php echo $active_listings; ?></li>
-			</ul>
-		</fieldset>
-		<fieldset>
 			<legend><?php echo lang('lang_xml_rpc_api'); ?></legend>
 			<p class="row1"><?php echo lang('lang_api_key'); ?>: <span class="api_key"><tt><?php echo $row['user_api_key']; ?></tt></span> &nbsp; 
 			<a href="<?php echo site_url('admin/users/reset_api/'.$row['user_id']); ?>"><?php echo lang('lang_regenerate'); ?></a></p>

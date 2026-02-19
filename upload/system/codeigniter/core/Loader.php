@@ -51,14 +51,14 @@ class CI_Loader {
 	 *
 	 * @access	public
 	 */
-	function CI_Loader()
-	{	
+	function __construct()
+	{
 		$this->_ci_view_path = APPPATH.'views/';
 		$this->_ci_ob_level  = ob_get_level();
 		$this->_ci_library_paths = array(APPPATH, BASEPATH);
 		$this->_ci_helper_paths = array(APPPATH, BASEPATH);
 		$this->_ci_model_paths = array(APPPATH);
-			
+
 		log_message('debug', "Loader Class Initialized");
 	}
 	
@@ -262,7 +262,8 @@ class CI_Loader {
 		require_once(BASEPATH.'database/drivers/'.$CI->db->dbdriver.'/'.$CI->db->dbdriver.'_utility'.EXT);
 		$class = 'CI_DB_'.$CI->db->dbdriver.'_utility';
 
-		$CI->dbutil =& instantiate_class(new $class());
+		$_dbutil = new $class();
+		$CI->dbutil =& instantiate_class($_dbutil);
 
 		$CI->load->_ci_assign_to_models();
 	}

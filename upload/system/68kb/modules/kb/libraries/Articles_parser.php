@@ -71,7 +71,7 @@ class Articles_parser
 
 		if ($options['category'] != '')
 		{
-			$this->_ci->db->join('article2cat', 'article_id = article_id_rel', 'right');
+			$this->_ci->db->join('article2cat', 'article_id = article_id_rel', 'inner');
 		}
 
 		$where = 'article_display = "y"';
@@ -181,6 +181,12 @@ class Articles_parser
 		}
 
 		$data = $query->result_array();
+
+		// Add article_url for each article
+		for ($i = 0; $i < count($data); $i++)
+		{
+			$data[$i]['article_url'] = site_url('article/'.$data[$i]['article_uri']);
+		}
 
 		$query->free_result();
 

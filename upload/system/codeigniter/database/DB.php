@@ -130,7 +130,8 @@ function &DB($params = '', $active_record_override = NULL)
 
 	// Instantiate the DB adapter
 	$driver = 'CI_DB_'.$params['dbdriver'].'_driver';
-	$DB =& instantiate_class(new $driver($params));
+	$driver_obj = new $driver($params);
+	$DB =& instantiate_class($driver_obj);
 	
 	if ($DB->autoinit == TRUE)
 	{

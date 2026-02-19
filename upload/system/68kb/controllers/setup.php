@@ -27,7 +27,7 @@ class Setup extends Controller
 	/**
 	 * Script Version
 	 */
-	var $script_version = '2.0.0';
+	var $script_version = '3.0.0';
 	
 	/**
 	 * Build Version
@@ -128,17 +128,15 @@ class Setup extends Controller
 	 */
 	function install()
 	{
-		$this->data['cache'] 				= $this->_writable(APPPATH.'cache');
-		$this->data['config_path']		 	= $this->_writable(APPPATH.'config/config.php');
-		$this->data['db_path']			 	= $this->_writable(APPPATH.'config/database.php');
-		
+		$this->data['cache'] 					= $this->_writable(APPPATH.'cache');
+		$this->data['config_path']		 		= $this->_writable(APPPATH.'config/config.php');
+		$this->data['db_config_writable']	 	= $this->_writable(APPPATH.'config/database.php');
+		$this->data['db_path']					= str_replace('\\', '/', ROOTPATH . 'database/68kb.sqlite');
+
 		// Setup form validation
-		$this->form_validation->set_rules('db_name', 'Database Name', 'required|callback__test_db');
-		$this->form_validation->set_rules('db_hostname', 'Database Hostname', 'required');
-		$this->form_validation->set_rules('db_username', 'Database Username', 'required');
-		$this->form_validation->set_rules('db_password', 'Database Password', '');
+		$this->form_validation->set_rules('db_path', 'SQLite Database Path', 'required|callback__test_db');
 		$this->form_validation->set_rules('db_prefix', 'Database Prefix', '');
-		
+
 		// Handle Validation
 		if ($this->form_validation->run() == FALSE)
 		{
@@ -148,14 +146,9 @@ class Setup extends Controller
 		else
 		{
 			// Assign out the posted data
-			$db['dbdriver'] = "mysql";
-			$db['hostname'] = $this->input->post('db_hostname', TRUE);
-			$db['username'] = $this->input->post('db_username', TRUE);
-			$db['password'] = $this->input->post('db_password', TRUE);
+			$db['database'] = $this->input->post('db_path', TRUE);
 			$db['dbprefix'] = $this->input->post('db_prefix', TRUE);
-			$db['database'] = $this->input->post('db_name', TRUE);
-			$db['db_debug'] = FALSE;
-			
+
 			$this->_write_db_file($db);
 
 			redirect('setup/install_final');
@@ -165,45 +158,38 @@ class Setup extends Controller
 	// ------------------------------------------------------------------------
 	
 	/**
-	 * Test the db settings
+	 * Test the SQLite db path
+	 *
+	 * @param	string $path Path to SQLite database file
+	 * @return	bool
 	 */
-	public function _test_db()
+	public function _test_db($path)
 	{
-		$db['dbdriver'] = "mysql";
-		$db['hostname'] = $this->input->post('db_hostname', TRUE);
-		$db['username'] = $this->input->post('db_username', TRUE);
-		$db['password'] = $this->input->post('db_password', TRUE);
-		$db['database'] = $this->input->post('db_name', TRUE);
-		$db['db_debug'] = FALSE;
-		
-		$this->load->database($db);
+		$dir = dirname($path);
 
-		if ($this->db->conn_id)
+		if ( ! is_dir($dir))
 		{
-			$this->load->dbutil();
-			
-			if ($this->dbutil->database_exists($db['database']))
-			{
-				return TRUE;
-			}
-			else
-			{
-				$this->load->dbforge();
-
-				if ( ! $this->dbforge->create_database($db['database']))
-				{
-					$this->form_validation->set_message('_test_db', 'Can not create the database. Please create it manually.');
-					return FALSE;
-				}
-				return TRUE;
-			}
-		}
-		else
-		{
-			$this->form_validation->set_message('_test_db', 'Can not connect to the database');
+			$this->form_validation->set_message('_test_db', 'The directory for the SQLite database does not exist: ' . $dir);
 			return FALSE;
 		}
-		die;
+
+		if ( ! is_writable($dir))
+		{
+			$this->form_validation->set_message('_test_db', 'The directory for the SQLite database is not writable: ' . $dir);
+			return FALSE;
+		}
+
+		try
+		{
+			$pdo = new PDO('sqlite:' . $path);
+			$pdo = NULL;
+			return TRUE;
+		}
+		catch (PDOException $e)
+		{
+			$this->form_validation->set_message('_test_db', 'Cannot connect to SQLite database: ' . $e->getMessage());
+			return FALSE;
+		}
 	}
 	
 	// ------------------------------------------------------------------------
@@ -219,9 +205,6 @@ class Setup extends Controller
 		$template = read_file(ROOTPATH.'setup/sample_data/database.php');
 		
 		$replace = array(
-			'__HOSTNAME__' 	=> $db['hostname'],
-			'__USERNAME__' 	=> $db['username'],
-			'__PASSWORD__' 	=> $db['password'],
 			'__DATABASE__' 	=> $db['database'],
 			'__DBPREFIX__' 	=> $db['dbprefix'],
 		);
@@ -370,6 +353,11 @@ class Setup extends Controller
 		$version_data['option_value'] = $this->script_version;
 		$this->db->where('option_name', 'script_version');
 		$this->db->update('settings', $version_data);
+		
+		// Also set script_latest to suppress upgrade notification
+		$version_data['option_value'] = $this->script_version;
+		$this->db->where('option_name', 'script_latest');
+		$this->db->update('settings', $version_data);
 	}
 	
 	// ------------------------------------------------------------------------
@@ -389,6 +377,11 @@ class Setup extends Controller
 		// now maintenance
 		$version_data['option_value'] = $this->script_version;
 		$this->db->where('option_name', 'script_version');
+		$this->db->update('settings', $version_data);
+		
+		// Also set script_latest to suppress upgrade notification
+		$version_data['option_value'] = $this->script_version;
+		$this->db->where('option_name', 'script_latest');
 		$this->db->update('settings', $version_data);
 		
 		$data = array( 

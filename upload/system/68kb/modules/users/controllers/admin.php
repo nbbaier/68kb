@@ -28,7 +28,12 @@ class Admin extends Admin_Controller {
 		parent::__construct();
 		
 		$this->load->model('users_model');
-		$this->load->model('orders/orders_model');
+		
+		// Load orders model only if the orders module is active
+		if ($this->events->active('orders'))
+		{
+			$this->load->model('orders/orders_model');
+		}
 		
 		if ( ! $this->users_auth->check_role('can_manage_users'))
 		{
@@ -309,9 +314,7 @@ class Admin extends Admin_Controller {
 		$data['row'] = $this->users_model->get_user($data['id']);
 		$data['notes'] = $this->users_model->user_notes($data['id']);
 		$data['groups'] = $this->usergroups_model->get_groups();
-		$data['active_listings'] = $this->users_model->users_listings($data['id']);
-		$data['total_order_amount'] = $this->orders_model->user_total_spent($data['id']);
-		$data['total_orders'] = $this->orders_model->get_users_orders($data['id'], TRUE);
+		
 		
 		$this->load->helper(array('form', 'url', 'html', 'date'));
 		
@@ -488,6 +491,14 @@ class Admin extends Admin_Controller {
 		}
 		
 		$this->load->model('listings/listings_model');
+		// Only proceed if listings module is active
+		if ( ! $this->db->table_exists('listings'))
+		{
+			$this->session->set_flashdata('msg', lang('lang_settings_saved'));
+			redirect('admin/users/edit/'.$user_id);
+			return;
+		}
+		
 		$this->db->select('listing_id')->from('listings')->where('listing_owner_id', $user_id);
 		$query = $this->db->get();
 		
@@ -592,6 +603,8 @@ class Admin extends Admin_Controller {
 	*/
 	public function grid()
 	{
+		$this->load->helper('date');
+		
 		$iTotal = $this->db->count_all('users');
 		
 		$this->db->start_cache();

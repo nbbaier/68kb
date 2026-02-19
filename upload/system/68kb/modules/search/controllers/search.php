@@ -209,7 +209,7 @@ class Search extends Front_Controller
 		// Do the query
 		$this->db->from('articles')
 				->join('article_fields', 'article_id = article_field_id', 'inner')
-				->join('article2cat', 'article_id = article_id_rel', 'right')
+				->join('article2cat', 'article_id = article_id_rel', 'inner')
 				->where($search_where)
 				->limit($config['per_page'], $offset);
 

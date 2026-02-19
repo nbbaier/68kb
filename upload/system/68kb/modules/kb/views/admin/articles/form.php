@@ -62,7 +62,7 @@ else
 
 		<div class="row1">
 			<?php echo form_label(lang('lang_display'). ':', 'article_display'); ?>
-			<?php $options = array('yes' => lang('lang_yes'), 'no' => lang('lang_no')); ?>
+			<?php $options = array('y' => lang('lang_yes'), 'n' => lang('lang_no')); ?>
 			<?php echo form_dropdown('article_display', $options, set_value('article_display', @$row['article_display'])); ?>
 		</div>
 		<div class="row2">

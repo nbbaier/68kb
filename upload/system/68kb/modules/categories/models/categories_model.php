@@ -578,8 +578,7 @@ class Categories_model extends CI_Model
 
 		$this->db->select('article_id')
 					->from('articles')
-					->join('article2cat', 'article_id = article_id_rel', 'inner')
-					->where_in('category_id_rel', $search_cats);
+					->join('article2cat', 'article_id = article_id_rel', 'inner');
 
 		$where = 'article_display = "y"';
 
@@ -590,6 +589,7 @@ class Categories_model extends CI_Model
 		}
 
 		$this->db->where($where);
+		$this->db->where_in('category_id_rel', $search_cats);
 		
 		$total = $this->db->count_all_results();
 		

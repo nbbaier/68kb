@@ -50,11 +50,11 @@ class CI_Security {
 										"Redirect\s+302"			=> '[removed]'
 									);
 
-	function CI_Security()
+	function __construct()
 	{
 		// Set the CSRF hash
 		$this->_csrf_set_hash();
-		
+
 		log_message('debug', "Security Class Initialized");
 	}
 
@@ -187,11 +187,11 @@ class CI_Security {
 		 */
 		if (is_array($str))
 		{
-			while (list($key) = each($str))
+			foreach ($str as $key => $val)
 			{
 				$str[$key] = $this->xss_clean($str[$key]);
 			}
-	
+
 			return $str;
 		}
 

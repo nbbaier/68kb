@@ -30,38 +30,10 @@
  */
 function version_check()
 {
-	$fp = @fsockopen("www.68kb.com", 80, $errno, $errstr, 30);
-	
-	$return = '';
-	
-	if ( ! $fp) 
-	{
-	    echo "$errstr ($errno)<br />\n";
-	} 
-	else 
-	{
-	    $out = "GET /downloads/latest/version.txt HTTP/1.1\r\n";
-	    $out .= "Host: www.68kb.com\r\n";
-	    $out .= "Connection: Close\r\n\r\n";
-
-	    fwrite($fp, $out);
-	
-	    while ( ! feof($fp)) 
-	    {
-	        $return .= fgets($fp, 128);
-	    }
-	
-		// Get rid of HTTP headers
-		$content = explode("\r\n\r\n", $return);
-		$content = explode($content[0], $return);
-
-		// Assign version to var
-		$version = trim($content[1]);
-		
-	    fclose($fp);
-	
-		return $version;
-	}
+	// External version check disabled - 68kb.com domain no longer available
+	// Return current version to prevent false "upgrade available" notices
+	$CI =& get_instance();
+	return $CI->settings->get_setting('script_version');
 }
 /* End of file version_helper.php */
 /* Location: ./upload/includes/68kb/helpers/version_helper.php */ 

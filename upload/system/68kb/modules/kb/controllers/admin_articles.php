@@ -375,7 +375,7 @@ class Admin_articles extends Admin_Controller {
 		// User Level
 		if ($this->session->userdata('user_group') == 4)
 		{
-			$this->db->where('article_author', $this->session->userdata['userid']);
+			$this->db->where('article_author', $this->session->userdata('user_id'));
 		}
 
 		/* Searching */

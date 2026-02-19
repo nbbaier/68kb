@@ -41,6 +41,7 @@ $(document).ready(function() {
 		"bJQueryUI": true,
 		"sAjaxSource": "<?php echo site_url('admin/kb/articles/grid'); ?>",
 		"fnServerData": function ( sSource, aoData, fnCallback ) {
+			aoData.push( { "name": "<?php echo $this->security->csrf_token_name; ?>", "value": "<?php echo $this->security->csrf_hash; ?>" } );
 			$.ajax({ "dataType": 'json', "type": "POST", "url": sSource, "data": aoData, "success": fnCallback });
 		}
 	} );

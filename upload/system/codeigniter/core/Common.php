@@ -163,7 +163,8 @@
 		// Keep track of what we just loaded
 		is_loaded($class);
 
-		$_classes[$class] =& instantiate_class(new $name());
+		$instance = new $name();
+		$_classes[$class] =& instantiate_class($instance);
 		return $_classes[$class];
 	}
 
@@ -255,7 +256,8 @@
 			}
 		}
 	
-		return $_config[0] =& $config;
+	$_config[0] =& $config;
+	return $_config[0];
 	}
 
 // ------------------------------------------------------------------------
