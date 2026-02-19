@@ -7,6 +7,7 @@ upload/system/codeigniter/system/logs/*
 !upload/system/codeigniter/system/logs/index.html
 /*.buildpath
 /*.project
+upload/database/68kb.sqlite
 
 # Agent documentation
 .claude/

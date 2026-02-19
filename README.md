@@ -1,18 +1,28 @@
-# 68KB v3.0.0 
+# 68KB
 
-This is the new repo for 68KB v2. This is a totally different repo than our original because we are redoing the entire code base. If 
-you are interested in helping out please contact us. 
+A lightweight knowledge base application — forked from [68kb/68kb](https://github.com/68kb/68kb) with improved accessibility, modern UI, and SQLite support.
 
-The old repo can be found here: <http://github.com/68designs/68kb>
+## What's Different
 
-## Installation 
+- **SQLite support** — no MySQL dependency; the database is a single file
+- **Improved UI and accessibility** — cleaner interface with better usability
+- **PHP 7.2+ compatibility** — updated constructors, removed deprecated functions
+- **Summernote WYSIWYG editor** — replaces the old js-quicktags toolbar
 
-This code base is currently in alpha release at best so it is not recommended to be used unless you are familiar with CodeIgniter and don't mind lots of bugs.
+## Quick Start
 
-  * Upload Files
-  * Edit includes/68kb/config/database.php
-  * Visit yoursite.com/index.php/setup and follow directions.
+**Requirements:** PHP 7.2+ with the PDO SQLite extension enabled.
 
-## Get In Touch
+1. Upload the contents of the `upload/` directory to your web server
+2. Point your web server's document root to the uploaded directory
+3. Visit your site and follow the setup wizard at `/index.php/setup`
 
-For v2 we are planning on using IRC to get ideas and for general chat. So if you want to meet and great please visit ##68kb on irc.freenode.net
+No MySQL needed — the database is a single SQLite file created automatically during setup.
+
+## Credits
+
+Originally forked from [68kb/68kb](https://github.com/68kb/68kb). The original project referenced a license at `http://68kb.com/user_guide/license.html` (now defunct).
+
+### Bundled Third-Party Software
+
+- [Summernote](https://github.com/summernote/summernote) — MIT License
