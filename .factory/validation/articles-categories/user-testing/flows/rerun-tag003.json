@@ -1,0 +1,71 @@
+{
+  "groupId": "rerun-tag003",
+  "testedAt": "2026-03-19T17:50:58Z",
+  "isolation": {
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "surface": "web (agent-browser) with supporting API/DB checks",
+    "browserSession": "rerun-tag003-20260319"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "sqlite3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-TAG-003",
+      "title": "Tag-based related articles",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Verify two existing articles share the same tag via DB query",
+          "expected": "A shared-tag dataset exists so related-article behavior can be observed",
+          "observed": "Tag rerun-articles-shared-1773941394 is linked to article IDs 24 and 25"
+        },
+        {
+          "action": "Navigate to /article/rerun-articles-1773941394-main in browser",
+          "expected": "Article detail page renders a user-visible related-articles surface",
+          "observed": "The route renders a 404 page with only 'Go home' and 'Sign in' links; no related-articles UI"
+        },
+        {
+          "action": "Probe likely related-article API routes",
+          "expected": "A related-articles endpoint returns related results excluding the current article",
+          "observed": "GET /api/articles/24/related, /api/articles/25/related, /api/articles/rerun-articles-1773941394-main/related, and /api/public/articles/24/related all returned 404 {\"error\":\"Not found\"}"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/rerun-tag003/VAL-TAG-003-public-article-route.png"
+        ],
+        "consoleErrors": "none (articles-categories/rerun-tag003/VAL-TAG-003-errors.txt is empty)",
+        "network": "articles-categories/rerun-tag003/VAL-TAG-003-network-requests.txt (agent-browser) and articles-categories/rerun-tag003/VAL-TAG-003-related-checks.txt (supplemental curl with HTTP status/body)",
+        "dbChecks": "articles-categories/rerun-tag003/VAL-TAG-003-related-checks.txt",
+        "browserSnapshot": "articles-categories/rerun-tag003/VAL-TAG-003-browser-snapshot.txt",
+        "pageText": "articles-categories/rerun-tag003/VAL-TAG-003-page-text.txt"
+      },
+      "issues": "Blocked: no user-visible related-articles surface or related-articles API route exists in the current build, so exclusion-of-self behavior cannot be validated through the real user surface."
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser network request export captured no requests for this flow, so status/body evidence was incomplete.",
+      "resolved": true,
+      "resolution": "Captured supplemental curl probes with full HTTP response details in VAL-TAG-003-related-checks.txt.",
+      "affectedAssertions": [
+        "VAL-TAG-003"
+      ]
+    }
+  ],
+  "blockers": [
+    {
+      "description": "Related-articles behavior is not exposed through a user-visible article detail surface or a testable API route in this build.",
+      "affectedAssertions": [
+        "VAL-TAG-003"
+      ],
+      "quickFixAttempted": "Used an existing shared-tag article pair (IDs 24/25), validated article route behavior in browser, and probed likely related endpoints; all surfaced as absent (404/no UI)."
+    }
+  ],
+  "summary": "VAL-TAG-003 remains blocked: shared tags exist in data, but no user-visible related-articles surface/API is currently available to validate related-results exclusion behavior."
+}

@@ -1,0 +1,46 @@
+{
+  "groupId": "rerun-cat032",
+  "testedAt": "2026-03-19T17:50:17Z",
+  "isolation": {
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "surface": "web",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "adminUsername": "admin",
+    "browserSession": "cat032-rerun"
+  },
+  "toolsUsed": [
+    "agent-browser"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-CAT-032",
+      "title": "Duplicate — invalid ID",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Sign in as admin at /login",
+          "expected": "Authenticated admin session",
+          "observed": "Login succeeded and URL became /admin"
+        },
+        {
+          "action": "Navigate to /admin/categories/new?duplicateId=abc",
+          "expected": "Redirect to /admin/categories with error flash",
+          "observed": "URL resolved to /admin/categories and an error toast 'Invalid category ID' was displayed"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/rerun-cat032/VAL-CAT-032-categories-grid-before.png",
+          "articles-categories/rerun-cat032/VAL-CAT-032-invalid-id-result.png"
+        ],
+        "consoleErrors": "No uncaught runtime exception observed. Console logged expected 400 failed-resource errors during invalid duplicate lookup.",
+        "network": "Authenticated fetch /api/admin/categories/abc/duplicate -> 400 with body {\"error\":\"Invalid category ID\"}; UI then showed error toast on /admin/categories."
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Validated VAL-CAT-032 and it now passes: invalid duplicate category ID redirects to /admin/categories and shows an error toast."
+}
