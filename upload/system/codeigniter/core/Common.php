@@ -337,7 +337,7 @@
 * @access	public
 * @return	void
 */
-	function log_message($level = 'error', $message, $php_error = FALSE)
+	function log_message($level, $message, $php_error = FALSE)
 	{
 		static $_log;
 
@@ -458,7 +458,7 @@
 		 // For example, if you are running PHP 5 and you use version 4 style 
 		 // class functions (without prefixes like "public", "private", etc.) 
 		 // you'll get notices telling you that these have been deprecated.
-		if ($severity == E_STRICT)
+		if (defined('E_STRICT') && $severity == E_STRICT)
 		{
 			return;
 		}
