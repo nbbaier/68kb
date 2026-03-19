@@ -1,0 +1,39 @@
+{
+  "featureId": "articles-crud-api",
+  "reviewedAt": "2026-03-19T15:54:20Z",
+  "commitId": "add4670",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "Core endpoints and most required behaviors are implemented and well covered by tests, but there is a blocking edge-case bug in tag syncing that can cause article create/update to fail with a 500 when duplicate keywords are supplied in one request.",
+    "issues": [
+      {
+        "file": "app/apps/server/src/routes/articles.ts",
+        "line": 90,
+        "severity": "blocking",
+        "description": "`syncTags()` does not deduplicate parsed keywords before inserting into `article_tags`. With input like `keywords: \"php, php\"`, the loop attempts the same `(tagsTagId, tagsArticleId)` insert twice, violating the composite PK on `article_tags` (`app/apps/server/src/db/schema.ts:163`) and causing the request to fail instead of reusing tags as expected."
+      },
+      {
+        "file": "app/apps/server/src/routes/articles.ts",
+        "line": 103,
+        "severity": "non_blocking",
+        "description": "`syncCategories()` inserts category links without deduplicating IDs. Duplicate category IDs in the payload can violate the composite PK on `article2cat` (`app/apps/server/src/db/schema.ts:137`) and surface as a server error. UI likely sends unique IDs, so impact is lower, but API-level robustness is incomplete."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "knowledge",
+      "observation": "Feature introduced `UPLOADS_DIR` override behavior for attachments, but this env var is not documented in shared environment knowledge.",
+      "evidence": "Code uses `process.env.UPLOADS_DIR` in `app/apps/server/src/routes/articles.ts:11-13`; `.factory/library/environment.md` lists only `SESSION_SECRET` and `PORT`."
+    },
+    {
+      "area": "skills",
+      "observation": "`fullstack-worker` procedure is not well aligned for backend-only features; transcript shows implementation-first flow and no browser/manual validation steps despite skill prescribing tests-first red phase and agent-browser verification.",
+      "evidence": "Transcript skeleton for session `3a518208-2354-4111-930e-5fd05c29f28b` shows `Create routes/articles.ts` before `Create __tests__/articles.test.ts`, and no `agent-browser` tool usage."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Reviewed handoff, commit `add4670`, transcript skeleton, and skill guidance. Result is FAIL due to a blocking duplicate-keyword tag-sync bug that can trigger PK violations and 500s during article create/update."
+}

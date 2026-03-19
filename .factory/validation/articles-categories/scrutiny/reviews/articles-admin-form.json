@@ -1,0 +1,45 @@
+{
+  "featureId": "articles-admin-form",
+  "reviewedAt": "2026-03-19T15:55:48Z",
+  "commitId": "486e557",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The feature behavior is largely implemented in code (notably commit b68d621), but the recorded handoff commit points to a test-only commit, and the rich-text editor height implementation is flawed in a way that can violate the required taller full-description editor behavior.",
+    "issues": [
+      {
+        "file": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be/handoffs/2026-03-19T15-15-46-704Z__articles-admin-form__fb8527b8-8bc6-4195-af80-eb487255803f.json",
+        "line": 6,
+        "severity": "blocking",
+        "description": "Handoff metadata for this feature references commit 486e557, but that commit contains only app/apps/server/src/__tests__/categories.test.ts (git show --stat 486e557) and does not include the form implementation itself. The actual form implementation commit is b68d621 (see .git/logs/refs/heads/master lines 19-20). This breaks feature-to-commit traceability and makes the recorded feature diff incomplete."
+      },
+      {
+        "file": "app/apps/client/src/pages/AdminArticleFormPage.tsx",
+        "line": 151,
+        "severity": "blocking",
+        "description": "RichTextEditor builds Tailwind min-height classes dynamically ('min-h-[' + minHeight + ']'). Tailwind class extraction is static, so the required classes for the two configured heights (80px at line 869, 240px at line 893) are not reliably generated. This can cause both editors to render without the intended distinct heights, violating the requirement that full description be taller."
+      },
+      {
+        "file": "app/apps/client/src/pages/AdminArticleFormPage.tsx",
+        "line": 684,
+        "severity": "non_blocking",
+        "description": "Invalid edit IDs can leave the page stuck in a perpetual loading state: isLoading initializes from isEdit (line 640), articleId is parseInt(id, 10) (line 637), and the fetch effect exits early on !articleId (line 684). For /admin/articles/foo/edit, articleId is NaN, so loading never clears and no error is shown."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "Feature handoff allows only a single commitId, but this worker session produced multiple commits where the primary implementation commit (b68d621) differs from the final recorded commit (486e557). This caused traceability loss for scrutiny.",
+      "evidence": "Handoff commitId at .../handoffs/...articles-admin-form...json line 6 is 486e557; .git/logs/refs/heads/master lines 19-20 show b68d621 (feature implementation) immediately followed by 486e557 (test-only commit)."
+    },
+    {
+      "area": "skills",
+      "observation": "fullstack-worker SKILL.md prescribes TDD order (API/UI tests first), but transcript ordering shows implementation files created before test files while handoff still reports followedProcedure=true.",
+      "evidence": "SKILL.md lines 29 and 42 require writing API/UI tests first; worker-transcripts.jsonl line 16 shows Create routes/categories.ts and Create AdminArticleFormPage.tsx before Create categories.test.ts and Create AdminArticleFormPage.test.tsx."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review failed due to two blocking issues: (1) handoff commit traceability mismatch (recorded commit is test-only, not the implementation commit) and (2) dynamic Tailwind min-height class construction in the rich text editor that can prevent the required taller full-description editor behavior. Also noted one non-blocking invalid-ID loading hang and two shared-state documentation/process gaps."
+}

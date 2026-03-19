@@ -1,0 +1,39 @@
+{
+  "featureId": "categories-crud-api",
+  "reviewedAt": "2026-03-19T15:55:05Z",
+  "commitId": "54f2ef1",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "Implementation covers most CRUD behavior and permission checks, but one contract-critical validation is incorrect: PUT accepts decimal order values instead of rejecting non-integers.",
+    "issues": [
+      {
+        "file": "app/apps/server/src/routes/categories.ts",
+        "line": 507,
+        "severity": "blocking",
+        "description": "`PUT /api/admin/categories/:id` treats `order` as any finite number and truncates with `Math.trunc` (e.g., `1.5` -> `1`) instead of rejecting non-integer input. This contradicts VAL-CAT-026 ('order must be integer')."
+      },
+      {
+        "file": "app/apps/server/src/__tests__/categories.test.ts",
+        "line": 626,
+        "severity": "non_blocking",
+        "description": "The test named 'returns 400 for non-integer order' only submits `'not-a-number'`; it does not cover decimal input (e.g., `1.5`), so the integer-validation defect is not detected."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "`fullstack-worker` procedure is over-prescriptive for API-only features and was not followed literally here (tests-first/manual browser steps), yet handoff marks `followedProcedure: true`.",
+      "evidence": "Skill requires 'Write API tests first (red)' and 'Manual verification with agent-browser' (`.factory/skills/fullstack-worker/SKILL.md`), but transcript skeleton shows `Create app/apps/server/src/routes/categories.ts` before creating tests and no agent-browser steps; handoff skillFeedback says followedProcedure true."
+    },
+    {
+      "area": "knowledge",
+      "observation": "Category image constraints/location knowledge was rediscovered ad hoc from legacy PHP, suggesting missing codified reference in shared library for categories parity rules.",
+      "evidence": "Transcript skeleton includes multiple legacy lookups (`grep -rn \"cat_image_path|max_size|allowed_types\" .../upload/system/68kb/modules/categories/controllers/admin.php`) before implementation; `.factory/library/` lacks a categories-specific parity note."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Reviewed commit 54f2ef1 and transcript for categories-crud-api. Core endpoints and flows are implemented, but update order validation does not enforce integer-only input, which is a blocking contract miss (VAL-CAT-026). Report marked fail."
+}

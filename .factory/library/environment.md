@@ -11,6 +11,7 @@ Environment variables, external dependencies, and setup notes.
 
 - `SESSION_SECRET` — Session encryption key (min 32 characters). For development, init.sh sets a default.
 - `PORT` — API server port (default: 3100)
+- `UPLOADS_DIR` — Optional override for article attachment storage directory. Defaults to `app/uploads` when unset.
 
 ## Bun-Specific Notes
 
