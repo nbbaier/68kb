@@ -1,0 +1,95 @@
+{
+  "groupId": "ui-404-flash",
+  "testedAt": "2026-03-19T06:15:29Z",
+  "isolation": {
+    "milestone": "foundation-auth",
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "uiBaseUrl": "http://localhost:3101",
+    "apiBaseUrl": "http://localhost:3100",
+    "adminCredentials": "admin / admin123",
+    "evidenceDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be/evidence/foundation-auth/ui-404-flash"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-PUBLIC-002",
+      "title": "Unknown routes show a 404 page",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate browser to /nonexistent-page-ui404flash",
+          "expected": "User-friendly 404 UI is rendered for unknown SPA route",
+          "observed": "Page showed '404 Page not found' with user-facing guidance and navigation links"
+        },
+        {
+          "action": "Request /api/nonexistent with curl",
+          "expected": "HTTP 404 with JSON error body",
+          "observed": "Both http://localhost:3100/api/nonexistent and http://localhost:3101/api/nonexistent returned HTTP 404 with {\"error\":\"Not found\"}"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/ui-404-flash/VAL-PUBLIC-002-unknown-spa-route.png"
+        ],
+        "consoleErrors": "none (foundation-auth/ui-404-flash/VAL-PUBLIC-002-console-errors.txt)",
+        "network": "curl GET /api/nonexistent -> 404 JSON (foundation-auth/ui-404-flash/VAL-PUBLIC-002-api-nonexistent-curl.txt, foundation-auth/ui-404-flash/VAL-PUBLIC-002-api-nonexistent-via-spa-curl.txt)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ADMIN-004",
+      "title": "Flash messages display correctly",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Log in as admin from /login",
+          "expected": "Success flash/toast appears immediately after successful login",
+          "observed": "Toast 'Signed in successfully' appeared on /admin"
+        },
+        {
+          "action": "Inspect toast success styling immediately",
+          "expected": "Success flash uses green success styling",
+          "observed": "Computed styles were green-tinted (background rgb(236, 253, 243), border rgb(191, 252, 217), text rgb(0, 138, 46))"
+        },
+        {
+          "action": "Navigate to another admin page after flash is shown",
+          "expected": "Flash disappears on next navigation",
+          "observed": "After navigating to /admin/users, toast count was 0 and no flash remained"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/ui-404-flash/VAL-ADMIN-004-flash-after-login.png",
+          "foundation-auth/ui-404-flash/VAL-ADMIN-004-after-navigation.png"
+        ],
+        "consoleErrors": "none (foundation-auth/ui-404-flash/VAL-ADMIN-004-console-errors.txt)",
+        "network": "POST /api/auth/login -> 200 (foundation-auth/ui-404-flash/VAL-ADMIN-004-login-curl.txt); toast style capture (foundation-auth/ui-404-flash/VAL-ADMIN-004-flash-style.json); post-navigation toast absence (foundation-auth/ui-404-flash/VAL-ADMIN-004-after-navigation-toast-check.json)"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser network request export did not provide useful request entries/statuses during this run.",
+      "resolved": true,
+      "resolution": "Captured supplemental curl response evidence for explicit HTTP status and JSON payload verification.",
+      "affectedAssertions": [
+        "VAL-PUBLIC-002",
+        "VAL-ADMIN-004"
+      ]
+    },
+    {
+      "description": "Success toast is short-lived and easy to miss for style checks.",
+      "resolved": true,
+      "resolution": "Captured screenshot immediately after login and extracted computed styles via in-page evaluation.",
+      "affectedAssertions": [
+        "VAL-ADMIN-004"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 2 assertions: 2 passed (VAL-PUBLIC-002, VAL-ADMIN-004)."
+}

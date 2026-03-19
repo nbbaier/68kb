@@ -1,0 +1,147 @@
+{
+  "groupId": "auth-session-routes",
+  "testedAt": "2026-03-19T05:48:59Z",
+  "isolation": {
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "surface": "web",
+    "uiBaseUrl": "http://localhost:3101",
+    "apiBaseUrl": "http://localhost:3100",
+    "accountPrefix": "g1auth_"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-AUTH-003",
+      "title": "Invalid password shows error",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Open /login and submit username=admin with an invalid password",
+          "expected": "Generic auth error is shown",
+          "observed": "Toast displayed: 'Invalid username or password'"
+        },
+        {
+          "action": "Check post-submit location",
+          "expected": "Remain on /login",
+          "observed": "Stayed on http://localhost:3101/login"
+        },
+        {
+          "action": "Check session cookie behavior on failed login",
+          "expected": "No session cookie",
+          "observed": "Session cookie exists and is rotated/set on failed login"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/auth-session-routes/VAL-AUTH-003-invalid-password-error.png"
+        ],
+        "consoleErrors": "none (foundation-auth/auth-session-routes/VAL-AUTH-003-browser-checks.txt)",
+        "network": "POST /api/auth/login -> 401 with {\"error\":\"Invalid username or password\"}; Set-Cookie headers present (foundation-auth/auth-session-routes/VAL-AUTH-003-curl-response.txt)"
+      },
+      "issues": "Contract requires no session cookie for invalid login, but a session cookie is present after failed login."
+    },
+    {
+      "id": "VAL-AUTH-004",
+      "title": "Non-existent username shows error",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Open /login and submit username=g1auth_missing_user with invalid password",
+          "expected": "Generic auth error shown (same as wrong-password)",
+          "observed": "Toast displayed: 'Invalid username or password'"
+        },
+        {
+          "action": "Compare response semantics with wrong-password path",
+          "expected": "Same generic message",
+          "observed": "Same 401 response body and same generic error string as VAL-AUTH-003"
+        },
+        {
+          "action": "Check session cookie behavior",
+          "expected": "No session cookie",
+          "observed": "Session cookie exists after failed login"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/auth-session-routes/VAL-AUTH-004-nonexistent-user-error.png"
+        ],
+        "consoleErrors": "none (foundation-auth/auth-session-routes/VAL-AUTH-004-browser-checks.txt)",
+        "network": "POST /api/auth/login -> 401 with {\"error\":\"Invalid username or password\"}; Set-Cookie headers present (foundation-auth/auth-session-routes/VAL-AUTH-004-curl-response.txt)"
+      },
+      "issues": "Contract requires no session cookie for non-existent username login failure, but session cookie is still set/rotated."
+    },
+    {
+      "id": "VAL-LOGOUT-002",
+      "title": "Logout is idempotent",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Clear browser cookies (unauthenticated state) and navigate to /logout",
+          "expected": "No error and redirect to login",
+          "observed": "Browser ended at http://localhost:3101/login"
+        },
+        {
+          "action": "Verify login screen after redirect",
+          "expected": "Login form rendered",
+          "observed": "Login form rendered without errors"
+        },
+        {
+          "action": "Call API logout without authenticated cookie",
+          "expected": "No server error",
+          "observed": "POST /api/auth/logout returned 200 with success message"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/auth-session-routes/VAL-LOGOUT-002-logout-unauth-redirect-login.png"
+        ],
+        "consoleErrors": "none (foundation-auth/auth-session-routes/VAL-LOGOUT-002-browser-checks.txt)",
+        "network": "POST /api/auth/logout -> 200 OK with {\"data\":{\"message\":\"Logged out successfully\"}} (foundation-auth/auth-session-routes/VAL-LOGOUT-002-curl-api-response.txt); browser /logout -> /login redirect observed"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-GUARD-003",
+      "title": "Auth pages exempt from guard",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Curl GET /login without session",
+          "expected": "HTTP 200",
+          "observed": "HTTP 200"
+        },
+        {
+          "action": "Curl GET /logout without session",
+          "expected": "HTTP 200",
+          "observed": "HTTP 200"
+        },
+        {
+          "action": "Curl GET /register and /forgot-password without session",
+          "expected": "HTTP 200 for both",
+          "observed": "HTTP 200 for both"
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "n/a (curl-only assertion)",
+        "network": "/login -> 200, /logout -> 200, /register -> 200, /forgot-password -> 200 (foundation-auth/auth-session-routes/VAL-GUARD-003-curl-status-codes.txt; headers in foundation-auth/auth-session-routes/VAL-GUARD-003-curl-headers.txt)"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser network request listing did not capture a logout request entry during /logout navigation.",
+      "resolved": true,
+      "resolution": "Captured explicit curl responses for logout status/body evidence.",
+      "affectedAssertions": [
+        "VAL-LOGOUT-002"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 4 assertions: 2 passed (VAL-LOGOUT-002, VAL-GUARD-003), 2 failed (VAL-AUTH-003, VAL-AUTH-004) due to session cookie being set/rotated on failed login attempts."
+}

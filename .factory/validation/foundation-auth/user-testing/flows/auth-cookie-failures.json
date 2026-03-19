@@ -1,0 +1,81 @@
+{
+  "groupId": "auth-cookie-failures",
+  "testedAt": "2026-03-19T06:15:46Z",
+  "isolation": {
+    "milestone": "foundation-auth",
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "browserSession": "auth-cookie-failures",
+    "notes": "Used dedicated browser session and assertion-specific failed-login requests; no seed account mutations performed."
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-AUTH-003",
+      "title": "Invalid password shows error; no session cookie on failed auth",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /login and submit username=admin with wrong password",
+          "expected": "Generic auth error shown and URL remains /login",
+          "observed": "Login page stayed at http://localhost:3101/login and displayed 'Invalid username or password'"
+        },
+        {
+          "action": "POST /api/auth/login via curl with wrong password",
+          "expected": "401 response with no Set-Cookie header",
+          "observed": "HTTP/1.1 401 Unauthorized and no Set-Cookie header present"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/auth-cookie-failures/VAL-AUTH-003-invalid-password-error.png"
+        ],
+        "consoleErrors": "none (foundation-auth/auth-cookie-failures/VAL-AUTH-003-console-errors.txt is empty)",
+        "network": "Browser POST /api/auth/login observed (foundation-auth/auth-cookie-failures/VAL-AUTH-003-network.txt); URL stayed /login (foundation-auth/auth-cookie-failures/VAL-AUTH-003-url.txt); curl 401 + generic error body and no Set-Cookie (foundation-auth/auth-cookie-failures/VAL-AUTH-003-curl-response.txt, foundation-auth/auth-cookie-failures/VAL-AUTH-003-curl-header-check.txt)."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-AUTH-004",
+      "title": "Non-existent username shows generic error; no session cookie on failed auth",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /login and submit unknown username with wrong password",
+          "expected": "Generic auth error shown and URL remains /login",
+          "observed": "Login page stayed at http://localhost:3101/login and displayed 'Invalid username or password'"
+        },
+        {
+          "action": "POST /api/auth/login via curl with unknown username",
+          "expected": "401 response with same generic error and no Set-Cookie header",
+          "observed": "HTTP/1.1 401 Unauthorized with body {\"error\":\"Invalid username or password\"} and no Set-Cookie header"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/auth-cookie-failures/VAL-AUTH-004-nonexistent-username-error.png"
+        ],
+        "consoleErrors": "none (foundation-auth/auth-cookie-failures/VAL-AUTH-004-console-errors.txt is empty)",
+        "network": "Browser POST /api/auth/login observed (foundation-auth/auth-cookie-failures/VAL-AUTH-004-network.txt); URL stayed /login (foundation-auth/auth-cookie-failures/VAL-AUTH-004-url.txt); curl 401 + generic error body and no Set-Cookie (foundation-auth/auth-cookie-failures/VAL-AUTH-004-curl-response.txt, foundation-auth/auth-cookie-failures/VAL-AUTH-004-curl-header-check.txt)."
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser network output lists matching requests but omits response status/header/body details needed for cookie assertions.",
+      "resolved": true,
+      "resolution": "Captured definitive 401 headers and payloads using curl for each assertion.",
+      "affectedAssertions": [
+        "VAL-AUTH-003",
+        "VAL-AUTH-004"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 2 assertions (VAL-AUTH-003, VAL-AUTH-004): both passed. UI showed the generic login failure message and curl-confirmed 401 responses excluded Set-Cookie headers in both failure paths."
+}

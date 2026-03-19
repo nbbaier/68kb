@@ -1,0 +1,373 @@
+{
+  "groupId": "setup-db-security",
+  "testedAt": "2026-03-19T04:16:30Z",
+  "isolation": {
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "repoRoot": "/Users/nbbaier/68kb",
+    "webUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100"
+  },
+  "toolsUsed": ["curl", "sqlite3", "bun", "python3", "ripgrep"],
+  "assertions": [
+    {
+      "id": "VAL-SETUP-001",
+      "title": "Monorepo directory structure exists",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Inspect /app/package.json for workspaces",
+          "expected": "workspaces includes apps/*",
+          "observed": "\"workspaces\": [\"apps/*\"]"
+        },
+        {
+          "action": "List workspace package/tsconfig files",
+          "expected": "server/client package.json and tsconfig.json all exist",
+          "observed": "All four files exist"
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "foundation-auth/setup-db-security/VAL-SETUP-001.txt"
+        ],
+        "consoleErrors": "n/a (non-UI assertion)",
+        "network": "n/a"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-SETUP-002",
+      "title": "API server boots on port 3100",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Check listener on TCP 3100",
+          "expected": "active server process listening on 3100",
+          "observed": "bun process listening on *:3100"
+        },
+        {
+          "action": "GET http://localhost:3100/api/health",
+          "expected": "200 with {\"status\":\"ok\"}",
+          "observed": "HTTP 200 with {\"status\":\"ok\"}"
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "foundation-auth/setup-db-security/VAL-SETUP-002.txt"
+        ],
+        "consoleErrors": "n/a (non-UI assertion)",
+        "network": "GET /api/health -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-SETUP-003",
+      "title": "Vite dev server boots on port 3101",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Check listener on TCP 3101",
+          "expected": "dev server process listening on 3101",
+          "observed": "node process listening on [::1]:3101"
+        },
+        {
+          "action": "GET http://localhost:3101",
+          "expected": "HTTP 200 and page contains <div id=\"root\">",
+          "observed": "status=200 and root div present"
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "foundation-auth/setup-db-security/VAL-SETUP-003.txt"
+        ],
+        "consoleErrors": "n/a (non-UI assertion)",
+        "network": "GET / -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-SETUP-004",
+      "title": "Vite proxies /api to Hono",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "GET health via API server and Vite proxy",
+          "expected": "responses match",
+          "observed": "Both returned {\"status\":\"ok\"}"
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "foundation-auth/setup-db-security/VAL-SETUP-004.txt"
+        ],
+        "consoleErrors": "n/a (non-UI assertion)",
+        "network": "GET :3100/api/health -> 200; GET :3101/api/health -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-SETUP-005",
+      "title": "TypeScript compiles without errors",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run bun run typecheck from /app",
+          "expected": "exit code 0 with no TS errors",
+          "observed": "Command completed successfully; exit_code=0"
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "foundation-auth/setup-db-security/VAL-SETUP-005.txt"
+        ],
+        "consoleErrors": "n/a",
+        "network": "n/a"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-SETUP-006",
+      "title": "Unit tests pass",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run bun run test from /app",
+          "expected": "server and client suites pass",
+          "observed": "Server: 48 pass/0 fail; Client: 6 files pass, 38 tests pass; exit_code=0"
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "foundation-auth/setup-db-security/VAL-SETUP-006.txt"
+        ],
+        "consoleErrors": "n/a",
+        "network": "n/a"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DB-001",
+      "title": "SQLite database file is created",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Inspect app/data/68kb.db with file command",
+          "expected": "recognized SQLite database",
+          "observed": "SQLite 3.x database"
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "foundation-auth/setup-db-security/VAL-DB-001.txt"
+        ],
+        "consoleErrors": "n/a",
+        "network": "n/a"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DB-002",
+      "title": "All 17+ tables are created",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Query sqlite_master for tables",
+          "expected": "at least 17 tables including core app tables",
+          "observed": "21 tables returned, including users, user_groups, user_notes, articles, categories, settings, failed_logins, glossary, comments, attachments, tags"
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "foundation-auth/setup-db-security/VAL-DB-002.txt"
+        ],
+        "consoleErrors": "n/a",
+        "network": "n/a"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DB-003",
+      "title": "WAL mode is enabled",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Check PRAGMA journal_mode via app db connection and sqlite CLI",
+          "expected": "wal",
+          "observed": "app connection: [\"wal\"]; sqlite file: wal"
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "foundation-auth/setup-db-security/VAL-DB-003.txt"
+        ],
+        "consoleErrors": "n/a",
+        "network": "n/a"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DB-004",
+      "title": "Foreign key constraints are enforced",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Check PRAGMA foreign_keys via app db connection",
+          "expected": "1",
+          "observed": "[1]"
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "foundation-auth/setup-db-security/VAL-DB-004.txt"
+        ],
+        "consoleErrors": "n/a",
+        "network": "n/a"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DB-005",
+      "title": "Five default user groups are seeded",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Query user_groups ordered by group_id",
+          "expected": "exactly IDs 1-5 with expected names",
+          "observed": "1 Site Admins, 2 Registered, 3 Pending, 4 Banned, 5 Guest"
+        },
+        {
+          "action": "Inspect permission columns",
+          "expected": "reasonable defaults per seed",
+          "observed": "Site Admins all y; other groups mostly n with expected can_search values"
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "foundation-auth/setup-db-security/VAL-DB-005.txt"
+        ],
+        "consoleErrors": "n/a",
+        "network": "n/a"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DB-006",
+      "title": "Default site settings are seeded",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Count settings and query required keys",
+          "expected": "count >= 1 and site_name exists",
+          "observed": "14 rows; site_name and script_version rows exist"
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "foundation-auth/setup-db-security/VAL-DB-006.txt"
+        ],
+        "consoleErrors": "n/a",
+        "network": "n/a"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DB-007",
+      "title": "Default admin user is seeded",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Query users where user_group=1",
+          "expected": "at least one admin with bcrypt hash",
+          "observed": "admin user exists in group 1 with hash prefix $2b$12$"
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "foundation-auth/setup-db-security/VAL-DB-007.txt"
+        ],
+        "consoleErrors": "n/a",
+        "network": "n/a"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-SEC-001",
+      "title": "Passwords are bcrypt-hashed",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Inspect user_password prefixes for all users",
+          "expected": "bcrypt cost 12 prefixes ($2b$12$)",
+          "observed": "All users have $2b$12$ prefix; non-bcrypt count=0; non-cost12 count=0"
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "foundation-auth/setup-db-security/VAL-SEC-001.txt"
+        ],
+        "consoleErrors": "n/a",
+        "network": "n/a"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-SEC-002",
+      "title": "Login timing is consistent",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run 2 warm-up login attempts per case",
+          "expected": "remove first-request skew",
+          "observed": "warm-up complete"
+        },
+        {
+          "action": "Measure 3 timed invalid-user and wrong-password attempts",
+          "expected": "timing difference <= 200ms",
+          "observed": "avg_abs_diff=0.000439s; max_pair_diff=0.001792s; both 401 with identical error body"
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "foundation-auth/setup-db-security/VAL-SEC-002.txt"
+        ],
+        "consoleErrors": "n/a",
+        "network": "POST /api/auth/login invalid user -> 401; wrong password -> 401"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-SEC-003",
+      "title": "Session secret from environment",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Scan server source for SESSION_SECRET usage",
+          "expected": "reads from process.env and uses it for encryptionKey",
+          "observed": "app.ts reads process.env.SESSION_SECRET and sets encryptionKey: sessionSecret"
+        },
+        {
+          "action": "Scan for hardcoded session secret patterns in src (excluding tests)",
+          "expected": "no hardcoded secret assignment",
+          "observed": "no hardcoded session secret matches found"
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "foundation-auth/setup-db-security/VAL-SEC-003.txt"
+        ],
+        "consoleErrors": "n/a",
+        "network": "n/a"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Shared-services rule prohibits restarting servers, so startup logs were inferred from active listeners plus successful health checks.",
+      "resolved": true,
+      "resolution": "Used lsof listener checks on 3100/3101 with direct/proxied health responses as runtime evidence.",
+      "affectedAssertions": ["VAL-SETUP-002", "VAL-SETUP-003"]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 16 assertions (setup/db/security): 16 passed, 0 failed, 0 blocked."
+}

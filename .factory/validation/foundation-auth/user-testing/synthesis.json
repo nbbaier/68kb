@@ -1,0 +1,21 @@
+{
+  "milestone": "foundation-auth",
+  "round": 3,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 4,
+    "passed": 4,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-AUTH-003",
+    "VAL-AUTH-004",
+    "VAL-PUBLIC-002",
+    "VAL-ADMIN-004"
+  ],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "previousRound": ".factory/validation/foundation-auth/user-testing/synthesis.round2.json"
+}

@@ -1,0 +1,43 @@
+{
+  "milestone": "foundation-auth",
+  "round": 2,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 7,
+    "passed": 3,
+    "failed": 4,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-LOGOUT-002",
+    "VAL-GUARD-003",
+    "VAL-GUARD-006"
+  ],
+  "failedAssertions": [
+    {
+      "id": "VAL-AUTH-003",
+      "reason": "Invalid-password login still rotates/sets a session cookie despite 401 response; contract expects no session cookie on failed auth."
+    },
+    {
+      "id": "VAL-AUTH-004",
+      "reason": "Non-existent-user login still rotates/sets a session cookie despite generic 401 error; contract expects no session cookie on failed auth."
+    },
+    {
+      "id": "VAL-PUBLIC-002",
+      "reason": "Unknown non-API routes render a friendly 404 UI but return HTTP 200 SPA shell instead of HTTP 404."
+    },
+    {
+      "id": "VAL-ADMIN-004",
+      "reason": "Flash lifecycle works (appears and clears), but success flash styling is neutral rather than expected green success styling."
+    }
+  ],
+  "blockedAssertions": [],
+  "appliedUpdates": [
+    {
+      "target": "user-testing.md",
+      "description": "Added guidance that Sonner toasts are brief and style-sensitive checks should capture immediate evidence plus computed styles.",
+      "source": "flow-report"
+    }
+  ],
+  "previousRound": ".factory/validation/foundation-auth/user-testing/synthesis.round1.json"
+}

@@ -1,0 +1,515 @@
+{
+  "groupId": "session-admin-guard",
+  "testedAt": "2026-03-19T04:19:26Z",
+  "isolation": {
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "webUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "nonAdminTestIdentity": "g3_guard_1773893815"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-SESSION-001",
+      "title": "Session cookie set after login",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "POST /api/auth/login with admin credentials",
+          "expected": "Set-Cookie session with HttpOnly and SameSite",
+          "observed": "Response included session Set-Cookie headers with HttpOnly; SameSite=Lax"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-ADMIN-001-002-005-006-dashboard-shell.png"
+        ],
+        "consoleErrors": "none",
+        "network": "foundation-auth/session-admin-guard/VAL-SESSION-001-login-set-cookie.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-SESSION-002",
+      "title": "Session persists across refresh",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Login as admin and refresh /admin",
+          "expected": "Remain authenticated",
+          "observed": "URL remained http://localhost:3101/admin and dashboard stayed visible"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-SESSION-002-after-refresh.png"
+        ],
+        "consoleErrors": "none",
+        "network": "foundation-auth/session-admin-guard/VAL-SESSION-002-url-after-refresh.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-SESSION-003",
+      "title": "Session cookie cleared after logout",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Login then POST /api/auth/logout with session cookie",
+          "expected": "Session invalidated",
+          "observed": "Logout returned 200 and subsequent /api/admin/stats returned 401 Unauthorized"
+        },
+        {
+          "action": "Use browser Back after logout",
+          "expected": "Protected admin route redirects to login",
+          "observed": "Back navigation returned to login redirect URL"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-LOGOUT-001-back-to-admin-redirected.png"
+        ],
+        "consoleErrors": "none",
+        "network": "foundation-auth/session-admin-guard/VAL-SESSION-003-logout-set-cookie.txt; foundation-auth/session-admin-guard/VAL-SESSION-003-admin-after-logout.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-SESSION-004",
+      "title": "Invalid session cookie rejected",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Set bogus session cookie and open /admin",
+          "expected": "Redirect to login",
+          "observed": "Redirected to http://localhost:3101/login?redirect=%2Fadmin"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-SESSION-004-bogus-cookie-redirect.png"
+        ],
+        "consoleErrors": "none",
+        "network": "foundation-auth/session-admin-guard/VAL-SESSION-004-url.txt; foundation-auth/session-admin-guard/VAL-SESSION-004-network.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-LOGOUT-001",
+      "title": "Admin logout redirects to login",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Click header Logout from admin",
+          "expected": "Redirect to login page",
+          "observed": "Redirected to /login?redirect=%2Fadmin"
+        },
+        {
+          "action": "Browser back to prior admin URL",
+          "expected": "Still redirected to login",
+          "observed": "Back landed on /login?redirect=%2Fadmin%2Fsettings"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-LOGOUT-001-login-after-logout.png",
+          "foundation-auth/session-admin-guard/VAL-LOGOUT-001-back-to-admin-redirected.png"
+        ],
+        "consoleErrors": "none",
+        "network": "foundation-auth/session-admin-guard/VAL-LOGOUT-001-url-after-logout.txt; foundation-auth/session-admin-guard/VAL-LOGOUT-001-url-after-back.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-LOGOUT-002",
+      "title": "Logout is idempotent",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Open /logout while unauthenticated",
+          "expected": "Redirect to login without error",
+          "observed": "Stayed on /logout and rendered Not Found page (Go home / Sign in links)"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-LOGOUT-002-login.png"
+        ],
+        "consoleErrors": "none",
+        "network": "foundation-auth/session-admin-guard/VAL-LOGOUT-002-url.txt; foundation-auth/session-admin-guard/VAL-LOGOUT-002-api-response.txt"
+      },
+      "issues": "Unauthenticated /logout route did not redirect to login in web UI."
+    },
+    {
+      "id": "VAL-GUARD-001",
+      "title": "Unauthenticated /admin redirects to login",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /admin without session",
+          "expected": "Redirect to login",
+          "observed": "Redirected to /login?redirect=%2Fadmin"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-GUARD-001-admin-redirect-login.png"
+        ],
+        "consoleErrors": "none",
+        "network": "foundation-auth/session-admin-guard/VAL-GUARD-001-url.txt; foundation-auth/session-admin-guard/VAL-GUARD-001-network.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-GUARD-002",
+      "title": "Admin sub-routes are protected",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /admin/articles, /admin/users, /admin/modules, /admin/settings without session",
+          "expected": "All redirect to login",
+          "observed": "Each redirected to /login?redirect=<route>"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-GUARD-002-subroute-redirect.png"
+        ],
+        "consoleErrors": "none",
+        "network": "foundation-auth/session-admin-guard/VAL-GUARD-002-subroutes.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-GUARD-003",
+      "title": "Auth pages exempt from guard",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Check /login, /logout, /register, /forgot-password without session",
+          "expected": "All auth routes accessible",
+          "observed": "login/register/forgot-password accessible; /logout route rendered Not Found in UI"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-LOGOUT-002-login.png"
+        ],
+        "consoleErrors": "none",
+        "network": "foundation-auth/session-admin-guard/VAL-GUARD-003-curl-statuses.txt"
+      },
+      "issues": "Logout route is not a functional auth page in the browser flow."
+    },
+    {
+      "id": "VAL-GUARD-004",
+      "title": "Post-login redirect to intended page",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /admin/settings without auth",
+          "expected": "Redirect to login with redirect query",
+          "observed": "Reached /login?redirect=%2Fadmin%2Fsettings"
+        },
+        {
+          "action": "Login as admin",
+          "expected": "Return to /admin/settings",
+          "observed": "Returned to /admin/settings"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-GUARD-004-settings-after-login.png"
+        ],
+        "consoleErrors": "none",
+        "network": "foundation-auth/session-admin-guard/VAL-GUARD-004-prelogin-url.txt; foundation-auth/session-admin-guard/VAL-GUARD-004-postlogin-url.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-GUARD-005",
+      "title": "API returns 401 for unauthenticated requests",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "GET /api/admin/stats without cookie",
+          "expected": "401 JSON error",
+          "observed": "HTTP/1.1 401 Unauthorized with {\"error\":\"Unauthorized\"}"
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "n/a",
+        "network": "foundation-auth/session-admin-guard/VAL-GUARD-005-api-unauth.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-GUARD-006",
+      "title": "Non-admin user denied admin access",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Register non-admin test user (group 2) with g3_ prefix",
+          "expected": "User created",
+          "observed": "Created user g3_guard_1773893815 with userGroup 2"
+        },
+        {
+          "action": "Login as non-admin and access admin",
+          "expected": "Denied/redirected",
+          "observed": "User reached /admin/settings and saw admin shell"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-GUARD-006-nonadmin-admin-access.png"
+        ],
+        "consoleErrors": "none",
+        "network": "foundation-auth/session-admin-guard/VAL-GUARD-006-register-response.txt; foundation-auth/session-admin-guard/VAL-GUARD-006-url-after-nonadmin-login.txt"
+      },
+      "issues": "Registered non-admin account was able to access admin routes."
+    },
+    {
+      "id": "VAL-ADMIN-001",
+      "title": "Admin layout renders with header",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Login as admin and view /admin",
+          "expected": "Header shows app name and username",
+          "observed": "Header shows 68kb and username admin"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-ADMIN-001-002-005-006-dashboard-shell.png"
+        ],
+        "consoleErrors": "none",
+        "network": "foundation-auth/session-admin-guard/VAL-ADMIN-001-body.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ADMIN-002",
+      "title": "Admin top navigation bar present",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Inspect admin top nav",
+          "expected": "Dashboard, Articles, Users, Modules, Settings visible",
+          "observed": "All five items visible for admin"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-ADMIN-001-002-005-006-dashboard-shell.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Top-nav items visible in annotated screenshot"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ADMIN-003",
+      "title": "Sub-navigation changes by section",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "View dashboard sub-nav",
+          "expected": "Dashboard and Logout entries",
+          "observed": "Dashboard sub-nav included Dashboard and Logout"
+        },
+        {
+          "action": "Navigate to settings",
+          "expected": "Sub-nav changes by section",
+          "observed": "Settings section showed Settings sub-nav"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-DASH-001-dashboard.png",
+          "foundation-auth/session-admin-guard/VAL-ADMIN-003-settings-subnav.png"
+        ],
+        "consoleErrors": "none",
+        "network": "foundation-auth/session-admin-guard/VAL-ADMIN-003-settings-url.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ADMIN-004",
+      "title": "Flash messages display correctly",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Exercise login/logout/navigation flows in admin shell",
+          "expected": "Flash messages appear with styling and clear on next nav",
+          "observed": "No flash message UI appeared during tested admin/auth transitions"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-DASH-001-dashboard.png",
+          "foundation-auth/session-admin-guard/VAL-LOGOUT-001-login-after-logout.png"
+        ],
+        "consoleErrors": "none",
+        "network": "No flash events observed in tested flows"
+      },
+      "issues": "Flash message behavior could not be observed from available admin/auth flows; expected flash display semantics not met."
+    },
+    {
+      "id": "VAL-ADMIN-005",
+      "title": "Edit Account link present",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Inspect admin header actions",
+          "expected": "Edit Account link present",
+          "observed": "Edit Account link visible in header"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-ADMIN-001-002-005-006-dashboard-shell.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Annotated element @e7"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ADMIN-006",
+      "title": "View Site link present",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Inspect admin header actions",
+          "expected": "View Site link present",
+          "observed": "View Site link visible in header"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-ADMIN-001-002-005-006-dashboard-shell.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Annotated element @e8"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ADMIN-007",
+      "title": "Logout link in admin header works",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Click header Logout",
+          "expected": "Logout and redirect to login",
+          "observed": "Redirected to login page"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-ADMIN-007-login-after-logout.png"
+        ],
+        "consoleErrors": "none",
+        "network": "foundation-auth/session-admin-guard/VAL-ADMIN-007-url-after-logout.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DASH-001",
+      "title": "Dashboard is default admin landing",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /login and sign in as admin",
+          "expected": "Land on /admin dashboard",
+          "observed": "Final URL was /admin and dashboard content rendered"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-DASH-001-dashboard.png"
+        ],
+        "consoleErrors": "none",
+        "network": "foundation-auth/session-admin-guard/VAL-DASH-001-url-after-direct-login.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DASH-002",
+      "title": "Dashboard shows site statistics",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Inspect dashboard stats cards",
+          "expected": "Version and member count visible",
+          "observed": "Displayed App Version 4.0.0 and Members count"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-DASH-001-dashboard.png"
+        ],
+        "consoleErrors": "none",
+        "network": "foundation-auth/session-admin-guard/VAL-DASH-002-dashboard-text.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DASH-003",
+      "title": "Dashboard has no console errors",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Load dashboard and check console/errors",
+          "expected": "No JS errors or failed requests",
+          "observed": "No console errors captured during dashboard checks"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/session-admin-guard/VAL-DASH-001-dashboard.png"
+        ],
+        "consoleErrors": "foundation-auth/session-admin-guard/VAL-DASH-003-errors.txt (empty)",
+        "network": "foundation-auth/session-admin-guard/VAL-DASH-003-network.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-PUBLIC-001",
+      "title": "Homepage loads without server errors",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "curl -i http://localhost:3101/",
+          "expected": "HTTP 200 or 302",
+          "observed": "HTTP/1.1 200 OK"
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "n/a",
+        "network": "foundation-auth/session-admin-guard/VAL-PUBLIC-001-home-curl.txt"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser network request export lists methods/URLs but not response status codes, so HTTP status confirmation required supplemental curl checks.",
+      "resolved": true,
+      "resolution": "Used curl -i captures for cookie/header/status-sensitive assertions.",
+      "affectedAssertions": [
+        "VAL-SESSION-001",
+        "VAL-SESSION-003",
+        "VAL-GUARD-005",
+        "VAL-PUBLIC-001"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 23 assertions: 19 passed, 4 failed (VAL-LOGOUT-002, VAL-GUARD-003, VAL-GUARD-006, VAL-ADMIN-004)."
+}

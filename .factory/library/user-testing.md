@@ -29,3 +29,18 @@ Testing surface, tools, and resource cost classification for validators.
 - agent-browser functional (confirmed March 2026)
 - Ports 3100/3101 available
 - No blockers identified
+
+## Flow Validator Guidance: web
+
+- Use the shared running app at `http://localhost:3101` (API at `http://localhost:3100`).
+- Do **not** restart/stop services from subagents; treat servers as shared infrastructure.
+- Use unique test accounts per flow group (prefix usernames/emails with your group id) to avoid collisions.
+- Do not delete/modify the seeded admin account (`admin`) in destructive ways.
+- Prefer validating behavior through the browser UI; use API/DB checks only as supporting evidence for assertions that require it.
+- Keep all screenshots/logs/notes under the assigned evidence directory only.
+
+## Tooling Notes
+
+- `agent-browser` network request exports may omit response status/body details for some fetch/XHR entries.
+- For assertions that require explicit status codes, headers, or response payload verification, capture supplemental `curl` evidence.
+- Sonner toasts can disappear quickly; for style-sensitive flash assertions, capture evidence immediately after trigger and record computed styles via in-page evaluation.

@@ -1,0 +1,192 @@
+{
+  "groupId": "auth-login-ui",
+  "testedAt": "2026-03-19T05:04:41Z",
+  "isolation": {
+    "milestone": "foundation-auth",
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "evidenceDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be/evidence/foundation-auth/auth-login-ui",
+    "seededAdminUsername": "admin"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-AUTH-001",
+      "title": "Login page renders",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to /login",
+          "expected": "Username field, password field, and submit button are visible",
+          "observed": "Username textbox, Password textbox, and Sign in button all visible"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/auth-login-ui/VAL-AUTH-001-login-form.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /login loaded successfully in browser"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-AUTH-002",
+      "title": "Valid credentials login succeeds",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Submit login form with seeded admin credentials",
+          "expected": "Authentication succeeds and redirects to dashboard/admin",
+          "observed": "Redirected to http://localhost:3101/admin and authenticated admin UI rendered with username 'admin'"
+        },
+        {
+          "action": "Verify session cookie and login response headers",
+          "expected": "Session cookie set with HttpOnly and SameSite attributes",
+          "observed": "curl POST /api/auth/login returned 200 with set-cookie headers containing HttpOnly; SameSite=Lax"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/auth-login-ui/VAL-AUTH-002-successful-login-dashboard.png"
+        ],
+        "consoleErrors": "none",
+        "network": "POST /api/auth/login -> 200; browser final URL http://localhost:3101/admin; Set-Cookie present"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-AUTH-003",
+      "title": "Invalid password shows error",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Submit login with valid username and wrong password",
+          "expected": "Generic auth error shown, URL remains /login, no session cookie",
+          "observed": "URL remained /login and toast showed 'Invalid username or password', but session cookie is still present"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/auth-login-ui/VAL-AUTH-003-invalid-password-error.png"
+        ],
+        "consoleErrors": "none",
+        "network": "POST /api/auth/login -> 401 with body {\"error\":\"Invalid username or password\"}; response includes Set-Cookie"
+      },
+      "issues": "Contract expects no session cookie for invalid login; app sets/retains session cookie (also present when simply visiting /login)."
+    },
+    {
+      "id": "VAL-AUTH-004",
+      "title": "Non-existent username shows error",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Submit login with unknown username",
+          "expected": "Same generic error as wrong-password case and no session cookie",
+          "observed": "Received same error text 'Invalid username or password' and remained on /login, but session cookie is present"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/auth-login-ui/VAL-AUTH-004-unknown-user-error.png"
+        ],
+        "consoleErrors": "none",
+        "network": "POST /api/auth/login -> 401 with identical error payload to wrong-password; response includes Set-Cookie"
+      },
+      "issues": "Contract expects no session cookie for unknown-user auth failure; app sets/retains session cookie."
+    },
+    {
+      "id": "VAL-AUTH-005",
+      "title": "Empty fields show validation errors",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Submit login form with both fields empty",
+          "expected": "Both field-level validation errors are shown",
+          "observed": "Displayed 'Username is required' and 'Password is required'"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/auth-login-ui/VAL-AUTH-005-empty-fields-errors.png"
+        ],
+        "consoleErrors": "none",
+        "network": "No /api/auth/login request captured before validation errors rendered"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-AUTH-006",
+      "title": "Empty password shows validation error",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Enter username only and submit",
+          "expected": "Password validation error shown and no auth attempt made",
+          "observed": "Displayed 'Password is required'; no /api/auth/login request captured at that validation point"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/auth-login-ui/VAL-AUTH-006-empty-password-error.png"
+        ],
+        "consoleErrors": "none",
+        "network": "No requests captured when checking /api/auth/login immediately after username-only submit"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-AUTH-007",
+      "title": "Remember-me checkbox present",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Inspect login form",
+          "expected": "Remember me checkbox and label visible",
+          "observed": "Checkbox and label 'Remember me' visible"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/auth-login-ui/VAL-AUTH-001-login-form.png"
+        ],
+        "consoleErrors": "none",
+        "network": "N/A"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-AUTH-008",
+      "title": "Forgot password link present",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Inspect login form for forgot-password link",
+          "expected": "Visible link points to forgot-password route",
+          "observed": "Link text 'Forgot password?' had href '/forgot-password'"
+        },
+        {
+          "action": "Click forgot-password link",
+          "expected": "Navigates to forgot-password page",
+          "observed": "Navigated to http://localhost:3101/forgot-password"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/auth-login-ui/VAL-AUTH-001-login-form.png",
+          "foundation-auth/auth-login-ui/VAL-AUTH-008-forgot-password-route.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Navigation to /forgot-password succeeded"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 8 auth login UI assertions: 6 passed and 2 failed. Failing assertions (VAL-AUTH-003, VAL-AUTH-004) fail contract expectations because session cookies are set/retained on failed login paths despite correct generic error handling."
+}

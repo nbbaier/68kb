@@ -1,0 +1,233 @@
+{
+  "groupId": "registration-404",
+  "testedAt": "2026-03-19T05:05:37Z",
+  "isolation": {
+    "milestone": "foundation-auth",
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "evidenceDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be/evidence/foundation-auth/registration-404/",
+    "accountPrefix": "reg404_",
+    "seededAdminUsername": "admin"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "python3-sqlite"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-REG-001",
+      "title": "Registration page renders",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to /register",
+          "expected": "Registration form shows username, email, password, confirm password, and submit",
+          "observed": "All four inputs plus 'Create account' button were visible"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/registration-404/VAL-REG-001-registration-page.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /register document requests observed in browser"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-REG-002",
+      "title": "Valid registration creates user and logs in",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Submit /register with unique reg404_ credentials",
+          "expected": "User created and redirected to authenticated page",
+          "observed": "User reg404_u1773896608 registered and redirected to http://localhost:3101/admin"
+        },
+        {
+          "action": "Inspect auth/session + DB row",
+          "expected": "Session cookie set; DB user row has user_group=2 and bcrypt cost 12 hash",
+          "observed": "Browser cookie contained session token; SQL check showed user_group=2 and hash prefix $2b$12$"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/registration-404/VAL-REG-002-post-registration.png"
+        ],
+        "consoleErrors": "none",
+        "network": "POST /api/auth/register (fetch) observed from register page",
+        "sql": "foundation-auth/registration-404/VAL-REG-002-sql.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-REG-003",
+      "title": "Duplicate username rejected",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Submit registration using existing username reg404_u1773896608 and a new email",
+          "expected": "Validation error for duplicate username; no new account",
+          "observed": "UI showed 'Username already in use' with validation failure; SQL check confirmed no row created for duplicate-attempt email"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/registration-404/VAL-REG-003-duplicate-username.png"
+        ],
+        "consoleErrors": "none",
+        "network": "POST /api/auth/register (fetch) observed during duplicate-username submit",
+        "sql": "foundation-auth/registration-404/VAL-REG-003-004-sql-check.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-REG-004",
+      "title": "Duplicate email rejected",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Submit registration using new username and existing email reg404_u1773896608@example.com",
+          "expected": "Validation error for duplicate email; no new account",
+          "observed": "UI showed 'Email already in use' with validation failure; SQL check confirmed no row created for duplicate-attempt username"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/registration-404/VAL-REG-004-duplicate-email.png"
+        ],
+        "consoleErrors": "none",
+        "network": "POST /api/auth/register (fetch) observed during duplicate-email submit",
+        "sql": "foundation-auth/registration-404/VAL-REG-003-004-sql-check.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-REG-005",
+      "title": "Password mismatch rejected",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Submit registration with non-matching password and confirmation",
+          "expected": "Password mismatch validation error and no account creation",
+          "observed": "UI showed 'Passwords do not match' and stayed on /register"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/registration-404/VAL-REG-005-password-mismatch.png"
+        ],
+        "consoleErrors": "none",
+        "network": "No /api/auth/register request captured at mismatch validation step"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-REG-006",
+      "title": "Empty required fields show errors",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Submit /register with all fields empty",
+          "expected": "Distinct required-field errors for username, email, password, and confirmation",
+          "observed": "Displayed 'Username is required', 'Email is required', 'Password is required', and 'Please confirm your password'"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/registration-404/VAL-REG-006-empty-fields-errors.png"
+        ],
+        "consoleErrors": "none",
+        "network": "No /api/auth/register request captured before client-side required-field errors"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-REG-007",
+      "title": "Invalid email format rejected",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Submit /register with malformed email 'not-an-email'",
+          "expected": "Email format validation error",
+          "observed": "UI showed 'Please enter a valid email address'"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/registration-404/VAL-REG-007-invalid-email.png"
+        ],
+        "consoleErrors": "none",
+        "network": "No /api/auth/register request captured at invalid-email client validation step"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-REG-008",
+      "title": "Registration link on login page",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /login and inspect links",
+          "expected": "Visible registration link present on login page",
+          "observed": "Login page showed 'Register' link"
+        },
+        {
+          "action": "Click Register link",
+          "expected": "Navigates to /register",
+          "observed": "Navigation succeeded to http://localhost:3101/register"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/registration-404/VAL-REG-008-login-register-link.png",
+          "foundation-auth/registration-404/VAL-REG-008-register-destination.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /login and navigation to /register succeeded"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-PUBLIC-002",
+      "title": "Unknown routes show 404",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Navigate browser to /reg404_missing_1773896608",
+          "expected": "Friendly 404 page and HTTP 404",
+          "observed": "Friendly in-app 404 content rendered in UI, but HTTP response from curl was 200 OK"
+        },
+        {
+          "action": "Verify unknown route status via curl",
+          "expected": "HTTP status 404",
+          "observed": "curl -i returned HTTP/1.1 200 OK for /reg404_missing_1773896608"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/registration-404/VAL-PUBLIC-002-unknown-route-ui.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /reg404_missing_1773896608 observed in browser; curl evidence shows HTTP 200",
+        "curl": "foundation-auth/registration-404/VAL-PUBLIC-002-curl.txt"
+      },
+      "issues": "Fails contract pass criteria requiring HTTP 404 status on unknown routes."
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser network request output did not include response status codes/payload bodies (request metadata only).",
+      "resolved": true,
+      "resolution": "Used UI text assertions plus curl/SQL corroboration for assertions that required explicit HTTP/DB evidence.",
+      "affectedAssertions": [
+        "VAL-REG-002",
+        "VAL-PUBLIC-002"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 9 assertions (VAL-REG-001..008, VAL-PUBLIC-002): 8 passed, 1 failed. Failure: VAL-PUBLIC-002 because unknown route returns friendly 404 UI but HTTP status 200 instead of 404."
+}

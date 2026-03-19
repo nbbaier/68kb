@@ -1,0 +1,130 @@
+{
+  "groupId": "rbac-api-404",
+  "testedAt": "2026-03-19T05:52:54Z",
+  "isolation": {
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "surface": "web",
+    "uiBaseUrl": "http://localhost:3101",
+    "apiBaseUrl": "http://localhost:3100",
+    "accountPrefix": "g2rbac_"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-GUARD-006",
+      "title": "Non-admin user denied admin access",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create a new registered user via /register with g2rbac_ prefix",
+          "expected": "User is created as Registered (group=2)",
+          "observed": "Account g2rbac_1773899162 created and logged in"
+        },
+        {
+          "action": "Verify current session identity",
+          "expected": "group=2 and canAccessAdmin=false",
+          "observed": "/api/auth/me returned userGroup=2 and permissions.canAccessAdmin=false"
+        },
+        {
+          "action": "Navigate to /admin as the registered user",
+          "expected": "Access denied (redirect or authorization error)",
+          "observed": "Browser was redirected to / (public home), no admin layout rendered"
+        },
+        {
+          "action": "Call admin API endpoint with same session",
+          "expected": "Forbidden response",
+          "observed": "GET /api/admin/users?page=1&pageSize=5 returned 403 with \"Forbidden: admin access required\""
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/rbac-api-404/VAL-GUARD-006-register-page.png",
+          "foundation-auth/rbac-api-404/VAL-GUARD-006-admin-attempt.png"
+        ],
+        "consoleErrors": "none (foundation-auth/rbac-api-404/VAL-GUARD-006-console-errors.txt)",
+        "network": "/api/auth/me -> 200 with group=2, canAccessAdmin=false (foundation-auth/rbac-api-404/VAL-GUARD-006-auth-me.json); /api/admin/users?page=1&pageSize=5 -> 403 forbidden (foundation-auth/rbac-api-404/VAL-GUARD-006-admin-api-check.json)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-PUBLIC-002",
+      "title": "Unknown routes show 404",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Open /this-route-should-not-exist-g2 in browser",
+          "expected": "Friendly 404 page and HTTP 404 status",
+          "observed": "Friendly '404 Page not found' UI rendered"
+        },
+        {
+          "action": "Verify HTTP status with curl",
+          "expected": "HTTP 404",
+          "observed": "HTTP 200 OK with Vite index.html response"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/rbac-api-404/VAL-PUBLIC-002-unknown-route.png"
+        ],
+        "consoleErrors": "none (foundation-auth/rbac-api-404/VAL-PUBLIC-002-console-errors.txt)",
+        "network": "curl GET /this-route-should-not-exist-g2 -> HTTP/1.1 200 OK with SPA HTML shell (foundation-auth/rbac-api-404/VAL-PUBLIC-002-curl.txt)"
+      },
+      "issues": "Contract requires HTTP 404 for unknown routes, but the route returns 200 while rendering a client-side 404 view."
+    },
+    {
+      "id": "VAL-ADMIN-004",
+      "title": "Flash messages display correctly",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Sign in as admin through /login",
+          "expected": "Success flash appears with success styling",
+          "observed": "Toast \"Signed in successfully\" appeared after login"
+        },
+        {
+          "action": "Inspect toast styling",
+          "expected": "Success flash styled green",
+          "observed": "Toast reported data-type=success but computed colors were neutral (background oklch(1 0 0), border oklch(0.922 0 0), text oklch(0.145 0 0))"
+        },
+        {
+          "action": "Navigate away after flash is shown",
+          "expected": "Flash disappears on next navigation",
+          "observed": "After navigating to /admin/users, toast no longer visible"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/rbac-api-404/VAL-ADMIN-004-flash-after-login.png",
+          "foundation-auth/rbac-api-404/VAL-ADMIN-004-after-navigation.png"
+        ],
+        "consoleErrors": "none (foundation-auth/rbac-api-404/VAL-ADMIN-004-console-errors.txt)",
+        "network": "POST /api/auth/login observed in browser request log during login flow (foundation-auth/rbac-api-404/VAL-ADMIN-004-network.txt); toast style snapshot in foundation-auth/rbac-api-404/VAL-ADMIN-004-flash-style.json"
+      },
+      "issues": "Flash lifecycle works (appears then clears on navigation), but success flash does not meet contract color expectation (green)."
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser request logs did not include response status codes needed for strict status assertions.",
+      "resolved": true,
+      "resolution": "Captured supplemental curl/eval artifacts for explicit HTTP status/body evidence.",
+      "affectedAssertions": [
+        "VAL-GUARD-006",
+        "VAL-PUBLIC-002"
+      ]
+    },
+    {
+      "description": "Toast visibility is brief, making style capture timing-sensitive.",
+      "resolved": true,
+      "resolution": "Captured screenshot immediately after login and extracted toast computed styles via in-page eval.",
+      "affectedAssertions": [
+        "VAL-ADMIN-004"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 3 assertions: 1 passed (VAL-GUARD-006) and 2 failed (VAL-PUBLIC-002, VAL-ADMIN-004)."
+}

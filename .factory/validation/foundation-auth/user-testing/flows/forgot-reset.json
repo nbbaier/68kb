@@ -1,0 +1,213 @@
+{
+  "groupId": "forgot-reset",
+  "testedAt": "2026-03-19T05:06:43Z",
+  "isolation": {
+    "milestone": "foundation-auth",
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "testAccount": {
+      "username": "forgot_flow_20260319",
+      "email": "forgot_flow_20260319@example.com"
+    },
+    "constraintsApplied": [
+      "Used shared running services only",
+      "Used dedicated forgot_ prefixed account for reset/hash assertions",
+      "Did not modify seeded admin user"
+    ]
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "sqlite3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-FORGOT-001",
+      "title": "Forgot password page renders",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to /forgot-password",
+          "expected": "Forgot password form with email input and submit button is visible",
+          "observed": "Email textbox and 'Send reset link' button were visible"
+        },
+        {
+          "action": "Check browser console",
+          "expected": "No console errors",
+          "observed": "No console errors"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/forgot-reset/VAL-FORGOT-001-forgot-page.png"
+        ],
+        "consoleErrors": "none (foundation-auth/forgot-reset/VAL-FORGOT-001-console.txt)",
+        "network": "GET /forgot-password and GET /api/auth/me observed (foundation-auth/forgot-reset/VAL-FORGOT-001-network.json)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-FORGOT-002",
+      "title": "Valid email shows success message",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Submit forgot-password form with known email forgot_flow_20260319@example.com",
+          "expected": "Generic success message is shown",
+          "observed": "Displayed: 'If that email address is in our database, we will send you a password reset link.'"
+        },
+        {
+          "action": "Verify user_verify in DB",
+          "expected": "user_verify is populated",
+          "observed": "user_verify set to 22-char hash"
+        },
+        {
+          "action": "Check browser console",
+          "expected": "No console errors",
+          "observed": "No console errors"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/forgot-reset/VAL-FORGOT-002-known-email-success.png"
+        ],
+        "consoleErrors": "none (foundation-auth/forgot-reset/VAL-FORGOT-002-console.txt)",
+        "network": "POST /api/auth/forgot-password -> 200 (foundation-auth/forgot-reset/VAL-FORGOT-002-known-email-response.txt)",
+        "database": "foundation-auth/forgot-reset/VAL-FORGOT-002-user-verify-db.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-FORGOT-003",
+      "title": "Unknown email shows same success (no enumeration)",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Submit forgot-password form with unknown email forgot_unknown_20260319@example.com",
+          "expected": "Same generic success message as known email",
+          "observed": "Displayed same generic success message"
+        },
+        {
+          "action": "Compare known vs unknown response payloads",
+          "expected": "Message bodies are identical",
+          "observed": "Response bodies are identical"
+        },
+        {
+          "action": "Check browser console",
+          "expected": "No console errors",
+          "observed": "No console errors"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/forgot-reset/VAL-FORGOT-003-unknown-email-success.png"
+        ],
+        "consoleErrors": "none (foundation-auth/forgot-reset/VAL-FORGOT-003-console.txt)",
+        "network": "POST /api/auth/forgot-password (unknown email) -> 200 (foundation-auth/forgot-reset/VAL-FORGOT-003-unknown-email-response.txt)",
+        "comparison": "foundation-auth/forgot-reset/VAL-FORGOT-002-003-message-compare.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-FORGOT-004",
+      "title": "Empty email shows validation error",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Submit forgot-password form with empty email field",
+          "expected": "Validation error is shown",
+          "observed": "Displayed 'Email is required'"
+        },
+        {
+          "action": "Check browser console",
+          "expected": "No console errors",
+          "observed": "No console errors"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "foundation-auth/forgot-reset/VAL-FORGOT-004-empty-email-error.png"
+        ],
+        "consoleErrors": "none (foundation-auth/forgot-reset/VAL-FORGOT-004-console.txt)",
+        "network": "API validation reference: POST /api/auth/forgot-password with empty payload -> 400 {\"errors\":{\"email\":\"Email is required\"}} (foundation-auth/forgot-reset/VAL-FORGOT-004-empty-email-response.txt)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-FORGOT-005",
+      "title": "Valid reset hash resets password",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Read current user_verify hash for forgot_flow_20260319@example.com",
+          "expected": "22-char hash available",
+          "observed": "Hash 5a6ac0129633431990bb89 read from DB"
+        },
+        {
+          "action": "POST /api/auth/reset-password with valid hash",
+          "expected": "200 success response",
+          "observed": "200 OK with 'Password has been reset successfully'"
+        },
+        {
+          "action": "Compare DB before/after reset",
+          "expected": "user_password changes and user_verify is cleared",
+          "observed": "Password hash changed and user_verify became empty"
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "n/a (API flow)",
+        "network": "POST /api/auth/reset-password -> 200 (foundation-auth/forgot-reset/VAL-FORGOT-005-reset-response.txt)",
+        "database": [
+          "foundation-auth/forgot-reset/VAL-FORGOT-005-before-reset-db.txt",
+          "foundation-auth/forgot-reset/VAL-FORGOT-005-after-reset-db.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-FORGOT-006",
+      "title": "Invalid reset hash rejected",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "POST /api/auth/reset-password with bogus hash zzzzzzzzzzzzzzzzzzzzzz",
+          "expected": "Error response indicating invalid/expired hash",
+          "observed": "400 Bad Request with 'Invalid or expired reset hash'"
+        },
+        {
+          "action": "Compare DB before/after invalid reset attempt",
+          "expected": "Password hash unchanged",
+          "observed": "Password hash unchanged"
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "n/a (API flow)",
+        "network": "POST /api/auth/reset-password -> 400 (foundation-auth/forgot-reset/VAL-FORGOT-006-invalid-reset-response.txt)",
+        "database": [
+          "foundation-auth/forgot-reset/VAL-FORGOT-006-before-invalid-db.txt",
+          "foundation-auth/forgot-reset/VAL-FORGOT-006-after-invalid-db.txt"
+        ]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser network export did not include response status codes directly for fetch requests.",
+      "resolved": true,
+      "resolution": "Captured explicit HTTP status evidence using curl response artifacts for each forgot/reset API call.",
+      "affectedAssertions": [
+        "VAL-FORGOT-002",
+        "VAL-FORGOT-003",
+        "VAL-FORGOT-004",
+        "VAL-FORGOT-005",
+        "VAL-FORGOT-006"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 6 assertions (VAL-FORGOT-001..006): 6 passed, 0 failed, 0 blocked."
+}
