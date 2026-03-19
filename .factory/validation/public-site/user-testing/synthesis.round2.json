@@ -1,0 +1,111 @@
+{
+  "milestone": "public-site",
+  "round": 2,
+  "generatedAt": "2026-03-19T21:09:01.715768+00:00",
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 14,
+    "passed": 12,
+    "failed": 1,
+    "blocked": 1
+  },
+  "passedAssertions": [
+    "VAL-PUB-002",
+    "VAL-PUB-003",
+    "VAL-BROWSE-004",
+    "VAL-BROWSE-007",
+    "VAL-DETAIL-009",
+    "VAL-SEARCH-001",
+    "VAL-TAG-003",
+    "VAL-XCUT-003",
+    "VAL-HOME-004",
+    "VAL-HOME-005",
+    "VAL-SEARCH-004",
+    "VAL-SEARCH-008"
+  ],
+  "failedAssertions": [
+    {
+      "id": "VAL-DETAIL-008",
+      "reason": "Glossary tooltip wrapping is missing on article detail content; contract requirement for <a class='tooltip'> title/href behavior is not met."
+    }
+  ],
+  "blockedAssertions": [
+    {
+      "id": "VAL-DETAIL-010",
+      "blockedBy": "Blocked: no hidden article fixture exists in the shared dataset, so hidden-article exclusion behavior could not be validated without creating temporary data."
+    }
+  ],
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "python3-sqlite3",
+    "python3",
+    "sqlite3"
+  ],
+  "appliedUpdates": [
+    {
+      "target": "user-testing.md",
+      "description": "Added rerun learnings for hidden-article fixture requirements (VAL-DETAIL-010), canonical glossary fixture route for VAL-DETAIL-008, and low-risk pagination fixtureing for VAL-SEARCH-004.",
+      "source": "flow-report"
+    }
+  ],
+  "flowReports": [
+    ".factory/validation/public-site/user-testing/flows/rerun-shell-routes.json",
+    ".factory/validation/public-site/user-testing/flows/rerun-tooltips-responsive.json",
+    ".factory/validation/public-site/user-testing/flows/rerun-stateful-home-search.json"
+  ],
+  "previousRound": ".factory/validation/public-site/user-testing/synthesis.round1.json",
+  "triage": {
+    "frictions": [
+      {
+        "description": "agent-browser errors command returned empty output when there were no errors, so explicit 'none' results were recorded in each assertion.",
+        "resolved": true,
+        "resolution": "Captured console checks after each assertion flow and treated empty output as no console errors.",
+        "affectedAssertions": [
+          "VAL-PUB-002",
+          "VAL-PUB-003",
+          "VAL-BROWSE-004",
+          "VAL-BROWSE-007",
+          "VAL-DETAIL-009",
+          "VAL-DETAIL-010",
+          "VAL-SEARCH-001",
+          "VAL-TAG-003"
+        ]
+      },
+      {
+        "description": "Guidance references an article title with URI-like text ending in 'and-data-structures', but direct navigation to that URI returned the not-found page. The assertion was validated by navigating from the homepage article link instead.",
+        "resolved": true,
+        "resolution": "Used homepage link for 'Introduction to Algorithms and Data Structures' to reach canonical URI /article/introduction-to-algorithms.",
+        "affectedAssertions": [
+          "VAL-DETAIL-008"
+        ]
+      },
+      {
+        "description": "agent-browser semantic locators for Keywords/Search were ambiguous because both header quick-search and advanced search form expose similar labels.",
+        "resolved": true,
+        "resolution": "Switched to snapshot refs (@e9/@e20) for deterministic targeting of advanced search controls.",
+        "affectedAssertions": [
+          "VAL-SEARCH-004"
+        ]
+      },
+      {
+        "description": "agent-browser network export returned \"No requests captured\" for one search capture attempt.",
+        "resolved": true,
+        "resolution": "Captured supplemental curl API evidence with explicit HTTP status and payload details.",
+        "affectedAssertions": [
+          "VAL-SEARCH-004",
+          "VAL-SEARCH-008"
+        ]
+      }
+    ],
+    "blockers": [
+      {
+        "description": "No hidden article fixture exists in current shared DB snapshot (article_display != 'y' count = 0).",
+        "affectedAssertions": [
+          "VAL-DETAIL-010"
+        ],
+        "quickFixAttempted": "Queried SQLite directly for hidden articles and checked a previously known hidden slug via UI/API; both confirmed not-found but did not provide a hidden-fixture case."
+      }
+    ]
+  }
+}

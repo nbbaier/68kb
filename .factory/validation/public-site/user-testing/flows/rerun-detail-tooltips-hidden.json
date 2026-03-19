@@ -1,0 +1,119 @@
+{
+  "groupId": "rerun-detail-tooltips-hidden",
+  "testedAt": "2026-03-19T21:39:59Z",
+  "isolation": {
+    "surface": "web",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "evidenceDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be/evidence/public-site/detail-tooltips-hidden",
+    "reportPath": "/Users/nbbaier/68kb/.factory/validation/public-site/user-testing/flows/rerun-detail-tooltips-hidden.json"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "python3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-DETAIL-008",
+      "title": "Glossary Tooltips",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to /article/introduction-to-algorithms",
+          "expected": "Article detail page renders glossary tooltip links in body",
+          "observed": "Article page loaded and annotated screenshot shows glossary-linked terms (algorithm, variable, object, array)."
+        },
+        {
+          "action": "Audit DOM tooltip wrapping and attributes",
+          "expected": "Tooltip anchors use class tooltip, title includes 'term - definition (<=75 chars)', and href links to /glossary/term/{term}",
+          "observed": "DOM audit found 4 tooltip anchors with correct href targets and title definitions at or below 75 chars (max observed: 75)."
+        },
+        {
+          "action": "Check repeat wrapping behavior for repeated terms",
+          "expected": "Only first occurrence wrapped; later occurrences unwrapped",
+          "observed": "For repeated terms ('algorithm', 'array'), first occurrence was wrapped and later occurrences were unwrapped."
+        },
+        {
+          "action": "Call article API endpoint",
+          "expected": "Endpoint reachable for supporting network evidence",
+          "observed": "GET /api/articles/introduction-to-algorithms returned HTTP 200 with article payload."
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/detail-tooltips-hidden/VAL-DETAIL-008-article-page.png",
+          "public-site/detail-tooltips-hidden/VAL-DETAIL-008-article-annotated.png"
+        ],
+        "consoleErrors": "none (console files empty)",
+        "network": "GET /api/articles/introduction-to-algorithms -> 200",
+        "artifacts": [
+          "public-site/detail-tooltips-hidden/VAL-DETAIL-008-dom-audit.json",
+          "public-site/detail-tooltips-hidden/VAL-DETAIL-008-title-length-check-retest.json",
+          "public-site/detail-tooltips-hidden/VAL-DETAIL-008-api-article-retest.http"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DETAIL-010",
+      "title": "Hidden Article Not Accessible",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to hidden URI /article/draft-hidden-article",
+          "expected": "Client-rendered not-found page; hidden content not shown",
+          "observed": "Not-found UI rendered, and hidden article title/body were not present."
+        },
+        {
+          "action": "Call hidden article API endpoint",
+          "expected": "API returns 404 for hidden article slug",
+          "observed": "GET /api/articles/draft-hidden-article returned HTTP 404 with {\"error\":\"Article not found\"}."
+        },
+        {
+          "action": "Check homepage, search results, and category listings",
+          "expected": "Hidden article excluded from public listings/search/category pages",
+          "observed": "Hidden title/slug absent on homepage, absent in search UI (no-results page), and absent from category listing page (/categories/php)."
+        },
+        {
+          "action": "Verify API listing endpoints",
+          "expected": "Hidden article absent from popular, recent, search, and category listing APIs",
+          "observed": "Exclusion summary confirmed hidden slug/title absent from /api/articles/popular, /api/articles/recent, /api/categories/* listings, and hidden-term search response."
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/detail-tooltips-hidden/VAL-DETAIL-010-hidden-article-page-retest.png",
+          "public-site/detail-tooltips-hidden/VAL-DETAIL-010-homepage-retest.png",
+          "public-site/detail-tooltips-hidden/VAL-DETAIL-010-search-results-retest.png",
+          "public-site/detail-tooltips-hidden/VAL-DETAIL-010-category-php-retest.png"
+        ],
+        "consoleErrors": "none (console files empty)",
+        "network": "GET /api/articles/draft-hidden-article -> 404; GET /api/articles/popular -> 200; GET /api/articles/recent -> 200; GET /api/categories/php -> 200",
+        "artifacts": [
+          "public-site/detail-tooltips-hidden/VAL-DETAIL-010-hidden-not-found-check-retest.json",
+          "public-site/detail-tooltips-hidden/VAL-DETAIL-010-api-hidden-article-retest.http",
+          "public-site/detail-tooltips-hidden/VAL-DETAIL-010-homepage-exclusion-check-retest.json",
+          "public-site/detail-tooltips-hidden/VAL-DETAIL-010-search-exclusion-check-retest.json",
+          "public-site/detail-tooltips-hidden/VAL-DETAIL-010-category-exclusion-check-retest.json",
+          "public-site/detail-tooltips-hidden/VAL-DETAIL-010-api-exclusion-summary-retest.json",
+          "public-site/detail-tooltips-hidden/VAL-DETAIL-010-api-all-category-exclusion-retest.json"
+        ]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Placeholder-based locator for sidebar search field intermittently failed on homepage.",
+      "resolved": true,
+      "resolution": "Switched to stable element refs from snapshot (@e31 searchbox, @e32 button).",
+      "affectedAssertions": [
+        "VAL-DETAIL-010"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Retested 2 assertions (VAL-DETAIL-008, VAL-DETAIL-010): both passed with UI screenshots, DOM audits, and curl API evidence."
+}

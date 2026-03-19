@@ -45,6 +45,7 @@ Testing surface, tools, and resource cost classification for validators.
 - For assertions that require explicit status codes, headers, or response payload verification, capture supplemental `curl` evidence.
 - Sonner toasts can disappear quickly; for style-sensitive flash assertions, capture evidence immediately after trigger and record computed styles via in-page evaluation.
 - Browser numeric inputs (`input[type=number]`) may reject non-numeric keystrokes before submit; for “non-numeric validation” assertions, use a boundary request or temporary DOM-type swap in automation to exercise server-side validation paths.
+- Homepage runs can have intermittent placeholder-locator flakiness on the sidebar search field; prefer snapshot refs for the search input/button when this occurs.
 
 ## Public-Site Fixture Learnings (2026-03-19)
 
