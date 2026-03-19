@@ -19,5 +19,12 @@
     }
   ],
   "appliedUpdates": [],
-  "previousRound": ".factory/validation/articles-categories/user-testing/synthesis.round2.json"
+  "previousRound": ".factory/validation/articles-categories/user-testing/synthesis.round2.json",
+  "orchestratorOverride": {
+    "reason": "VAL-TAG-003 moved to article-detail-page feature in milestone 3 (public-site). The related-articles surface is a public-facing feature that does not belong in the admin-focused articles-categories milestone.",
+    "deferredAssertions": [
+      "VAL-TAG-003"
+    ],
+    "overriddenAt": "2026-03-19T17:55:00Z"
+  }
 }
