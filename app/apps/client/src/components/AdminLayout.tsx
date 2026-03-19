@@ -36,10 +36,17 @@ const SUB_NAV: Record<string, SubNavItem[]> = {
   articles: [
     { label: 'Articles', path: '/admin/articles' },
     { label: 'Categories', path: '/admin/categories' },
+    { label: 'Glossary', path: '/admin/kb/glossary' },
   ],
   categories: [
     { label: 'Articles', path: '/admin/articles' },
     { label: 'Categories', path: '/admin/categories' },
+    { label: 'Glossary', path: '/admin/kb/glossary' },
+  ],
+  kb: [
+    { label: 'Articles', path: '/admin/articles' },
+    { label: 'Categories', path: '/admin/categories' },
+    { label: 'Glossary', path: '/admin/kb/glossary' },
   ],
   users: [{ label: 'Users', path: '/admin/users' }],
   modules: [{ label: 'Modules', path: '/admin/modules' }],
@@ -93,8 +100,13 @@ export function AdminLayout() {
           <nav aria-label="Admin main navigation" className="flex-1 hidden sm:flex">
             <ul className="flex items-center gap-1">
               {visibleNavItems.map((item) => {
+                // Articles tab is also active for categories and kb sub-sections
                 const isActive =
-                  item.key === '' ? section === '' : section === item.key
+                  item.key === ''
+                    ? section === ''
+                    : item.key === 'articles'
+                      ? section === 'articles' || section === 'categories' || section === 'kb'
+                      : section === item.key
                 return (
                   <li key={item.label}>
                     <Link

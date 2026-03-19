@@ -12,6 +12,7 @@ import {
   createPublicSettingsRoutes,
 } from './routes/public'
 import { createSearchRoutes } from './routes/search'
+import { createPublicGlossaryRoutes } from './routes/glossary'
 import type { AppVariables } from './types'
 
 export function createApp(database: typeof db) {
@@ -87,6 +88,7 @@ export function createApp(database: typeof db) {
   app.route('/api/articles', createPublicArticleRoutes(database))
   app.route('/api/settings', createPublicSettingsRoutes(database))
   app.route('/api/search', createSearchRoutes(database))
+  app.route('/api/glossary', createPublicGlossaryRoutes(database))
 
   // Admin routes
   app.route('/api/admin', createAdminRoutes(database))

@@ -21,6 +21,8 @@ import { ArticleDetailPage } from '@/pages/ArticleDetailPage'
 import { CategoriesIndexPage } from '@/pages/CategoriesIndexPage'
 import { CategoryDetailPage } from '@/pages/CategoryDetailPage'
 import { GlossaryPage } from '@/pages/GlossaryPage'
+import { AdminGlossaryPage } from '@/pages/AdminGlossaryPage'
+import { AdminGlossaryFormPage } from '@/pages/AdminGlossaryFormPage'
 import { SearchPage } from '@/pages/SearchPage'
 import { SearchResultsPage } from '@/pages/SearchResultsPage'
 import { SearchNoResultsPage } from '@/pages/SearchNoResultsPage'
@@ -103,6 +105,11 @@ function App() {
             <Route path="categories/:id/edit" element={<AdminCategoryFormPage />} />
             <Route path="categories/:id/delete" element={<AdminCategoryDeletePage />} />
             <Route path="categories/:id/duplicate" element={<AdminCategoryDuplicatePage />} />
+            {/* Glossary routes */}
+            <Route path="kb/glossary" element={<AdminGlossaryPage />} />
+            <Route path="kb/glossary/add" element={<AdminGlossaryFormPage />} />
+            <Route path="kb/glossary/edit/:id" element={<AdminGlossaryFormPage />} />
+
             <Route
               path="users"
               element={<div className="p-4 text-muted-foreground">Users — coming soon</div>}

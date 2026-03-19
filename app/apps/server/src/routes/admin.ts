@@ -5,6 +5,7 @@ import { createRequireAdmin } from '../middleware/auth'
 import { createArticleRoutes } from './articles'
 import { createCategoryRoutes } from './categories'
 import { createUserRoutes } from './users'
+import { createAdminGlossaryRoutes } from './glossary'
 import type { AppVariables, DrizzleDB } from '../types'
 
 export function createAdminRoutes(db: DrizzleDB) {
@@ -52,6 +53,9 @@ export function createAdminRoutes(db: DrizzleDB) {
 
   // Mount user routes (includes /search)
   admin.route('/users', createUserRoutes(db))
+
+  // Mount glossary admin routes
+  admin.route('/glossary', createAdminGlossaryRoutes(db))
 
   return admin
 }
