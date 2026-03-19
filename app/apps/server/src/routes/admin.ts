@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
-import { eq, count } from 'drizzle-orm'
-import { settings, users } from '../db/schema'
+import { eq, count, asc } from 'drizzle-orm'
+import { settings, users, userGroups } from '../db/schema'
 import { createRequireAdmin } from '../middleware/auth'
 import { createArticleRoutes } from './articles'
 import { createCategoryRoutes } from './categories'
@@ -43,6 +43,27 @@ export function createAdminRoutes(db: DrizzleDB) {
         userCount,
       },
     })
+  })
+
+  // ---------------------------------------------------------------------------
+  // GET /api/admin/usergroups
+  // Minimal listing of all user groups (used by user add/edit forms).
+  // Full CRUD is implemented by the user-groups-crud feature.
+  // ---------------------------------------------------------------------------
+  admin.get('/usergroups', (c) => {
+    const groups = db
+      .select({
+        groupId: userGroups.groupId,
+        groupName: userGroups.groupName,
+        groupDescription: userGroups.groupDescription,
+        canAccessAdmin: userGroups.canAccessAdmin,
+        canManageUsers: userGroups.canManageUsers,
+      })
+      .from(userGroups)
+      .orderBy(asc(userGroups.groupId))
+      .all()
+
+    return c.json({ data: groups })
   })
 
   // Mount articles CRUD routes

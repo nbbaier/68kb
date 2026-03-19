@@ -1,14 +1,69 @@
 import { Hono } from 'hono'
-import { like, or } from 'drizzle-orm'
-import { users } from '../db/schema'
+import { eq, like, or, and, ne, count, asc, desc } from 'drizzle-orm'
+import { createHash } from 'node:crypto'
+import { users, userGroups } from '../db/schema'
+import { createRequireRole } from '../middleware/auth'
 import type { AppVariables, DrizzleDB } from '../types'
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Generate a Gravatar MD5 hash from an email address.
+ */
+function gravatarHash(email: string): string {
+  return createHash('md5').update(email.trim().toLowerCase()).digest('hex')
+}
+
+/**
+ * Generate a random 32-character hexadecimal API key.
+ */
+function generateApiKey(): string {
+  const bytes = new Uint8Array(16)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+/**
+ * Simple email format validation.
+ */
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+/**
+ * Validate username is alphanumeric only (letters and digits).
+ */
+function isAlphanumeric(value: string): boolean {
+  return /^[a-zA-Z0-9]+$/.test(value)
+}
+
+// Sort field map
+type SortField = 'username' | 'email' | 'joinDate' | 'lastLogin' | 'group'
+const SORT_COLUMNS: Record<SortField, typeof users.userUsername | typeof users.userEmail | typeof users.userJoinDate | typeof users.userLastLogin | typeof users.userGroup> = {
+  username: users.userUsername,
+  email: users.userEmail,
+  joinDate: users.userJoinDate,
+  lastLogin: users.userLastLogin,
+  group: users.userGroup,
+}
+
+// ---------------------------------------------------------------------------
+// Route factory
+// ---------------------------------------------------------------------------
 
 export function createUserRoutes(db: DrizzleDB) {
   const router = new Hono<{ Variables: AppVariables }>()
 
+  const requireManageUsers = createRequireRole(db)('canManageUsers')
+
   // -------------------------------------------------------------------------
   // GET /api/admin/users/search?q=term
   // Search users by username or email (for author field AJAX lookup)
+  // This must come before /:id to avoid routing conflicts
   // -------------------------------------------------------------------------
   router.get('/search', async (c) => {
     const q = (c.req.query('q') ?? '').trim()
@@ -34,6 +89,386 @@ export function createUserRoutes(db: DrizzleDB) {
       .all()
 
     return c.json({ data: results })
+  })
+
+  // -------------------------------------------------------------------------
+  // GET /api/admin/users
+  // Paginated, searchable, sortable list of users with group info
+  // -------------------------------------------------------------------------
+  router.get('/', requireManageUsers, async (c) => {
+    const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10))
+    const limit = Math.min(100, Math.max(1, parseInt(c.req.query('limit') ?? '20', 10)))
+    const sortParam = (c.req.query('sort') ?? 'username') as SortField
+    const orderParam = c.req.query('order') === 'desc' ? 'desc' : 'asc'
+    const search = (c.req.query('search') ?? '').trim()
+    const offset = (page - 1) * limit
+
+    const sortCol = SORT_COLUMNS[sortParam] ?? users.userUsername
+    const orderFn = orderParam === 'asc' ? asc : desc
+
+    const whereClause = search
+      ? or(
+          like(users.userUsername, `%${search}%`),
+          like(users.userEmail, `%${search}%`),
+        )
+      : undefined
+
+    // Get total count
+    const totalResult = db
+      .select({ value: count() })
+      .from(users)
+      .where(whereClause)
+      .get()
+    const total = totalResult?.value ?? 0
+
+    // Get paginated rows with group join
+    const rows = db
+      .select({
+        userId: users.userId,
+        userUsername: users.userUsername,
+        userEmail: users.userEmail,
+        userGroup: users.userGroup,
+        userJoinDate: users.userJoinDate,
+        userLastLogin: users.userLastLogin,
+        userApiKey: users.userApiKey,
+        groupName: userGroups.groupName,
+      })
+      .from(users)
+      .leftJoin(userGroups, eq(users.userGroup, userGroups.groupId))
+      .where(whereClause)
+      .orderBy(orderFn(sortCol))
+      .limit(limit)
+      .offset(offset)
+      .all()
+
+    const data = rows.map((row) => ({
+      ...row,
+      gravatarHash: gravatarHash(row.userEmail),
+    }))
+
+    return c.json({ data, total, page })
+  })
+
+  // -------------------------------------------------------------------------
+  // GET /api/admin/users/:id
+  // Single user with group info
+  // -------------------------------------------------------------------------
+  router.get('/:id', requireManageUsers, async (c) => {
+    const id = parseInt(c.req.param('id'), 10)
+    if (isNaN(id)) {
+      return c.json({ error: 'Invalid user ID' }, 400)
+    }
+
+    const row = db
+      .select({
+        userId: users.userId,
+        userUsername: users.userUsername,
+        userEmail: users.userEmail,
+        userGroup: users.userGroup,
+        userJoinDate: users.userJoinDate,
+        userLastLogin: users.userLastLogin,
+        userApiKey: users.userApiKey,
+        groupName: userGroups.groupName,
+      })
+      .from(users)
+      .leftJoin(userGroups, eq(users.userGroup, userGroups.groupId))
+      .where(eq(users.userId, id))
+      .get()
+
+    if (!row) {
+      return c.json({ error: 'User not found' }, 404)
+    }
+
+    return c.json({
+      data: {
+        ...row,
+        gravatarHash: gravatarHash(row.userEmail),
+      },
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // POST /api/admin/users
+  // Create a new user
+  // -------------------------------------------------------------------------
+  router.post('/', requireManageUsers, async (c) => {
+    const body = await c.req.json() as {
+      userUsername?: string
+      userEmail?: string
+      userGroup?: number
+      userPassword?: string
+      confirmPassword?: string
+    }
+
+    const username = (body.userUsername ?? '').trim()
+    const email = (body.userEmail ?? '').trim()
+    const group = body.userGroup
+    const password = body.userPassword ?? ''
+    const confirm = body.confirmPassword ?? ''
+
+    // Validate username
+    if (!username) {
+      return c.json({ error: 'Username is required' }, 400)
+    }
+    if (!isAlphanumeric(username)) {
+      return c.json({ error: 'Username must be alphanumeric (letters and digits only)' }, 400)
+    }
+
+    // Validate email
+    if (!email) {
+      return c.json({ error: 'Email address is required' }, 400)
+    }
+    if (!isValidEmail(email)) {
+      return c.json({ error: 'Please enter a valid email address' }, 400)
+    }
+
+    // Validate group
+    if (group === undefined || group === null || isNaN(Number(group))) {
+      return c.json({ error: 'User group is required' }, 400)
+    }
+
+    // Validate password
+    if (!password) {
+      return c.json({ error: 'Password is required' }, 400)
+    }
+    if (password !== confirm) {
+      return c.json({ error: 'Passwords do not match' }, 400)
+    }
+
+    // Check username uniqueness
+    const existingUsername = db
+      .select({ userId: users.userId })
+      .from(users)
+      .where(eq(users.userUsername, username))
+      .get()
+    if (existingUsername) {
+      return c.json({ error: 'Username is already in use' }, 400)
+    }
+
+    // Check email uniqueness
+    const existingEmail = db
+      .select({ userId: users.userId })
+      .from(users)
+      .where(eq(users.userEmail, email))
+      .get()
+    if (existingEmail) {
+      return c.json({ error: 'Email address is already in use' }, 400)
+    }
+
+    // Hash password and generate API key
+    const hashedPassword = await Bun.password.hash(password, { algorithm: 'bcrypt', cost: 12 })
+    const apiKey = generateApiKey()
+    const now = Math.floor(Date.now() / 1000)
+
+    const [inserted] = db
+      .insert(users)
+      .values({
+        userUsername: username,
+        userEmail: email,
+        userGroup: Number(group),
+        userPassword: hashedPassword,
+        userApiKey: apiKey,
+        userJoinDate: now,
+        userLastLogin: 0,
+        lastActivity: 0,
+        userIp: '',
+        userCookie: '',
+        userSession: '',
+        userVerify: '',
+      })
+      .returning({
+        userId: users.userId,
+        userUsername: users.userUsername,
+        userEmail: users.userEmail,
+        userGroup: users.userGroup,
+        userJoinDate: users.userJoinDate,
+        userLastLogin: users.userLastLogin,
+        userApiKey: users.userApiKey,
+      })
+      .all()
+
+    return c.json(
+      {
+        data: {
+          ...inserted,
+          gravatarHash: gravatarHash(inserted.userEmail),
+        },
+      },
+      201,
+    )
+  })
+
+  // -------------------------------------------------------------------------
+  // PUT /api/admin/users/:id
+  // Update user — uniqueness excludes self, password optional, prevent last admin demotion
+  // -------------------------------------------------------------------------
+  router.put('/:id', requireManageUsers, async (c) => {
+    const id = parseInt(c.req.param('id'), 10)
+    if (isNaN(id)) {
+      return c.json({ error: 'Invalid user ID' }, 400)
+    }
+
+    // Check user exists
+    const existing = db.select().from(users).where(eq(users.userId, id)).get()
+    if (!existing) {
+      return c.json({ error: 'User not found' }, 404)
+    }
+
+    const body = await c.req.json() as {
+      userUsername?: string
+      userEmail?: string
+      userGroup?: number
+      userPassword?: string
+      confirmPassword?: string
+    }
+
+    const username = (body.userUsername ?? '').trim()
+    const email = (body.userEmail ?? '').trim()
+    const group = body.userGroup
+    const password = body.userPassword ?? ''
+    const confirm = body.confirmPassword ?? ''
+
+    // Validate username
+    if (!username) {
+      return c.json({ error: 'Username is required' }, 400)
+    }
+    if (!isAlphanumeric(username)) {
+      return c.json({ error: 'Username must be alphanumeric (letters and digits only)' }, 400)
+    }
+
+    // Validate email
+    if (!email) {
+      return c.json({ error: 'Email address is required' }, 400)
+    }
+    if (!isValidEmail(email)) {
+      return c.json({ error: 'Please enter a valid email address' }, 400)
+    }
+
+    // Validate group
+    if (group === undefined || group === null || isNaN(Number(group))) {
+      return c.json({ error: 'User group is required' }, 400)
+    }
+
+    // Validate password if provided
+    if (password) {
+      if (password !== confirm) {
+        return c.json({ error: 'Passwords do not match' }, 400)
+      }
+    }
+
+    // Username uniqueness (exclude self)
+    const existingUsername = db
+      .select({ userId: users.userId })
+      .from(users)
+      .where(and(eq(users.userUsername, username), ne(users.userId, id)))
+      .get()
+    if (existingUsername) {
+      return c.json({ error: 'Username is already in use' }, 400)
+    }
+
+    // Email uniqueness (exclude self)
+    const existingEmail = db
+      .select({ userId: users.userId })
+      .from(users)
+      .where(and(eq(users.userEmail, email), ne(users.userId, id)))
+      .get()
+    if (existingEmail) {
+      return c.json({ error: 'Email address is already in use' }, 400)
+    }
+
+    // Prevent demoting the last admin (group 1)
+    if (existing.userGroup === 1 && Number(group) !== 1) {
+      const adminCount = db
+        .select({ value: count() })
+        .from(users)
+        .where(eq(users.userGroup, 1))
+        .get()
+      if ((adminCount?.value ?? 0) <= 1) {
+        return c.json({ error: 'Cannot demote the last admin user' }, 400)
+      }
+    }
+
+    // Build update object
+    const updateData: Partial<typeof users.$inferInsert> = {
+      userUsername: username,
+      userEmail: email,
+      userGroup: Number(group),
+    }
+
+    // Only update password if provided
+    if (password) {
+      updateData.userPassword = await Bun.password.hash(password, { algorithm: 'bcrypt', cost: 12 })
+    }
+
+    const [updated] = db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.userId, id))
+      .returning({
+        userId: users.userId,
+        userUsername: users.userUsername,
+        userEmail: users.userEmail,
+        userGroup: users.userGroup,
+        userJoinDate: users.userJoinDate,
+        userLastLogin: users.userLastLogin,
+        userApiKey: users.userApiKey,
+      })
+      .all()
+
+    const groupRow = db
+      .select({ groupName: userGroups.groupName })
+      .from(userGroups)
+      .where(eq(userGroups.groupId, updated.userGroup))
+      .get()
+
+    return c.json({
+      data: {
+        ...updated,
+        groupName: groupRow?.groupName ?? '',
+        gravatarHash: gravatarHash(updated.userEmail),
+      },
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // DELETE /api/admin/users/:id
+  // Delete a user
+  // -------------------------------------------------------------------------
+  router.delete('/:id', requireManageUsers, async (c) => {
+    const id = parseInt(c.req.param('id'), 10)
+    if (isNaN(id)) {
+      return c.json({ error: 'Invalid user ID' }, 400)
+    }
+
+    const existing = db.select({ userId: users.userId }).from(users).where(eq(users.userId, id)).get()
+    if (!existing) {
+      return c.json({ error: 'User not found' }, 404)
+    }
+
+    db.delete(users).where(eq(users.userId, id)).run()
+
+    return c.json({ data: { success: true } })
+  })
+
+  // -------------------------------------------------------------------------
+  // POST /api/admin/users/:id/reset-api-key
+  // Generate and save a new API key for the user
+  // -------------------------------------------------------------------------
+  router.post('/:id/reset-api-key', requireManageUsers, async (c) => {
+    const id = parseInt(c.req.param('id'), 10)
+    if (isNaN(id)) {
+      return c.json({ error: 'Invalid user ID' }, 400)
+    }
+
+    const existing = db.select({ userId: users.userId }).from(users).where(eq(users.userId, id)).get()
+    if (!existing) {
+      return c.json({ error: 'User not found' }, 404)
+    }
+
+    const newKey = generateApiKey()
+    db.update(users).set({ userApiKey: newKey }).where(eq(users.userId, id)).run()
+
+    return c.json({ data: { userApiKey: newKey } })
   })
 
   return router

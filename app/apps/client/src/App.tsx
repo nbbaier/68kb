@@ -23,6 +23,8 @@ import { CategoryDetailPage } from '@/pages/CategoryDetailPage'
 import { GlossaryPage } from '@/pages/GlossaryPage'
 import { AdminGlossaryPage } from '@/pages/AdminGlossaryPage'
 import { AdminGlossaryFormPage } from '@/pages/AdminGlossaryFormPage'
+import { AdminUsersPage } from '@/pages/AdminUsersPage'
+import { AdminUserFormPage } from '@/pages/AdminUserFormPage'
 import { SearchPage } from '@/pages/SearchPage'
 import { SearchResultsPage } from '@/pages/SearchResultsPage'
 import { SearchNoResultsPage } from '@/pages/SearchNoResultsPage'
@@ -110,10 +112,10 @@ function App() {
             <Route path="kb/glossary/add" element={<AdminGlossaryFormPage />} />
             <Route path="kb/glossary/edit/:id" element={<AdminGlossaryFormPage />} />
 
-            <Route
-              path="users"
-              element={<div className="p-4 text-muted-foreground">Users — coming soon</div>}
-            />
+            {/* Users routes */}
+            <Route path="users" element={<AdminUsersPage />} />
+            <Route path="users/new" element={<AdminUserFormPage />} />
+            <Route path="users/:id/edit" element={<AdminUserFormPage />} />
             <Route
               path="modules"
               element={<div className="p-4 text-muted-foreground">Modules — coming soon</div>}
