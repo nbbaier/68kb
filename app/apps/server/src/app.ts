@@ -6,6 +6,11 @@ import { sessionMiddleware, CookieStore } from 'hono-sessions'
 import type { db } from './db'
 import { createAuthRoutes } from './routes/auth'
 import { createAdminRoutes } from './routes/admin'
+import {
+  createPublicCategoryRoutes,
+  createPublicArticleRoutes,
+  createPublicSettingsRoutes,
+} from './routes/public'
 import type { AppVariables } from './types'
 
 export function createApp(database: typeof db) {
@@ -75,6 +80,11 @@ export function createApp(database: typeof db) {
 
   // Auth routes
   app.route('/api/auth', createAuthRoutes(database))
+
+  // Public API routes
+  app.route('/api/categories', createPublicCategoryRoutes(database))
+  app.route('/api/articles', createPublicArticleRoutes(database))
+  app.route('/api/settings', createPublicSettingsRoutes(database))
 
   // Admin routes
   app.route('/api/admin', createAdminRoutes(database))

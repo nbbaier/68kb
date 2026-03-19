@@ -3,6 +3,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { AuthGuard } from '@/components/AuthGuard'
 import { AdminLayout } from '@/components/AdminLayout'
+import { PublicLayout } from '@/components/PublicLayout'
 import { LoginPage } from '@/pages/LoginPage'
 import { RegisterPage } from '@/pages/RegisterPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
@@ -16,6 +17,9 @@ import { AdminCategoryFormPage } from '@/pages/AdminCategoryFormPage'
 import { AdminCategoryDeletePage } from '@/pages/AdminCategoryDeletePage'
 import { AdminCategoryDuplicatePage } from '@/pages/AdminCategoryDuplicatePage'
 import { HomePage } from '@/pages/HomePage'
+import { CategoriesIndexPage } from '@/pages/CategoriesIndexPage'
+import { GlossaryPage } from '@/pages/GlossaryPage'
+import { SearchPage } from '@/pages/SearchPage'
 
 function App() {
   return (
@@ -23,9 +27,16 @@ function App() {
       <AuthProvider>
         <Routes>
           {/* ---------------------------------------------------------------- */}
-          {/* Public site */}
+          {/* Public site — wrapped in PublicLayout */}
           {/* ---------------------------------------------------------------- */}
-          <Route path="/" element={<HomePage />} />
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/categories" element={<CategoriesIndexPage />} />
+            <Route path="/categories/:slug" element={<CategoriesIndexPage />} />
+            <Route path="/glossary" element={<GlossaryPage />} />
+            <Route path="/glossary/term/:letter" element={<GlossaryPage />} />
+            <Route path="/search" element={<SearchPage />} />
+          </Route>
 
           {/* ---------------------------------------------------------------- */}
           {/* Auth pages — redirect to /admin if already logged in */}
