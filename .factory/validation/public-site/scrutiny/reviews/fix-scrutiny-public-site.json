@@ -1,0 +1,21 @@
+{
+  "featureId": "fix-scrutiny-public-site",
+  "reviewedAt": "2026-03-19T19:57:36Z",
+  "commitId": "db748b1",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Reviewed commit db748b1 against the fix feature requirements and prior failed reviews. All four prior blocking issues are correctly addressed (PublicLayout auth links, article hit-count UI sync, search results limit behavior, and strict glossary edit ID validation). The three non-blocking fixes in this feature are also implemented as described (hidden-ancestor breadcrumb traversal behavior, LIKE wildcard escaping, and glossary definition sanitization).",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The fullstack-worker procedure still requires manual verification via agent-browser, but this worker session completed without agent-browser interactions and still reported followedProcedure=true. This mismatch is recurring and suggests procedure enforcement/documentation drift.",
+      "evidence": "Skill step 8 in /Users/nbbaier/68kb/.factory/skills/fullstack-worker/SKILL.md requires manual verification with agent-browser; transcript skeleton for workerSessionId f565e592-d5d3-49de-aef9-073caaeb6abb shows no agent-browser tool calls; handoff.skillFeedback.followedProcedure=true."
+    }
+  ],
+  "addressesFailureFrom": "/Users/nbbaier/68kb/.factory/validation/public-site/scrutiny/synthesis.json",
+  "summary": "Pass: fix-scrutiny-public-site adequately resolves the previously failed public-site scrutiny blockers and the scoped non-blocking follow-up fixes; no new blocking defects were found in the reviewed diff."
+}

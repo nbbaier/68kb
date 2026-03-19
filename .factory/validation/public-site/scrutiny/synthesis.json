@@ -1,7 +1,7 @@
 {
   "milestone": "public-site",
-  "round": 1,
-  "status": "fail",
+  "round": 2,
+  "status": "pass",
   "validatorsRun": {
     "test": {
       "passed": true,
@@ -20,83 +20,21 @@
     }
   },
   "reviewsSummary": {
-    "total": 6,
-    "passed": 2,
-    "failed": 4,
-    "failedFeatures": [
-      "public-layout-homepage",
-      "article-detail-page",
-      "search-functionality",
-      "glossary-public-and-admin"
-    ]
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "failedFeatures": []
   },
-  "blockingIssues": [
-    {
-      "featureId": "public-layout-homepage",
-      "severity": "blocking",
-      "description": "PublicLayout user-nav links point to non-existent /users/* routes instead of actual app routes (/login, /register, /admin/account), causing broken navigation."
-    },
-    {
-      "featureId": "article-detail-page",
-      "severity": "blocking",
-      "description": "Article detail page increments hits but keeps rendering stale pre-increment view count, causing displayed views to diverge from DB state."
-    },
-    {
-      "featureId": "search-functionality",
-      "severity": "blocking",
-      "description": "Search results page hard-codes limit=10 when fetching pages, overriding site_max_search and breaking contract-aligned pagination behavior."
-    },
-    {
-      "featureId": "glossary-public-and-admin",
-      "severity": "blocking",
-      "description": "Admin glossary edit page uses permissive parseInt-based ID handling, allowing malformed IDs like 1abc instead of strict invalid-ID redirect behavior."
-    }
-  ],
-  "appliedUpdates": [
-    {
-      "target": "library",
-      "description": "Documented canonical current client auth/account route paths to avoid /users/* link mismatches.",
-      "sourceFeature": "public-layout-homepage"
-    },
-    {
-      "target": "library",
-      "description": "Documented Hono nested category route pattern `/:uri{.+}` for multi-segment slugs.",
-      "sourceFeature": "category-browse-pages"
-    }
-  ],
+  "blockingIssues": [],
+  "appliedUpdates": [],
   "suggestedGuidanceUpdates": [
     {
       "target": "fullstack-worker skill",
-      "suggestion": "Add an explicit manual-verification checklist item to click every newly added navigation/action link and verify destination routes exist and render expected pages.",
-      "evidence": "public-layout-homepage introduced /users/* links that were not present in router definitions and were not caught during manual checks.",
-      "isSystemic": false
-    },
-    {
-      "target": "fullstack-worker skill",
-      "suggestion": "Clarify tests-first guidance and require accurate handoff reporting when deviations occur (set followedProcedure=false with rationale when implementation/debugging must precede tests).",
-      "evidence": "category-browse-pages and glossary-public-and-admin reviews both identified tests-first/procedure-reporting mismatch patterns.",
+      "suggestion": "Clarify and enforce manual agent-browser verification expectations versus skillFeedback reporting so workers do not mark followedProcedure=true when required manual browser checks were skipped.",
+      "evidence": "Review for fix-scrutiny-public-site found no agent-browser calls in workerSessionId f565e592-d5d3-49de-aef9-073caaeb6abb despite fullstack-worker step 8 requiring manual verification, while handoff.skillFeedback.followedProcedure was true.",
       "isSystemic": true
-    },
-    {
-      "target": "AGENTS.md",
-      "suggestion": "Clarify whether react-hook-form+zod and shadcn are strict requirements for all forms/pages or preferred defaults with explicit exceptions.",
-      "evidence": "search-functionality used plain controlled form handling while current guidance can be interpreted as universally mandatory.",
-      "isSystemic": false
     }
   ],
-  "rejectedObservations": [
-    {
-      "observation": "fullstack-worker UI tests-first observation from glossary-public-and-admin",
-      "reason": "duplicate (covered by systemic tests-first/procedure-reporting guidance recommendation)"
-    },
-    {
-      "observation": "strict numeric route-param validation convention gap",
-      "reason": "ambiguous as a global convention; issue is captured directly as a feature-specific blocking defect"
-    },
-    {
-      "observation": "zod request-validation reminder for search POST route",
-      "reason": "already encompassed by broader AGENTS/skill clarification recommendation on validation/framework expectations"
-    }
-  ],
-  "previousRound": null
+  "rejectedObservations": [],
+  "previousRound": "/Users/nbbaier/68kb/.factory/validation/public-site/scrutiny/synthesis.round1.json"
 }
