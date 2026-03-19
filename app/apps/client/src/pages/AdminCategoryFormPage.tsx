@@ -350,7 +350,13 @@ export function AdminCategoryFormPage() {
         }
         // In duplicate mode, don't carry over the image
       } catch (err) {
-        setLoadError(err instanceof Error ? err.message : 'Failed to load category')
+        if (isDuplicate) {
+          // Duplicate load failed (e.g. category not found) — redirect to grid with toast
+          toast.error(err instanceof Error ? err.message : 'Failed to load category')
+          navigate('/admin/categories', { replace: true })
+        } else {
+          setLoadError(err instanceof Error ? err.message : 'Failed to load category')
+        }
       } finally {
         setIsLoading(false)
       }
@@ -358,7 +364,7 @@ export function AdminCategoryFormPage() {
 
     fetchCategory()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [catId, dupId, isEdit, isDuplicate])
+  }, [catId, dupId, isEdit, isDuplicate, navigate])
 
   // -------------------------------------------------------------------------
   // Form submission

@@ -7,7 +7,8 @@ import { toast } from 'sonner'
  *
  * Handles the /admin/categories/:id/duplicate route.
  * - If :id is non-numeric or invalid, redirects to /admin/categories with an error flash.
- * - If :id is a valid number, redirects to /admin/categories/new?duplicateId=:id to pre-fill the add form.
+ * - If :id is numeric but the API returns 404 (category not found), redirects to /admin/categories with an error flash.
+ * - If :id is a valid number and the category exists, redirects to /admin/categories/new?duplicateId=:id to pre-fill the add form.
  */
 export function AdminCategoryDuplicatePage() {
   const { id } = useParams<{ id: string }>()
@@ -23,8 +24,27 @@ export function AdminCategoryDuplicatePage() {
       return
     }
 
-    // Valid numeric ID — redirect to the add form with duplicateId query param
-    navigate(`/admin/categories/new?duplicateId=${numId}`, { replace: true })
+    // Valid numeric ID — verify category exists via API before redirecting
+    const verify = async () => {
+      try {
+        const res = await fetch(`/api/admin/categories/${numId}/duplicate`, {
+          credentials: 'include',
+        })
+        if (!res.ok) {
+          // Category not found (404) or other server error — redirect with toast
+          toast.error('Category not found')
+          navigate('/admin/categories', { replace: true })
+          return
+        }
+        // Category exists — redirect to the add form with duplicateId query param
+        navigate(`/admin/categories/new?duplicateId=${numId}`, { replace: true })
+      } catch {
+        toast.error('Failed to load category')
+        navigate('/admin/categories', { replace: true })
+      }
+    }
+
+    verify()
   }, [id, navigate])
 
   // Render nothing while redirecting
