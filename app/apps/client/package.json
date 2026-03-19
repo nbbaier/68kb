@@ -11,13 +11,19 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "class-variance-authority": "^0.7",
     "clsx": "^2",
     "lucide-react": "^0.511",
+    "next-themes": "^0.4.6",
+    "radix-ui": "^1.4.3",
     "react": "^19",
     "react-dom": "^19",
+    "react-hook-form": "^7.71.2",
     "react-router": "^7",
-    "tailwind-merge": "^2"
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^2",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4",
