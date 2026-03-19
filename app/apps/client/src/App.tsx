@@ -14,6 +14,7 @@ import { AdminArticleFormPage } from '@/pages/AdminArticleFormPage'
 import { AdminCategoriesPage } from '@/pages/AdminCategoriesPage'
 import { AdminCategoryFormPage } from '@/pages/AdminCategoryFormPage'
 import { AdminCategoryDeletePage } from '@/pages/AdminCategoryDeletePage'
+import { AdminCategoryDuplicatePage } from '@/pages/AdminCategoryDuplicatePage'
 import { HomePage } from '@/pages/HomePage'
 
 function App() {
@@ -83,6 +84,7 @@ function App() {
             <Route path="categories/new" element={<AdminCategoryFormPage />} />
             <Route path="categories/:id/edit" element={<AdminCategoryFormPage />} />
             <Route path="categories/:id/delete" element={<AdminCategoryDeletePage />} />
+            <Route path="categories/:id/duplicate" element={<AdminCategoryDuplicatePage />} />
             <Route
               path="users"
               element={<div className="p-4 text-muted-foreground">Users — coming soon</div>}

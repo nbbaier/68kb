@@ -539,7 +539,7 @@ export function createArticleRoutes(db: DrizzleDB) {
   router.delete('/:id', async (c) => {
     const id = parseInt(c.req.param('id'), 10)
     if (isNaN(id) || id <= 0) {
-      return c.json({ error: 'Invalid article ID' }, 400)
+      return c.json({ error: 'Article not found' }, 404)
     }
 
     const article = db.select().from(articles).where(eq(articles.articleId, id)).get()

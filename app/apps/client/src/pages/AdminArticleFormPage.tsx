@@ -496,8 +496,7 @@ function AttachmentsSection({
     }
   }
 
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleUpload = async () => {
     if (!uploadFile) return
 
     setIsUploading(true)
@@ -516,21 +515,25 @@ function AttachmentsSection({
 
       const json = await res.json() as { data?: Attachment; error?: string }
       if (!res.ok) {
-        setUploadError(json.error ?? 'Upload failed')
+        const errMsg = json.error ?? 'Upload failed'
+        setUploadError(errMsg)
+        toast.error(errMsg)
         return
       }
 
       if (json.data) {
         onAttachmentUploaded(json.data)
         toast.success('Attachment uploaded successfully')
-      }
-      setUploadTitle('')
-      setUploadFile(null)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
+        setUploadTitle('')
+        setUploadFile(null)
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
+        }
       }
     } catch {
-      setUploadError('Upload failed. Please try again.')
+      const errMsg = 'Upload failed. Please try again.'
+      setUploadError(errMsg)
+      toast.error(errMsg)
     } finally {
       setIsUploading(false)
     }
@@ -588,8 +591,8 @@ function AttachmentsSection({
         <p className="text-sm text-muted-foreground">No attachments yet.</p>
       )}
 
-      {/* Upload form */}
-      <form onSubmit={handleUpload} className="space-y-3">
+      {/* Upload section — uses a div (not form) to avoid nesting inside the outer article form */}
+      <div className="space-y-3">
         <h4 className="text-sm font-medium">Upload New Attachment</h4>
         {uploadError && (
           <p role="alert" className="text-sm text-destructive">
@@ -615,15 +618,16 @@ function AttachmentsSection({
             />
           </div>
           <Button
-            type="submit"
+            type="button"
             variant="secondary"
             disabled={!uploadFile || isUploading}
+            onClick={handleUpload}
           >
             <UploadIcon className="size-4 mr-2" />
             {isUploading ? 'Uploading…' : 'Upload'}
           </Button>
         </div>
-      </form>
+      </div>
     </div>
   )
 }
@@ -762,11 +766,18 @@ export function AdminArticleFormPage() {
         const formData = new FormData()
         formData.set('title', pendingUploadTitle || pendingUploadFile.name)
         formData.set('file', pendingUploadFile)
-        await fetch(`/api/admin/articles/${savedId}/attachments`, {
+        const uploadRes = await fetch(`/api/admin/articles/${savedId}/attachments`, {
           method: 'POST',
           credentials: 'include',
           body: formData,
         })
+        if (!uploadRes.ok) {
+          const uploadJson = await uploadRes.json() as { error?: string }
+          // Article was created successfully, but the file upload failed — show error
+          toast.error(uploadJson.error ?? 'File upload failed')
+          navigate(`/admin/articles/${savedId}/edit`)
+          return
+        }
       }
 
       toast.success(isEdit ? 'Article updated successfully' : 'Article created successfully')

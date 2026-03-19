@@ -831,13 +831,21 @@ describe('DELETE /api/admin/articles/:id', () => {
     expect(res.status).toBe(404)
   })
 
-  it('returns 400 for invalid ID', async () => {
+  it('returns 404 for invalid (non-numeric) ID (VAL-ART-041)', async () => {
     const cookie = await loginAsAdmin()
     const res = await app.request('/api/admin/articles/xyz', {
       method: 'DELETE',
       headers: { Cookie: cookie },
     })
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(404)
+  })
+  it('returns 404 for non-numeric ID "abc" (VAL-ART-041)', async () => {
+    const cookie = await loginAsAdmin()
+    const res = await app.request('/api/admin/articles/abc', {
+      method: 'DELETE',
+      headers: { Cookie: cookie },
+    })
+    expect(res.status).toBe(404)
   })
 
   it('deletes article and cascades: article2cat, article_tags, attachments', async () => {
