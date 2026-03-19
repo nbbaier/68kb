@@ -1,0 +1,39 @@
+{
+  "featureId": "public-layout-homepage",
+  "reviewedAt": "2026-03-19T19:39:58Z",
+  "commitId": "1370036",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The feature largely delivers the required public APIs, layout shell, and homepage sections, but it contains a blocking navigation regression: PublicLayout user links target non-existent /users/* routes instead of the app's actual auth/account routes.",
+    "issues": [
+      {
+        "file": "app/apps/client/src/components/PublicLayout.tsx",
+        "line": 212,
+        "severity": "blocking",
+        "description": "User nav links are wired to /users/login, /users/register, /users/account, and /users/profile/:username, but router definitions in app/apps/client/src/App.tsx only define /login, /register, /forgot-password, and /admin/account (no /users/* routes). This causes Login/Register/My Account links in the new public layout to lead to 404 routes."
+      },
+      {
+        "file": "app/apps/client/src/components/PublicLayout.tsx",
+        "line": 87,
+        "severity": "non_blocking",
+        "description": "Sidebar category links use `/categories/${cat.catUri}` while this commit's router only defines `/categories/:slug` (single segment). If catUri contains nested paths (e.g. `php/basics`, as seeded in app/apps/server/src/__tests__/public.test.ts), child category links become unmatched routes."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "Shared docs do not define canonical frontend public auth/account route paths, which likely contributed to route mismatch in the new layout (/users/* links vs existing /login and /register routes).",
+      "evidence": "AGENTS.md and .factory/library/architecture.md describe API route conventions but not frontend auth URL conventions; mismatch visible between app/apps/client/src/components/PublicLayout.tsx:212-218 and app/apps/client/src/App.tsx:45-54."
+    },
+    {
+      "area": "skills",
+      "observation": "The worker procedure's manual verification guidance is broad and did not force click-through verification of newly added navigation links, allowing broken href targets to pass despite extensive tests.",
+      "evidence": ".factory/skills/fullstack-worker/SKILL.md step 8 requires manual verification but does not explicitly require validating each new link target; handoff interactiveChecks mention nav state checks but not clicking Login/Register/My Account destinations."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail: found a blocking user-navigation routing mismatch in PublicLayout (/users/* links do not match app routes), plus a non-blocking nested-category link routing risk."
+}

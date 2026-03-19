@@ -1,0 +1,39 @@
+{
+  "featureId": "glossary-public-and-admin",
+  "reviewedAt": "2026-03-19T19:40:12Z",
+  "commitId": "52eca6a",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "Feature broadly implements required public and admin glossary capabilities, but there is a blocking invalid-ID handling bug in the admin edit page and a non-blocking stored-XSS risk in public glossary definition rendering.",
+    "issues": [
+      {
+        "file": "app/apps/client/src/pages/AdminGlossaryFormPage.tsx",
+        "line": 57,
+        "severity": "blocking",
+        "description": "Invalid edit IDs are parsed with parseInt() and only checked with isNaN(). Inputs like '/admin/kb/glossary/edit/1abc' are treated as ID 1 instead of being rejected/redirected, violating the invalid-ID redirect requirement. Use strict numeric validation (e.g., /^\\d+$/) before fetching."
+      },
+      {
+        "file": "app/apps/client/src/pages/GlossaryPage.tsx",
+        "line": 107,
+        "severity": "non_blocking",
+        "description": "Public glossary definitions are rendered with dangerouslySetInnerHTML from admin-controlled content, while create/update API paths for glossary terms do not sanitize HTML. This creates a stored-XSS risk if malicious HTML is saved in gDefinition."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "fullstack-worker skill procedure says to write UI component tests first, but this feature added only server tests while still marking followedProcedure=true. The skill procedure and practical enforcement are out of sync.",
+      "evidence": ".factory/skills/fullstack-worker/SKILL.md Step 6 requires UI component tests; handoff tests.added includes only app/apps/server/src/__tests__/glossary.test.ts; handoff.skillFeedback.followedProcedure=true with no deviations."
+    },
+    {
+      "area": "conventions",
+      "observation": "Shared conventions do not explicitly require strict client-side route-param validation for numeric IDs, which likely contributed to permissive parseInt-based handling.",
+      "evidence": "AGENTS.md and .factory/library/architecture.md describe API and form conventions but do not document strict numeric route-param checks; AdminGlossaryFormPage.tsx:57 uses parseInt(id, 10) + isNaN only."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Result: fail. The implementation is mostly complete for glossary public/admin behavior, but admin edit invalid-ID handling is not strict enough (blocking). Also noted a non-blocking stored-XSS risk in glossary definition rendering and two shared-state documentation/procedure gaps."
+}

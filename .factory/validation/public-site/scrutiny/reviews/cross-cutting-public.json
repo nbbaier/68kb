@@ -1,0 +1,22 @@
+{
+  "featureId": "cross-cutting-public",
+  "reviewedAt": "2026-03-19T19:39:37Z",
+  "commitId": "9a35724",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Implementation satisfies the core cross-cutting requirements: hidden categories are filtered across public category endpoints and breadcrumb rendering no longer exposes hidden categories; responsive public layout introduces mobile navigation and stacked content/sidebar behavior; XSS rendering relies on React escaping with coverage in new tests. One non-blocking breadcrumb edge case remains.",
+    "issues": [
+      {
+        "file": "app/apps/server/src/routes/public.ts",
+        "line": 159,
+        "severity": "non_blocking",
+        "description": "Breadcrumb traversal stops when the immediate parent is hidden (`if (!parent) break` after filtering parent by `cat_display='yes'`). In hierarchies like visible-grandparent -> hidden-parent -> visible-child, this drops visible higher ancestors instead of skipping only hidden nodes."
+      }
+    ]
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": null,
+  "summary": "PASS with one non-blocking issue: breadcrumb traversal truncates when a hidden parent exists, which can omit visible higher ancestors. No blocking correctness, security, or regression defects were found for the required feature behavior."
+}

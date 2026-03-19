@@ -1,0 +1,39 @@
+{
+  "featureId": "search-functionality",
+  "reviewedAt": "2026-03-19T19:41:36Z",
+  "commitId": "652cea0",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The feature delivers the required search routes and pages, but there is a blocking pagination correctness issue: the client hard-codes `limit=10`, which overrides `site_max_search` and can break expected pagination behavior when that setting differs from 10.",
+    "issues": [
+      {
+        "file": "app/apps/client/src/pages/SearchResultsPage.tsx",
+        "line": 85,
+        "severity": "blocking",
+        "description": "`loadPage()` always sends `limit=${perPage}`, and `perPage` defaults to 10 before first response (`const perPage = results?.limit ?? 10`). This forces 10 results/page regardless of configured `site_max_search`, so pagination behavior can diverge from the contract requirement tied to `site_max_search` (VAL-SEARCH-004)."
+      },
+      {
+        "file": "app/apps/server/src/routes/search.ts",
+        "line": 90,
+        "severity": "non_blocking",
+        "description": "Keyword LIKE patterns are built as `%${word}%` without escaping `%`/`_` wildcard characters. This allows wildcard-heavy inputs to match far more rows than intended (e.g., `%`), unlike the legacy implementation which used `escape_like_str` before LIKE construction."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "Shared conventions currently prescribe shadcn components and react-hook-form + zod for forms, but this feature's public search form uses plain controlled inputs and manual submit handling. The guidance appears stricter than observed implementation practice and could be clarified to avoid inconsistent enforcement.",
+      "evidence": "AGENTS.md:30-31 says 'Use shadcn components for all UI' and 'Forms: react-hook-form + zod'; feature uses plain `<form>/<input>/<select>` in app/apps/client/src/pages/SearchPage.tsx:124,133,152."
+    },
+    {
+      "area": "skills",
+      "observation": "The fullstack-worker skill says to use Zod for request body validation where applicable, but this route parses JSON without runtime schema validation, relying on TypeScript-only typing. Consider tightening the skill wording/checklist for public POST endpoints.",
+      "evidence": ".factory/skills/fullstack-worker/SKILL.md step 5 ('Use Zod for request body validation where applicable') vs app/apps/server/src/routes/search.ts:191-199 (manual JSON parse, no zod schema)."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail — blocking issue in search results pagination: client enforces `limit=10` instead of honoring configured `site_max_search`; plus a non-blocking wildcard-escaping correctness risk in keyword LIKE matching."
+}

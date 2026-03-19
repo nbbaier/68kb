@@ -1,0 +1,28 @@
+{
+  "featureId": "article-detail-page",
+  "reviewedAt": "2026-03-19T19:40:08Z",
+  "commitId": "11d6399",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "Core article detail functionality is implemented, but hit-count behavior is inconsistent with the feature contract: the page increments views on load but does not update the rendered count to match the post-increment DB value. I also noted a hidden-article exposure edge case on the hit endpoint.",
+    "issues": [
+      {
+        "file": "app/apps/client/src/pages/ArticleDetailPage.tsx",
+        "line": 270,
+        "severity": "blocking",
+        "description": "The page increments hits (`POST /api/articles/:id/hit`) but never updates local `articleHits` state from that response; rendered `Views:` uses the pre-increment value (`article.articleHits`), so UI count can diverge from DB after each view. This conflicts with the requirement that displayed hit count matches article views accounting for current visit increment (VAL-DETAIL-004/005)."
+      },
+      {
+        "file": "app/apps/server/src/routes/public.ts",
+        "line": 247,
+        "severity": "non_blocking",
+        "description": "`POST /api/articles/:id/hit` increments any existing article ID without checking `articleDisplay = 'y'`. Hidden articles are inaccessible by slug, but their hit counters are still mutable if IDs are known, which weakens the hidden-content boundary intent."
+      }
+    ]
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": null,
+  "summary": "Fail — blocking issue on hit-count correctness: view increments occur but displayed count is stale relative to DB. Non-blocking: hidden-article IDs can still have hit counts incremented via the public hit endpoint."
+}

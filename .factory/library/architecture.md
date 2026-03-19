@@ -53,6 +53,7 @@ app/
 
 - **shadcn component installation**: After `bunx shadcn@latest add <component>`, verify files land in `src/components/ui/` (not a literal `@/` directory). If components.json alias resolution fails, move files manually.
 - **Forms with react-hook-form + zod**: Always add `noValidate` to `<form>` elements to prevent HTML5 native validation from interfering with react-hook-form's validation.
+- **Client auth/account routes (current app)**: Public auth routes are `/login`, `/register`, `/forgot-password`; account edit route is `/admin/account`. Do not link to `/users/*` routes unless those routes are explicitly added.
 
 ## Testing Patterns
 
@@ -65,5 +66,6 @@ app/
 - Public routes: `/api/auth/*`, `/api/articles/*`, `/api/categories/*`, `/api/search/*`
 - Admin routes: `/api/admin/articles/*`, `/api/admin/categories/*`, `/api/admin/users/*`, etc.
 - Admin routes are protected via `createRequireAdmin(sessionStore)` helper, which enforces session auth plus `can_access_admin` permission checks.
+- For public category routes that need nested slugs (e.g. `parent/child`), use Hono parameter regex style `/:uri{.+}` rather than simple `/:slug`.
 - Pagination: `?page=1&limit=20&sort=field&order=asc&search=term`
 - Responses: `{ data: T }` or `{ data: T[], total: number, page: number }` for lists
