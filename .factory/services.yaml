@@ -1,0 +1,23 @@
+commands:
+  install: cd /Users/nbbaier/68kb/app && bun install
+  typecheck: cd /Users/nbbaier/68kb/app && bunx tsc --noEmit -p apps/server/tsconfig.json && bunx tsc --noEmit -p apps/client/tsconfig.json
+  test: cd /Users/nbbaier/68kb/app && bun test
+  build: cd /Users/nbbaier/68kb/app && bun run --filter @68kb/client build
+  db:migrate: cd /Users/nbbaier/68kb/app && bun run --filter @68kb/server db:migrate
+  db:seed: cd /Users/nbbaier/68kb/app && bun run --filter @68kb/server db:seed
+  db:push: cd /Users/nbbaier/68kb/app && bunx --cwd apps/server drizzle-kit push
+
+services:
+  api:
+    start: cd /Users/nbbaier/68kb/app && PORT=3100 bun run --hot apps/server/src/index.ts
+    stop: lsof -ti :3100 | xargs kill 2>/dev/null || true
+    healthcheck: curl -sf http://localhost:3100/api/health
+    port: 3100
+    depends_on: []
+
+  web:
+    start: cd /Users/nbbaier/68kb/app && bunx --cwd apps/client vite --port 3101
+    stop: lsof -ti :3101 | xargs kill 2>/dev/null || true
+    healthcheck: curl -sf http://localhost:3101
+    port: 3101
+    depends_on: [api]
