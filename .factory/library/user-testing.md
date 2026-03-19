@@ -45,3 +45,11 @@ Testing surface, tools, and resource cost classification for validators.
 - For assertions that require explicit status codes, headers, or response payload verification, capture supplemental `curl` evidence.
 - Sonner toasts can disappear quickly; for style-sensitive flash assertions, capture evidence immediately after trigger and record computed styles via in-page evaluation.
 - Browser numeric inputs (`input[type=number]`) may reject non-numeric keystrokes before submit; for “non-numeric validation” assertions, use a boundary request or temporary DOM-type swap in automation to exercise server-side validation paths.
+
+## Public-Site Fixture Learnings (2026-03-19)
+
+- Do **not** run glossary public and glossary admin assertion groups concurrently; glossary admin CRUD mutates glossary rows and can race glossary list/count assertions.
+- `VAL-DETAIL-008` needs a fixture article body containing at least one glossary term; current seeded data may have zero glossary-term matches in article descriptions.
+- `VAL-HOME-004` and `VAL-HOME-005` require isolated empty-data fixtures (or disposable DB copy) because they depend on globally empty categories/articles states.
+- `VAL-SEARCH-004` pagination requires visible matches strictly greater than `site_max_search` (default observed: 20); current seed data can be below threshold.
+- `VAL-SEARCH-008` requires an expired search hash fixture (older than 1 hour) to validate cleanup/expiration behavior without waiting in real time.

@@ -1,0 +1,200 @@
+{
+  "groupId": "glossary-public",
+  "testedAt": "2026-03-19T20:19:56Z",
+  "isolation": {
+    "surface": "web",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "evidenceDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be/evidence/public-site/glossary-public",
+    "reportPath": "/Users/nbbaier/68kb/.factory/validation/public-site/user-testing/flows/glossary-public.json",
+    "dataPrefix": "ut_glossary_public_",
+    "seededAdminCredentials": "admin / admin123"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "python3-sqlite3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-GLOSS-001",
+      "title": "A–Z Navigation Bar",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to /glossary",
+          "expected": "A–Z and # navigation links are rendered",
+          "observed": "A–Z and # links are visible in the glossary navigation row"
+        },
+        {
+          "action": "Extract glossary letter links and hrefs from DOM",
+          "expected": "Letters A–Z map to /glossary/term/{letter}; # maps to /glossary/term/sym",
+          "observed": "DOM export shows all 26 letters with expected /glossary/term/{letter} hrefs and # -> /glossary/term/sym"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/glossary-public/VAL-GLOSS-001-glossary-annotated.png"
+        ],
+        "artifacts": [
+          "public-site/glossary-public/VAL-GLOSS-001-az-links.json"
+        ],
+        "consoleErrors": "none (public-site/glossary-public/VAL-GLOSS-001-002-006-console-errors.txt)",
+        "network": "GET /glossary -> 200 (public-site/glossary-public/VAL-GLOSS-route-status.txt)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-GLOSS-002",
+      "title": "Full Glossary List",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Load /glossary and capture rendered term list",
+          "expected": "All glossary terms render in ascending order with term anchors and definitions",
+          "observed": "8 terms rendered in ascending order (.htaccess, 404 Error, Algorithm, API, Boolean, Cache, Database, ut_glossary_admin_20260319_a_edit) with #term-* anchors and visible definitions"
+        },
+        {
+          "action": "Query SQLite glossary table for count and sorted terms",
+          "expected": "UI count/order match DB count/order",
+          "observed": "DB count=8 and sorted term list matches UI exactly"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/glossary-public/VAL-GLOSS-002-full-glossary.png"
+        ],
+        "artifacts": [
+          "public-site/glossary-public/VAL-GLOSS-002-terms-dom.json",
+          "public-site/glossary-public/VAL-GLOSS-db-reference.json"
+        ],
+        "consoleErrors": "none (public-site/glossary-public/VAL-GLOSS-001-002-006-console-errors.txt)",
+        "network": "GET /glossary -> 200 (public-site/glossary-public/VAL-GLOSS-route-status.txt)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-GLOSS-003",
+      "title": "Letter Filtering",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to /glossary/term/a",
+          "expected": "Only A terms display; A–Z bar remains visible",
+          "observed": "Rendered terms are Algorithm and API only; A–Z bar visible with 27 links including #"
+        },
+        {
+          "action": "Compare with DB WHERE lower(g_term) LIKE 'a%'",
+          "expected": "UI matches DB result and remains alphabetically sorted",
+          "observed": "DB aTerms=[Algorithm, API], matching UI order and membership"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/glossary-public/VAL-GLOSS-003-letter-a.png"
+        ],
+        "artifacts": [
+          "public-site/glossary-public/VAL-GLOSS-003-terms-a.json",
+          "public-site/glossary-public/VAL-GLOSS-db-reference.json"
+        ],
+        "consoleErrors": "none (public-site/glossary-public/VAL-GLOSS-003-console-errors.txt)",
+        "network": "GET /glossary/term/a -> 200 (public-site/glossary-public/VAL-GLOSS-route-status.txt)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-GLOSS-004",
+      "title": "Symbol/Number Filtering",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to /glossary/term/sym",
+          "expected": "Only symbol/number-leading terms display; A–Z bar remains visible",
+          "observed": "Rendered terms are .htaccess and 404 Error only; A–Z bar visible with # link"
+        },
+        {
+          "action": "Compare with DB symbol/number query",
+          "expected": "UI term set matches DB symbol/number result",
+          "observed": "DB symbolTerms=[.htaccess, 404 Error], matching UI exactly"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/glossary-public/VAL-GLOSS-004-symbols.png"
+        ],
+        "artifacts": [
+          "public-site/glossary-public/VAL-GLOSS-004-terms-sym.json",
+          "public-site/glossary-public/VAL-GLOSS-db-reference.json"
+        ],
+        "consoleErrors": "none (public-site/glossary-public/VAL-GLOSS-004-console-errors.txt)",
+        "network": "GET /glossary/term/sym -> 200 (public-site/glossary-public/VAL-GLOSS-route-status.txt)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-GLOSS-005",
+      "title": "Empty Letter Result",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to /glossary/term/e (no matching terms in DB)",
+          "expected": "Page renders cleanly with no term rows; A–Z bar remains present",
+          "observed": "Page rendered with termCount=0, no layout errors, and A–Z bar visible"
+        },
+        {
+          "action": "Use A–Z bar after empty state",
+          "expected": "Navigation links still functional",
+          "observed": "Clicked 'A' link from empty E page and navigated to /glossary/term/a successfully"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/glossary-public/VAL-GLOSS-005-empty-letter-e.png",
+          "public-site/glossary-public/VAL-GLOSS-005-nav-functional-after-empty.png"
+        ],
+        "artifacts": [
+          "public-site/glossary-public/VAL-GLOSS-005-empty-letter-e-dom.json",
+          "public-site/glossary-public/VAL-GLOSS-db-reference.json"
+        ],
+        "consoleErrors": "none (public-site/glossary-public/VAL-GLOSS-005-console-errors.txt)",
+        "network": "GET /glossary/term/e -> 200 (public-site/glossary-public/VAL-GLOSS-route-status.txt)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-GLOSS-006",
+      "title": "Glossary Page Title",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Load /glossary and read document title",
+          "expected": "HTML title contains 'Glossary'",
+          "observed": "Page title is 'Glossary'"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/glossary-public/VAL-GLOSS-002-full-glossary.png"
+        ],
+        "artifacts": [
+          "public-site/glossary-public/VAL-GLOSS-006-title.txt"
+        ],
+        "consoleErrors": "none (public-site/glossary-public/VAL-GLOSS-001-002-006-console-errors.txt)",
+        "network": "GET /glossary -> 200 (public-site/glossary-public/VAL-GLOSS-route-status.txt)"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Glossary data changed during parallel validation (new admin-created term appeared mid-run), so /glossary evidence had to be re-captured to align UI and DB counts at one point in time.",
+      "resolved": true,
+      "resolution": "Re-ran /glossary capture and DB query immediately afterward; final UI and DB both show 8 terms.",
+      "affectedAssertions": [
+        "VAL-GLOSS-002"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 6 assertions for Glossary Public: 6 passed, 0 failed, 0 blocked. A–Z navigation, full list rendering/count, letter and symbol filtering, empty-letter behavior, and title behavior all matched contract expectations."
+}

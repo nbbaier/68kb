@@ -1,0 +1,314 @@
+{
+  "groupId": "category-browse-crosscut",
+  "testedAt": "2026-03-19T20:12:49Z",
+  "isolation": {
+    "surface": "web",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "evidenceDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be/evidence/public-site/category-browse-crosscut",
+    "reportPath": "/Users/nbbaier/68kb/.factory/validation/public-site/user-testing/flows/category-browse-crosscut.json"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "sqlite3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-BROWSE-001",
+      "title": "Sub-Category Grid",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /categories/g5dupdel-1773939084-repl-parent",
+          "expected": "Direct visible child categories render in Sub-Categories grid",
+          "observed": "Grid rendered 3 direct children: repl_child, src, src_1 with article counts"
+        },
+        {
+          "action": "Compare API/DB child list for cat_id=15",
+          "expected": "Only direct visible children shown with matching data",
+          "observed": "UI matched API/DB: 3 visible direct children, counts 1/0/0"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/category-browse-crosscut/VAL-BROWSE-001-subcategory-grid.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/categories/g5dupdel-1773939084-repl-parent?page=1&limit=10 -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-BROWSE-002",
+      "title": "Category Name and Description",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /categories/g5dupdel-1773939084-repl-parent",
+          "expected": "Heading and description match category record",
+          "observed": "Heading g5dupdel_1773939084_repl_parent and description g5dupdel replacement parent category displayed"
+        },
+        {
+          "action": "Check DB category row cat_id=15",
+          "expected": "DB values match rendered content",
+          "observed": "DB cat_name/cat_description matched rendered heading/description"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/category-browse-crosscut/VAL-BROWSE-002-category-name-description.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/categories/g5dupdel-1773939084-repl-parent?page=1&limit=10 -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-BROWSE-003",
+      "title": "Paginated Article List",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /categories/g10tags-cat-1773939841 page 1",
+          "expected": "Article list and pagination controls appear when total exceeds page size",
+          "observed": "List rendered with Previous/Next controls and first page articles ut_browse_crosscut_pag_22..13"
+        },
+        {
+          "action": "Click Next page",
+          "expected": "Page 2 shows different article slice",
+          "observed": "Page 2 showed ut_browse_crosscut_pag_12..03 (different from page 1)"
+        },
+        {
+          "action": "Check category API page metadata",
+          "expected": "Total and paging metadata consistent",
+          "observed": "API reported total=22, limit=10, page=1 and page=2 as expected"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/category-browse-crosscut/VAL-BROWSE-003-category-pagination-page1.png",
+          "public-site/category-browse-crosscut/VAL-BROWSE-003-category-pagination-page2.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/categories/g10tags-cat-1773939841?page=1&limit=10 -> 200; GET /api/categories/g10tags-cat-1773939841?page=2&limit=10 -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-BROWSE-004",
+      "title": "Breadcrumb Navigation",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Open /categories/g5dupdel-1773939084-repl-parent/g5dupdel-1773939084-repl-child",
+          "expected": "Breadcrumb includes Categories -> ancestor(s) -> current category, all as links",
+          "observed": "Breadcrumb showed Categories and parent as links, but current category rendered as non-link text"
+        },
+        {
+          "action": "Inspect API breadcrumb payload",
+          "expected": "UI matches full linked breadcrumb chain",
+          "observed": "API included parent and current entries; UI did not render current entry as a link"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/category-browse-crosscut/VAL-BROWSE-004-breadcrumb-deep-nested.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/categories/g5dupdel-1773939084-repl-parent/g5dupdel-1773939084-repl-child?page=1&limit=10 -> 200"
+      },
+      "issues": "Current category breadcrumb segment is not a link, which does not meet the assertion contract wording that each segment be linked."
+    },
+    {
+      "id": "VAL-BROWSE-005",
+      "title": "Empty Category (No Articles)",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /categories/g4edit_noimg_uri",
+          "expected": "No-articles message shown instead of article list",
+          "observed": "Page displayed 'No articles found in this category.'"
+        },
+        {
+          "action": "Check category API payload",
+          "expected": "Article total is zero",
+          "observed": "API returned articles.total=0"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/category-browse-crosscut/VAL-BROWSE-005-empty-category-no-articles.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/categories/g4edit_noimg_uri?page=1&limit=10 -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-BROWSE-006",
+      "title": "Empty Category (No Sub-Categories)",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open leaf category /categories/g5dupdel-1773939084-repl-parent/g5dupdel-1773939084-repl-child",
+          "expected": "Page renders cleanly without sub-category grid errors",
+          "observed": "Page loaded cleanly; no Sub-Categories section rendered"
+        },
+        {
+          "action": "Check console after load",
+          "expected": "No JS errors",
+          "observed": "No console errors"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/category-browse-crosscut/VAL-BROWSE-006-leaf-no-subcategories.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/categories/g5dupdel-1773939084-repl-parent/g5dupdel-1773939084-repl-child?page=1&limit=10 -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-BROWSE-007",
+      "title": "Invalid Category URI Redirect",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Navigate to /categories/nonexistent-category-ut-browse-crosscut",
+          "expected": "HTTP 302 redirect to /categories",
+          "observed": "Browser ended at /categories, but direct HTTP request returned 200 (SPA shell), not 302"
+        },
+        {
+          "action": "Check invalid category API endpoint",
+          "expected": "Invalid category handling path confirms non-existent resource",
+          "observed": "API returned 404 {\"error\":\"Category not found\"}"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/category-browse-crosscut/VAL-BROWSE-007-invalid-category-redirect.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /categories/nonexistent-category-ut-browse-crosscut -> 200; GET /api/categories/nonexistent-category-ut-browse-crosscut?page=1&limit=10 -> 404"
+      },
+      "issues": "Observed client-side redirect behavior, but contract requires HTTP 302 redirect response."
+    },
+    {
+      "id": "VAL-BROWSE-008",
+      "title": "Categories Index (Root Level)",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /categories",
+          "expected": "Categories heading and top-level visible categories are listed",
+          "observed": "Heading 'Categories' rendered with root-level category links"
+        },
+        {
+          "action": "Check categories API",
+          "expected": "Public category list request succeeds",
+          "observed": "GET /api/categories returned 200 with visible category data"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/category-browse-crosscut/VAL-BROWSE-008-categories-index-root.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/categories -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-XCUT-002",
+      "title": "Hidden Categories Not Displayed",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Check homepage and category browse pages",
+          "expected": "Hidden categories are absent from public grids/sidebar/browse",
+          "observed": "Hidden categories g2core_6a598d_child and g4edit_target_cei_renamed were not present"
+        },
+        {
+          "action": "Open /search and inspect category dropdown",
+          "expected": "Hidden categories excluded from search filter options",
+          "observed": "Dropdown options excluded both hidden category names"
+        },
+        {
+          "action": "Open grandchild page with hidden ancestor and inspect breadcrumb",
+          "expected": "Hidden category not shown in breadcrumbs",
+          "observed": "Breadcrumb contained root + current; hidden ancestor excluded"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/category-browse-crosscut/VAL-XCUT-002-hidden-categories-homepage-grid.png",
+          "public-site/category-browse-crosscut/VAL-XCUT-002-hidden-categories-search-dropdown.png",
+          "public-site/category-browse-crosscut/VAL-XCUT-002-hidden-categories-breadcrumb-sidebar.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/categories -> 200; GET /api/categories/g2core-6a598d-root/g2core-6a598d-child/g2core-6a598d-grandchild?page=1&limit=10 -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-XCUT-003",
+      "title": "Responsive/Accessible Layout",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Set viewport to 320, 768, 1024, 1440 and load homepage",
+          "expected": "No horizontal overflow at all widths; nav accessible",
+          "observed": "No overflow at 320 and 1440; horizontal overflow detected at 768 and 1024"
+        },
+        {
+          "action": "Check navigation availability",
+          "expected": "Navigation usable at each width",
+          "observed": "Navigation available via menu button at 320 and visible links at larger widths"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/category-browse-crosscut/VAL-XCUT-003-responsive-320.png",
+          "public-site/category-browse-crosscut/VAL-XCUT-003-responsive-320-menu-open.png",
+          "public-site/category-browse-crosscut/VAL-XCUT-003-responsive-768.png",
+          "public-site/category-browse-crosscut/VAL-XCUT-003-responsive-1024.png",
+          "public-site/category-browse-crosscut/VAL-XCUT-003-responsive-1440.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET / -> 200 (all viewport checks)"
+      },
+      "issues": "documentElement.scrollWidth exceeded viewport width at 768 and 1024, indicating horizontal overflow."
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Existing seeded data did not provide enough visible articles in one category to exercise pagination transitions for VAL-BROWSE-003.",
+      "resolved": true,
+      "resolution": "Created temporary prefixed articles (ut_browse_crosscut_pag_*) for validation, captured evidence, then removed all temporary rows after testing.",
+      "affectedAssertions": [
+        "VAL-BROWSE-003"
+      ]
+    },
+    {
+      "description": "agent-browser network export does not include response status codes.",
+      "resolved": true,
+      "resolution": "Captured supplemental curl evidence for required status codes and payload snippets.",
+      "affectedAssertions": [
+        "VAL-BROWSE-001",
+        "VAL-BROWSE-002",
+        "VAL-BROWSE-003",
+        "VAL-BROWSE-004",
+        "VAL-BROWSE-005",
+        "VAL-BROWSE-006",
+        "VAL-BROWSE-007",
+        "VAL-BROWSE-008",
+        "VAL-XCUT-002",
+        "VAL-XCUT-003"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 10 assertions: 7 passed, 3 failed (VAL-BROWSE-004 breadcrumb current item not linked, VAL-BROWSE-007 expected HTTP 302 not observed, VAL-XCUT-003 horizontal overflow at 768/1024)."
+}

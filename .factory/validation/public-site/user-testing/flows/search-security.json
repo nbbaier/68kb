@@ -1,0 +1,332 @@
+{
+  "groupId": "search-security",
+  "testedAt": "2026-03-19T20:23:32Z",
+  "isolation": {
+    "surface": "web",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "evidenceDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be/evidence/public-site/search-security",
+    "reportPath": "/Users/nbbaier/68kb/.factory/validation/public-site/user-testing/flows/search-security.json",
+    "dataPrefix": "ut_search_security_",
+    "seededAdminCredentials": "admin / admin123"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "python3-sqlite3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-SEARCH-001",
+      "title": "Advanced Search Form",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Navigate to /search and inspect form controls",
+          "expected": "Keywords input, Category dropdown, submit button, and Search breadcrumb are present",
+          "observed": "Keywords input, category dropdown, submit button, and breadcrumb were present on /search"
+        },
+        {
+          "action": "Compare dropdown options against visible categories in DB",
+          "expected": "Dropdown includes all visible categories hierarchically",
+          "observed": "Dropdown showed 19 visible categories while DB had 20 visible categories; g2core_6a598d_grandchild was missing"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/search-security/VAL-SEARCH-001-form.png"
+        ],
+        "artifacts": [
+          "public-site/search-security/VAL-SEARCH-001-dropdown-compare.txt"
+        ],
+        "consoleErrors": "none (public-site/search-security/VAL-SEARCH-001-dropdown-compare.txt)",
+        "network": "GET /search -> 200"
+      },
+      "issues": "Category dropdown omitted visible category g2core_6a598d_grandchild (cat_id=5)."
+    },
+    {
+      "id": "VAL-SEARCH-002",
+      "title": "Search by Keywords",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Submit keyword search for 'g6grid'",
+          "expected": "Matching visible articles returned with /article/{uri} links",
+          "observed": "Results page listed 6 matching g6grid articles with /article/* links"
+        },
+        {
+          "action": "Verify returned article visibility in DB",
+          "expected": "Only article_display='y' results are shown",
+          "observed": "All returned article URIs mapped to article_display='y' in DB"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/search-security/VAL-SEARCH-002-results.png"
+        ],
+        "artifacts": [
+          "public-site/search-security/VAL-SEARCH-002-results-check.txt"
+        ],
+        "consoleErrors": "none (public-site/search-security/VAL-SEARCH-002-results-check.txt)",
+        "network": "Browser navigated to /search/results/e5401e32422f75442445d41dca2c583d"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-SEARCH-003",
+      "title": "Search by Category Filter",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Search keyword 'g' with category filter cat_id=15 (g5dupdel_..._repl_parent)",
+          "expected": "Results limited to selected category tree (self + descendants)",
+          "observed": "Only /article/g5dupdel-1773939084-article was returned"
+        },
+        {
+          "action": "Compare filtered results to category tree membership",
+          "expected": "Cross-category matches excluded",
+          "observed": "DB check showed returned article belonged to tree [15,16,17,22] and other keyword matches from other categories were excluded"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/search-security/VAL-SEARCH-003-category-filter.png"
+        ],
+        "artifacts": [
+          "public-site/search-security/VAL-SEARCH-003-category-filter-check.txt"
+        ],
+        "consoleErrors": "none (public-site/search-security/VAL-SEARCH-003-category-filter-check.txt)",
+        "network": "Browser navigated to /search/results/0a938cef13a518906c37253f3ae2ce3d"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-SEARCH-004",
+      "title": "Search Results Pagination",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Run broad search keyword 'g' and inspect result set/pagination controls",
+          "expected": "If matches exceed site_max_search, pagination links appear and page 2 differs",
+          "observed": "9 visible results returned and no pagination controls rendered"
+        },
+        {
+          "action": "Check configured per-page limit and total matching visible records",
+          "expected": "Dataset should have > site_max_search results to exercise pagination",
+          "observed": "site_max_search=20 while visible matching records=9, so pagination path could not be triggered"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/search-security/VAL-SEARCH-004-results-no-pagination.png"
+        ],
+        "artifacts": [
+          "public-site/search-security/VAL-SEARCH-004-pagination-check.txt"
+        ],
+        "consoleErrors": "none (public-site/search-security/VAL-SEARCH-004-pagination-check.txt)",
+        "network": "Browser navigated to /search/results/93c5e8926f06d116b51d245d86e395f2"
+      },
+      "issues": "Precondition unmet: available visible data does not exceed pagination threshold."
+    },
+    {
+      "id": "VAL-SEARCH-005",
+      "title": "No Results Message",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Search for nonsensical keyword ut_search_security_no_results_20260319_xyz",
+          "expected": "No-results page with message and Search Again link",
+          "observed": "Navigated to /search/no-results with 'No Results Found' message and 'Search Again' link"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/search-security/VAL-SEARCH-005-no-results.png"
+        ],
+        "artifacts": [
+          "public-site/search-security/VAL-SEARCH-005-no-results-check.txt"
+        ],
+        "consoleErrors": "none (public-site/search-security/VAL-SEARCH-005-no-results-check.txt)",
+        "network": "Browser route /search/no-results"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-SEARCH-006",
+      "title": "Search Logging",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Record searchlog max ID, then run keyword search 'g6grid'",
+          "expected": "New searchlog row inserted for executed search",
+          "observed": "New row searchlog_id=11 inserted after search"
+        },
+        {
+          "action": "Validate inserted row fields",
+          "expected": "Row contains term, current timestamp, client IP, and anonymous user id",
+          "observed": "Row captured term='g6grid', current timestamp, user_id=0, ip='0.0.0.0'"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/search-security/VAL-SEARCH-006-searchlog-trigger.png"
+        ],
+        "artifacts": [
+          "public-site/search-security/VAL-SEARCH-006-searchlog-db-check.txt"
+        ],
+        "consoleErrors": "none (public-site/search-security/VAL-SEARCH-006-searchlog-db-check.txt)",
+        "network": "Browser navigated to /search/results/a935a733f195b55895b8556cf0e2e2c4"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-SEARCH-007",
+      "title": "Search with Empty Keywords",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Submit /search form with empty keywords and default category",
+          "expected": "Redirect to no-results/search page without server error",
+          "observed": "Navigated to /search/no-results and page rendered cleanly"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/search-security/VAL-SEARCH-007-empty-search.png"
+        ],
+        "artifacts": [
+          "public-site/search-security/VAL-SEARCH-007-empty-search-check.txt"
+        ],
+        "consoleErrors": "none (public-site/search-security/VAL-SEARCH-007-empty-search-check.txt)",
+        "network": "Client-side navigation to /search/no-results"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-SEARCH-008",
+      "title": "Search Hash Expiration",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Inspect search table for hashes older than 1 hour",
+          "expected": "At least one expired hash available to validate expiration redirect",
+          "observed": "0 expired rows found; all search hashes were newer than 1 hour"
+        },
+        {
+          "action": "Open an existing current hash",
+          "expected": "Current hash should still be accessible",
+          "observed": "Current hash remained accessible at /search/results/a935a733f195b55895b8556cf0e2e2c4"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/search-security/VAL-SEARCH-008-current-hash-accessible.png"
+        ],
+        "artifacts": [
+          "public-site/search-security/VAL-SEARCH-008-expiration-check.txt"
+        ],
+        "consoleErrors": "none (public-site/search-security/VAL-SEARCH-008-expiration-check.txt)",
+        "network": "Browser route /search/results/a935a733f195b55895b8556cf0e2e2c4"
+      },
+      "issues": "Precondition unmet: no expired hash fixture available without mutating shared data or waiting >1h."
+    },
+    {
+      "id": "VAL-SEARCH-009",
+      "title": "Malformed Search Hash",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to /search/results/abc (wrong length)",
+          "expected": "Redirect to no-results",
+          "observed": "Browser ended at /search/no-results"
+        },
+        {
+          "action": "Navigate to /search/results/ffffffffffffffffffffffffffffffff (nonexistent 32-char hash)",
+          "expected": "Redirect to no-results",
+          "observed": "Browser ended at /search/no-results"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/search-security/VAL-SEARCH-009-invalid-hash.png"
+        ],
+        "artifacts": [
+          "public-site/search-security/VAL-SEARCH-009-invalid-hash-check.txt"
+        ],
+        "consoleErrors": "none (public-site/search-security/VAL-SEARCH-009-invalid-hash-check.txt)",
+        "network": "Client-side redirect for both malformed hash cases to /search/no-results"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-XCUT-001",
+      "title": "XSS Protection on User Input",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Submit search payload <script>alert('xss')</script>",
+          "expected": "No script execution and safe rendering",
+          "observed": "Navigated to /search/no-results, no alert executed, no console/script errors"
+        },
+        {
+          "action": "Inspect rendered HTML for payload reflection",
+          "expected": "Raw script must not render as executable markup",
+          "observed": "Raw payload was absent from page source (containsRawPayload=false), indicating no executable script injection"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/search-security/VAL-XCUT-001-xss-search.png"
+        ],
+        "artifacts": [
+          "public-site/search-security/VAL-XCUT-001-xss-check.txt"
+        ],
+        "consoleErrors": "none (public-site/search-security/VAL-XCUT-001-xss-check.txt)",
+        "network": "Browser route /search/no-results after payload submit"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser label locator for 'Keywords' matched both main search form input and sidebar search input.",
+      "resolved": true,
+      "resolution": "Switched to ref-based interaction (@e9/@e31) after snapshot to target the intended advanced search form.",
+      "affectedAssertions": [
+        "VAL-SEARCH-002",
+        "VAL-SEARCH-003",
+        "VAL-SEARCH-004",
+        "VAL-SEARCH-005",
+        "VAL-SEARCH-006",
+        "VAL-SEARCH-007",
+        "VAL-XCUT-001"
+      ]
+    },
+    {
+      "description": "agent-browser network request log did not capture useful /search request details in this run.",
+      "resolved": true,
+      "resolution": "Used supplemental curl checks and SQLite evidence for status/behavior validation where needed.",
+      "affectedAssertions": [
+        "VAL-SEARCH-006",
+        "VAL-SEARCH-009"
+      ]
+    }
+  ],
+  "blockers": [
+    {
+      "description": "Pagination precondition not met: site_max_search=20 while maximum visible matched records in dataset were 9.",
+      "affectedAssertions": [
+        "VAL-SEARCH-004"
+      ],
+      "quickFixAttempted": "Ran broad keyword search ('g') and verified DB match count; still below pagination threshold."
+    },
+    {
+      "description": "No expired search hashes available for expiration-path validation.",
+      "affectedAssertions": [
+        "VAL-SEARCH-008"
+      ],
+      "quickFixAttempted": "Queried search table for rows older than 1 hour; found 0. Avoided mutating shared DB timestamps."
+    }
+  ],
+  "summary": "Tested 10 assertions: 7 passed, 1 failed, 2 blocked. Failure: VAL-SEARCH-001 missing one visible category in advanced-search dropdown. Blocked: VAL-SEARCH-004 (insufficient data for pagination) and VAL-SEARCH-008 (no expired hash fixture)."
+}

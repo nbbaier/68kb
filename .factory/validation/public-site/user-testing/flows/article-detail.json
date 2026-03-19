@@ -1,0 +1,360 @@
+{
+  "groupId": "article-detail",
+  "testedAt": "2026-03-19T20:14:10.522360Z",
+  "isolation": {
+    "surface": "web",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "evidenceDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be/evidence/public-site/article-detail",
+    "reportPath": "/Users/nbbaier/68kb/.factory/validation/public-site/user-testing/flows/article-detail.json",
+    "adminCredentials": "admin / admin123"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "python3-sqlite3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-DETAIL-001",
+      "title": "Article Title and Content",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /article/g7core-full-uri-20260319113257",
+          "expected": "Heading/body match DB and render as HTML",
+          "observed": "H1 matched DB title; body rendered in DOM (not escaped)"
+        },
+        {
+          "action": "Open /article/g9edit_article_uri_updated_1773939132",
+          "expected": "Rich HTML body renders",
+          "observed": "DOM check confirmed <em> and <li> rendered"
+        },
+        {
+          "action": "Open hidden article URI",
+          "expected": "Non-display article not publicly accessible",
+          "observed": "Hidden URI showed 404 page content instead of article body"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/article-detail/VAL-DETAIL-001-006-article13.png",
+          "public-site/article-detail/VAL-DETAIL-007-article19-no-attachments.png",
+          "public-site/article-detail/VAL-DETAIL-010-hidden-article-page.png"
+        ],
+        "consoleErrors": "none (empty logs)",
+        "network": "GET /article/g7core-full-uri-20260319113257 -> 200; GET /article/g9edit_article_uri_updated_1773939132 -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DETAIL-002",
+      "title": "Article Categories (Links)",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /article/g7core-full-uri-20260319113257",
+          "expected": "Associated visible categories shown as links",
+          "observed": "Two linked categories rendered below content"
+        },
+        {
+          "action": "Compare with DB article2cat/categories",
+          "expected": "URIs/text match DB cat_uri/cat_name",
+          "observed": "Links matched /categories/g7core-cat-a-20260319113257 and /categories/g7core-cat-b-20260319113257"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/article-detail/VAL-DETAIL-001-006-article13.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /article/g7core-full-uri-20260319113257 -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DETAIL-003",
+      "title": "Last Modified Date",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Inspect article info line on article detail",
+          "expected": "Contains Last Updated label with human-readable date",
+          "observed": "Displayed 'Last Updated: March 19, 2026'"
+        },
+        {
+          "action": "Compare with DB article_modified",
+          "expected": "Formatted date matches timestamp",
+          "observed": "DB timestamp 1773938074 formats to March 19, 2026"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/article-detail/VAL-DETAIL-004-hit-display-article13-final.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /article/g7core-full-uri-20260319113257 -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DETAIL-004",
+      "title": "Hit/View Count Display",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open article detail page",
+          "expected": "Views count is shown",
+          "observed": "Views: 6 shown in article info"
+        },
+        {
+          "action": "Compare displayed value to DB",
+          "expected": "Displayed views matches stored article_hits",
+          "observed": "Displayed Views: 6 equals DB article13_hits=6"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/article-detail/VAL-DETAIL-004-hit-display-article13-final.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /article/g7core-full-uri-20260319113257 -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DETAIL-005",
+      "title": "Hit Counter Increment",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Query DB hits for article 19 before load",
+          "expected": "Baseline value captured",
+          "observed": "before_open (19, 0)"
+        },
+        {
+          "action": "Load article once then query DB",
+          "expected": "Increment by exactly 1",
+          "observed": "after_first_open (19, 1)"
+        },
+        {
+          "action": "Reload once then query DB",
+          "expected": "Increment by exactly 1 again",
+          "observed": "after_reload (19, 2)"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/article-detail/VAL-DETAIL-004-005-hit-display-after-reload.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /article/g9edit_article_uri_updated_1773939132 -> 200 (initial + reload)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DETAIL-006",
+      "title": "File Attachments",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open article with known attachment",
+          "expected": "Attachments fieldset with download link is visible",
+          "observed": "Attachments section rendered with g7core_attach_20260319113257 link"
+        },
+        {
+          "action": "Request attachment URL",
+          "expected": "Download endpoint responds successfully",
+          "observed": "GET /uploads/13/1773938074371_g7core_attachment.txt returned 200"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/article-detail/VAL-DETAIL-001-006-article13.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /uploads/13/1773938074371_g7core_attachment.txt -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DETAIL-007",
+      "title": "File Attachments (None)",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open article with zero attachments (/article/g9edit_article_uri_updated_1773939132)",
+          "expected": "No attachments fieldset shown",
+          "observed": "No Attachments heading and no /uploads links in main content"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/article-detail/VAL-DETAIL-007-article19-no-attachments.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /article/g9edit_article_uri_updated_1773939132 -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DETAIL-008",
+      "title": "Glossary Tooltips",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Check glossary terms and article descriptions in DB",
+          "expected": "At least one public article contains glossary term occurrences for tooltip validation",
+          "observed": "No article_description contains any glossary term"
+        },
+        {
+          "action": "Inspect article DOM for tooltip anchors",
+          "expected": "a.tooltip present when terms occur",
+          "observed": "tooltipCount remained 0 on tested detail pages"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/article-detail/VAL-DETAIL-001-006-article13.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /article/g7core-full-uri-20260319113257 -> 200"
+      },
+      "issues": "Blocked by missing test fixture data: no available article body includes glossary terms, so first-occurrence tooltip behavior cannot be exercised end-to-end on current dataset."
+    },
+    {
+      "id": "VAL-DETAIL-009",
+      "title": "Article Not Found (404)",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Navigate to /article/this-uri-does-not-exist-ut-article-detail",
+          "expected": "HTTP 404 and user-friendly error page",
+          "observed": "User-friendly 404 page rendered in UI"
+        },
+        {
+          "action": "Check HTTP status via curl",
+          "expected": "404",
+          "observed": "Status was 200"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/article-detail/VAL-DETAIL-009-not-found-page.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /article/this-uri-does-not-exist-ut-article-detail -> 200"
+      },
+      "issues": "Route renders 404 UI but returns HTTP 200 instead of 404."
+    },
+    {
+      "id": "VAL-DETAIL-010",
+      "title": "Hidden Article Not Accessible",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Navigate to hidden URI /article/g6grid_20260319112217-article-03",
+          "expected": "HTTP 404",
+          "observed": "404 UI shown but HTTP status was 200"
+        },
+        {
+          "action": "Check public listings/search/category for hidden title g6grid_20260319112217_search_target",
+          "expected": "Hidden article excluded everywhere",
+          "observed": "Hidden article absent from homepage, search results, and category page"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/article-detail/VAL-DETAIL-010-hidden-article-page.png",
+          "public-site/article-detail/VAL-DETAIL-010-homepage-exclusion.png",
+          "public-site/article-detail/VAL-DETAIL-010-search-exclusion.png",
+          "public-site/article-detail/VAL-DETAIL-010-category-exclusion.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /article/g6grid_20260319112217-article-03 -> 200"
+      },
+      "issues": "Hidden article content is blocked and excluded from listings, but endpoint does not return required HTTP 404 status."
+    },
+    {
+      "id": "VAL-TAG-003",
+      "title": "Tag-based related articles",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Open /article/g6grid_20260319112217-article-00 (shared tags with other visible articles)",
+          "expected": "Related articles list appears excluding current article",
+          "observed": "No related section and no related article links rendered"
+        },
+        {
+          "action": "Compare with DB shared-tag candidates",
+          "expected": "At least one related candidate exists",
+          "observed": "DB shows shared-tag candidates but UI shows none"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/article-detail/VAL-TAG-003-related-article1.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /article/g6grid_20260319112217-article-00 -> 200"
+      },
+      "issues": "Related-by-tag results are not displayed on article detail despite existing shared-tag candidates."
+    },
+    {
+      "id": "VAL-XCUT-004",
+      "title": "Page Meta Tags",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /article/g7core-full-uri-20260319113257 and inspect <head>",
+          "expected": "meta[name=keywords] and meta[name=description] populated from article fields",
+          "observed": "keywords='g7corekw1,g7corekw2'; description='g7core short desc <b>bold</b>'"
+        },
+        {
+          "action": "Compare with DB article fields",
+          "expected": "Values correspond to article_keywords and article_short_desc",
+          "observed": "Keywords exactly matched DB; description derived from DB short description content"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/article-detail/VAL-DETAIL-004-hit-display-article13-final.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /article/g7core-full-uri-20260319113257 -> 200"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Advanced search page has duplicate 'Keywords' labels (main form + sidebar search), causing strict locator conflicts in agent-browser.",
+      "resolved": true,
+      "resolution": "Switched to element refs from snapshot (filled @e9 and clicked @e31) to target the correct form.",
+      "affectedAssertions": [
+        "VAL-DETAIL-010"
+      ]
+    },
+    {
+      "description": "agent-browser network request log returned no captured requests in this run.",
+      "resolved": true,
+      "resolution": "Captured explicit route/asset status codes with curl as supplemental network evidence.",
+      "affectedAssertions": [
+        "VAL-DETAIL-006",
+        "VAL-DETAIL-009",
+        "VAL-DETAIL-010",
+        "VAL-XCUT-004"
+      ]
+    }
+  ],
+  "blockers": [
+    {
+      "description": "No current article body contains any glossary term, so first-occurrence tooltip behavior cannot be triggered through existing public data.",
+      "affectedAssertions": [
+        "VAL-DETAIL-008"
+      ],
+      "quickFixAttempted": "Queried glossary terms and all article descriptions in SQLite; found zero matches."
+    }
+  ],
+  "summary": "Tested 12 assertions: 8 passed, 3 failed, 1 blocked. Failures were HTTP status handling for not-found/hidden article routes and missing related-by-tag rendering."
+}

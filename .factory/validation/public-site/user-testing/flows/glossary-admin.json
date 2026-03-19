@@ -1,0 +1,188 @@
+{
+  "groupId": "glossary-admin",
+  "testedAt": "2026-03-19T20:23:56.033516+00:00",
+  "isolation": {
+    "surface": "web",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "evidenceDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be/evidence/public-site/glossary-admin",
+    "reportPath": "/Users/nbbaier/68kb/.factory/validation/public-site/user-testing/flows/glossary-admin.json",
+    "dataPrefix": "ut_glossary_admin_",
+    "credentials": {
+      "username": "admin",
+      "password": "admin123"
+    }
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "python3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-GLOSS-ADMIN-001",
+      "title": "Glossary Grid View",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to /admin/kb/glossary",
+          "expected": "Grid shows checkbox, Term, Definition columns and Add Term button to /admin/kb/glossary/add",
+          "observed": "Grid rendered with Select row checkboxes, Term/Definition columns, and Add Term link to /admin/kb/glossary/add"
+        },
+        {
+          "action": "Search for \"API\"",
+          "expected": "Search filters rows",
+          "observed": "Grid filtered to single API row with \"1 term(s) total\""
+        },
+        {
+          "action": "Click Sort by Term",
+          "expected": "Sort order changes",
+          "observed": "Order changed from [.htaccess, 404 Error, ...] to [Database, Cache, ...]"
+        },
+        {
+          "action": "Compare grid total with DB",
+          "expected": "UI row count matches glossary table",
+          "observed": "UI showed 7 term(s); SQLite query returned count=7"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/glossary-admin/VAL-GLOSS-ADMIN-001-grid.png",
+          "public-site/glossary-admin/VAL-GLOSS-ADMIN-001-search-filter.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/admin/glossary?page=1&limit=20&sort=term&order=asc observed in browser; curl to same endpoint returned 200 with total=7"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-GLOSS-ADMIN-002",
+      "title": "Add Glossary Term",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /admin/kb/glossary/add",
+          "expected": "Form shows Term and Definition fields",
+          "observed": "Form rendered with Term* and Definition fields"
+        },
+        {
+          "action": "Submit empty form",
+          "expected": "Validation errors shown",
+          "observed": "Validation message \"Term is required\" shown on add form"
+        },
+        {
+          "action": "Submit valid term ut_glossary_admin_20260319_a",
+          "expected": "New row inserted, redirect to grid, success flash",
+          "observed": "Redirected to /admin/kb/glossary, flash \"Glossary term created\", DB row inserted with g_id=10"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/glossary-admin/VAL-GLOSS-ADMIN-002-add-form.png",
+          "public-site/glossary-admin/VAL-GLOSS-ADMIN-002-validation-error.png",
+          "public-site/glossary-admin/VAL-GLOSS-ADMIN-002-created-flash.png"
+        ],
+        "consoleErrors": "none",
+        "network": "POST /api/admin/glossary observed from UI flow; subsequent GET /api/admin/glossary list refresh observed"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-GLOSS-ADMIN-003",
+      "title": "Edit Glossary Term",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /admin/kb/glossary/edit/10",
+          "expected": "Form pre-populated with existing term/definition",
+          "observed": "Term and Definition fields pre-filled with previously created term values"
+        },
+        {
+          "action": "Update term+definition and submit",
+          "expected": "DB updated, redirect to grid with success flash",
+          "observed": "Redirected to /admin/kb/glossary with flash \"Glossary term updated\"; DB row 10 updated to ut_glossary_admin_20260319_a_edit"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/glossary-admin/VAL-GLOSS-ADMIN-003-edit-prepopulated.png",
+          "public-site/glossary-admin/VAL-GLOSS-ADMIN-003-updated-grid-flash.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/admin/glossary/10 then PUT /api/admin/glossary/10 observed in browser network log"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-GLOSS-ADMIN-004",
+      "title": "Bulk Delete Glossary Terms",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Select row for ut_glossary_admin_20260319_a_edit",
+          "expected": "Bulk action controls become available",
+          "observed": "Bulk action combobox and Update button appeared after selecting checkbox"
+        },
+        {
+          "action": "Choose Delete and click Update",
+          "expected": "Selected records deleted, unselected remain",
+          "observed": "Flash showed \"1 term(s) deleted\"; DB count changed 8→7; deleted term removed while unselected term \"Database\" remained"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/glossary-admin/VAL-GLOSS-ADMIN-004-before-bulk-delete.png",
+          "public-site/glossary-admin/VAL-GLOSS-ADMIN-004-after-bulk-delete.png"
+        ],
+        "consoleErrors": "none",
+        "network": "DELETE /api/admin/glossary observed in browser network log"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-GLOSS-ADMIN-005",
+      "title": "Edit Non-Existent Term",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to /admin/kb/glossary/edit/999999 while authenticated",
+          "expected": "Redirect to glossary grid without server error",
+          "observed": "Client landed on /admin/kb/glossary with \"Glossary term not found\" flash; no console errors"
+        },
+        {
+          "action": "Inspect invalid term API response",
+          "expected": "Not-found response handled cleanly",
+          "observed": "curl GET /api/admin/glossary/999999 returned 404 JSON {\"error\":\"Glossary term not found\"}"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/glossary-admin/VAL-GLOSS-ADMIN-005-invalid-edit-redirect.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Document GET /admin/kb/glossary/edit/999999 observed, followed by GET /api/admin/glossary/999999 (404) and UI redirect to /admin/kb/glossary"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Bulk action dropdown/update controls are hidden until at least one row checkbox is selected.",
+      "resolved": true,
+      "resolution": "Selected a glossary row first; controls appeared and delete action became available.",
+      "affectedAssertions": [
+        "VAL-GLOSS-ADMIN-004"
+      ]
+    },
+    {
+      "description": "Invalid edit route handling is SPA/client-driven (document request returns SPA shell; not an HTTP 302 redirect).",
+      "resolved": true,
+      "resolution": "Captured final redirected UI state and supplemental API 404 evidence for invalid ID handling.",
+      "affectedAssertions": [
+        "VAL-GLOSS-ADMIN-005"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Validated 5 glossary admin assertions: 5 passed, 0 failed, 0 blocked."
+}

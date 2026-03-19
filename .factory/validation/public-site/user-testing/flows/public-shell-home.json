@@ -1,0 +1,379 @@
+{
+  "groupId": "public-shell-home",
+  "testedAt": "2026-03-19T20:11:43Z",
+  "isolation": {
+    "surface": "web",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "evidenceDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be/evidence/public-site/public-shell-home",
+    "reportPath": "/Users/nbbaier/68kb/.factory/validation/public-site/user-testing/flows/public-shell-home.json",
+    "dataPrefix": "ut_public_shell_home_"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "python3-sqlite"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-PUB-001",
+      "title": "Top Navigation Links",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open / and inspect main nav",
+          "expected": "Home, Categories, Glossary, Advanced Search links visible",
+          "observed": "All 4 links visible in header nav on home"
+        },
+        {
+          "action": "Click nav links sequentially (Categories, Glossary, Advanced Search, Home)",
+          "expected": "Navigate to /categories, /glossary, /search, /",
+          "observed": "URL changed correctly to each expected route"
+        },
+        {
+          "action": "Check active-state indicator on each route",
+          "expected": "Current route link has visual active state",
+          "observed": "aria-current=\"page\" + active classes present for Home/Categories/Glossary/Advanced Search on their routes"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/public-shell-home/VAL-PUB-001-home-nav.png",
+          "public-site/public-shell-home/VAL-PUB-001-categories-active.png",
+          "public-site/public-shell-home/VAL-PUB-001-glossary-active.png",
+          "public-site/public-shell-home/VAL-PUB-001-search-active.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Browser navigation clicks resolved to expected URLs: /categories, /glossary, /search, / (all loaded successfully)."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-PUB-002",
+      "title": "User Navigation (Logged Out)",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Clear cookies and open /",
+          "expected": "Logged-out header state",
+          "observed": "Logged-out state shown with Login and Register links"
+        },
+        {
+          "action": "Inspect href targets for Login/Register",
+          "expected": "Login -> /users/login, Register -> /users/register",
+          "observed": "Login -> /login, Register -> /register"
+        },
+        {
+          "action": "Check for authenticated text",
+          "expected": "No Welcome/My Account text",
+          "observed": "No Welcome/My Account text present"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/public-shell-home/VAL-PUB-002-logged-out-nav.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET / loaded successfully (200)."
+      },
+      "issues": "Route targets do not match contract: expected /users/login and /users/register but implementation uses /login and /register."
+    },
+    {
+      "id": "VAL-PUB-003",
+      "title": "User Navigation (Logged In)",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Sign in with seeded admin credentials and open /",
+          "expected": "Authenticated user nav shown",
+          "observed": "Header shows \"Welcome, admin\" and \"My Account\"; Login/Register hidden"
+        },
+        {
+          "action": "Inspect authenticated link targets",
+          "expected": "Welcome links to profile and My Account links to /users/account",
+          "observed": "Both Welcome and My Account link to /admin"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/public-shell-home/VAL-PUB-003-logged-in-nav.png"
+        ],
+        "consoleErrors": "none",
+        "network": "POST /api/auth/login succeeded via UI (redirected to /admin), then GET / rendered authenticated header state."
+      },
+      "issues": "Authenticated header links do not match contract routing expectations (expected profile + /users/account; actual links point to /admin)."
+    },
+    {
+      "id": "VAL-PUB-004",
+      "title": "Sidebar Search Box",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Inspect sidebar search section on /",
+          "expected": "Search heading, keyword input, submit button, and Advanced Search link to /search",
+          "observed": "All elements present; Advanced Search href is /search"
+        },
+        {
+          "action": "Submit sidebar search for g6grid_20260319112217_article_00",
+          "expected": "Search flow executes and returns results",
+          "observed": "Flow navigated to /search/results/<hash> and displayed matching result list"
+        },
+        {
+          "action": "Verify search endpoint behavior",
+          "expected": "Keyword submission reaches search endpoint",
+          "observed": "curl POST /api/search with same keyword returned 200 and hash payload"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/public-shell-home/VAL-PUB-004-sidebar-search.png",
+          "public-site/public-shell-home/VAL-PUB-004-search-results.png"
+        ],
+        "consoleErrors": "none",
+        "network": "POST /api/search -> 200 {\"data\":{\"hash\":\"...\",\"total\":1}}; browser navigated to /search/results/<hash>."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-PUB-005",
+      "title": "Sidebar Category Listing",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Capture sidebar categories list on /",
+          "expected": "Hierarchical list of visible categories with counts and links",
+          "observed": "Sidebar rendered hierarchical list with \u00bb indentation for child categories and count badges"
+        },
+        {
+          "action": "Compare rendered list against DB visible tree/counts query",
+          "expected": "Displayed categories and counts match DB-derived visible tree",
+          "observed": "Rendered labels/hrefs/counts matched DB query output (including nested child URIs)"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/public-shell-home/VAL-PUB-005-sidebar-categories.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/categories -> 200."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-PUB-006",
+      "title": "Footer Content",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open / and inspect footer text",
+          "expected": "\u00a9 {current_year} {site_title}",
+          "observed": "Footer shows \"\u00a9 2026 Your Site\""
+        },
+        {
+          "action": "Compare site title to settings table",
+          "expected": "Footer site title equals settings.site_name",
+          "observed": "DB setting site_name=Your Site, matching footer text"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/public-shell-home/VAL-PUB-006-footer.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/settings/public -> 200."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-PUB-007",
+      "title": "Layout Renders on All Public Pages",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /",
+          "expected": "Nav + sidebar + footer visible",
+          "observed": "All shell elements present"
+        },
+        {
+          "action": "Open /article/g7core-full-uri-20260319113257",
+          "expected": "Nav + sidebar + footer visible",
+          "observed": "All shell elements present"
+        },
+        {
+          "action": "Open /categories/g10tags-cat-1773939841",
+          "expected": "Nav + sidebar + footer visible",
+          "observed": "All shell elements present"
+        },
+        {
+          "action": "Open /search and /glossary",
+          "expected": "Nav + sidebar + footer visible",
+          "observed": "All shell elements present on both routes"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/public-shell-home/VAL-PUB-007-home-layout.png",
+          "public-site/public-shell-home/VAL-PUB-007-article-layout.png",
+          "public-site/public-shell-home/VAL-PUB-007-category-layout.png",
+          "public-site/public-shell-home/VAL-PUB-007-search-layout.png",
+          "public-site/public-shell-home/VAL-PUB-007-glossary-layout.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /, /article/{uri}, /categories/{uri}, /search, /glossary all loaded successfully."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-HOME-001",
+      "title": "Category Grid Display",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open / and inspect Categories section",
+          "expected": "3-column grid of top-level visible categories with link/name/description/count",
+          "observed": "Grid computed to 3 columns at desktop viewport and rendered 16 category cards"
+        },
+        {
+          "action": "Compare displayed category links/counts against DB top-level visible categories query",
+          "expected": "Only cat_parent=0 and cat_display=yes with correct counts",
+          "observed": "Displayed cards matched DB top-level visible set and article counts; no child category URIs shown in grid"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/public-shell-home/VAL-HOME-001-category-grid.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/categories -> 200."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-HOME-002",
+      "title": "Popular Articles List",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Inspect Most Popular list on /",
+          "expected": "Articles sorted by article_hits desc with links to /article/{uri}",
+          "observed": "List order and links matched descending-hit order from DB top 10"
+        },
+        {
+          "action": "Check visibility constraint",
+          "expected": "Only article_display=y entries shown",
+          "observed": "All listed articles corresponded to DB rows with article_display=y"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/public-shell-home/VAL-HOME-002-popular-list.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/articles/popular -> 200."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-HOME-003",
+      "title": "Recent Articles List",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Inspect Recent Articles list on /",
+          "expected": "Articles sorted by article_date desc with links to /article/{uri}",
+          "observed": "Rendered order matched DB descending article_date order"
+        },
+        {
+          "action": "Check visibility constraint",
+          "expected": "Only article_display=y entries shown",
+          "observed": "All listed recent entries were display=y in DB"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/public-shell-home/VAL-HOME-003-recent-list.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/articles/recent -> 200."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-HOME-004",
+      "title": "Empty State (No Categories)",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Assess precondition for empty-category homepage state",
+          "expected": "Environment with zero visible categories",
+          "observed": "Environment has many visible categories and shared seeded data"
+        },
+        {
+          "action": "Determine safe way to induce precondition",
+          "expected": "Non-disruptive isolated method available",
+          "observed": "No isolated data namespace available; clearing categories would disrupt shared validation environment"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/public-shell-home/VAL-HOME-001-category-grid.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Current environment serves populated /api/categories data (200)."
+      },
+      "issues": "Blocked by shared seeded dataset: could not safely create a no-categories global state without destructive cross-worker impact."
+    },
+    {
+      "id": "VAL-HOME-005",
+      "title": "Empty State (No Articles)",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Assess precondition for empty-articles homepage state",
+          "expected": "Environment with zero articles for popular/recent lists",
+          "observed": "Environment has many public articles in both lists"
+        },
+        {
+          "action": "Determine safe way to induce precondition",
+          "expected": "Non-disruptive isolated method available",
+          "observed": "No isolated data namespace available; deleting all articles would disrupt shared validation environment"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/public-shell-home/VAL-HOME-002-popular-list.png",
+          "public-site/public-shell-home/VAL-HOME-003-recent-list.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Current environment serves populated /api/articles/popular and /api/articles/recent data (200)."
+      },
+      "issues": "Blocked by shared seeded dataset: could not safely create a no-articles global state without destructive cross-worker impact."
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser network request export returned \"No requests captured\" during this session, so explicit status/body evidence had to be collected with supplemental curl calls.",
+      "resolved": true,
+      "resolution": "Captured API request/response evidence with curl for /api/search, /api/categories, /api/settings/public, /api/articles/popular, and /api/articles/recent.",
+      "affectedAssertions": [
+        "VAL-PUB-004",
+        "VAL-PUB-005",
+        "VAL-PUB-006",
+        "VAL-HOME-001",
+        "VAL-HOME-002",
+        "VAL-HOME-003"
+      ]
+    }
+  ],
+  "blockers": [
+    {
+      "description": "Shared seeded environment did not provide an isolated way to enforce global empty categories/articles preconditions for homepage empty-state assertions.",
+      "affectedAssertions": [
+        "VAL-HOME-004",
+        "VAL-HOME-005"
+      ],
+      "quickFixAttempted": "Reviewed current dataset and avoided destructive global data mutation per shared-infrastructure rules."
+    }
+  ],
+  "summary": "Tested 12 assertions for public shell/home: 8 passed, 2 failed (VAL-PUB-002, VAL-PUB-003 route mismatches), 2 blocked (VAL-HOME-004, VAL-HOME-005 precondition requires destructive shared data changes)."
+}
