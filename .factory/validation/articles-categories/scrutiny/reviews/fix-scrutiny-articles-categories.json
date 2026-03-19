@@ -1,0 +1,21 @@
+{
+  "featureId": "fix-scrutiny-articles-categories",
+  "reviewedAt": "2026-03-19T16:09:13Z",
+  "commitId": "a87c34b",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Reviewed the rerun fix against the prior blocking failures. All three targeted blockers are resolved: syncTags now deduplicates keywords before article_tags inserts, RichTextEditor no longer relies on dynamic Tailwind min-height class construction, and category PUT order validation now rejects non-integer decimal input with regression coverage.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The fullstack-worker procedure remains over-prescriptive for focused fix work: the transcript shows implementation edits before regression-test additions and no agent-browser step, while handoff skillFeedback still reports followedProcedure=true.",
+      "evidence": "worker-transcripts.jsonl entry for session 9b8f4ba7-f212-4bad-b505-0f29370e9ae6 shows Edit calls for routes/articles.ts, AdminArticleFormPage.tsx, and routes/categories.ts before test edits, and contains no agent-browser tool usage; .factory/skills/fullstack-worker/SKILL.md requires tests-first and manual verification with agent-browser."
+    }
+  ],
+  "addressesFailureFrom": ".factory/validation/articles-categories/scrutiny/synthesis.json",
+  "summary": "PASS: The rerun fix feature fully resolves the three requested prior blocking issues (duplicate keyword PK collision risk, dynamic Tailwind min-height extraction risk, and decimal order truncation acceptance in category PUT) with corresponding code and regression tests."
+}
