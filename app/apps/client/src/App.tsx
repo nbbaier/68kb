@@ -22,6 +22,8 @@ import { CategoriesIndexPage } from '@/pages/CategoriesIndexPage'
 import { CategoryDetailPage } from '@/pages/CategoryDetailPage'
 import { GlossaryPage } from '@/pages/GlossaryPage'
 import { SearchPage } from '@/pages/SearchPage'
+import { SearchResultsPage } from '@/pages/SearchResultsPage'
+import { SearchNoResultsPage } from '@/pages/SearchNoResultsPage'
 
 function App() {
   return (
@@ -39,6 +41,8 @@ function App() {
             <Route path="/glossary" element={<GlossaryPage />} />
             <Route path="/glossary/term/:letter" element={<GlossaryPage />} />
             <Route path="/search" element={<SearchPage />} />
+            <Route path="/search/results/:hash" element={<SearchResultsPage />} />
+            <Route path="/search/no-results" element={<SearchNoResultsPage />} />
           </Route>
 
           {/* ---------------------------------------------------------------- */}
