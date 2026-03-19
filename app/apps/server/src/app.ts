@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
+import { serveStatic } from 'hono/bun'
 import { sessionMiddleware, CookieStore } from 'hono-sessions'
 import type { db } from './db'
 import { createAuthRoutes } from './routes/auth'
@@ -68,6 +69,9 @@ export function createApp(database: typeof db) {
   app.get('/api/health', (c) => {
     return c.json({ status: 'ok' })
   })
+
+  // Serve uploaded files (images, attachments) from the uploads/ directory
+  app.use('/uploads/*', serveStatic({ root: './' }))
 
   // Auth routes
   app.route('/api/auth', createAuthRoutes(database))

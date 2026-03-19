@@ -11,6 +11,9 @@ import { NotFoundPage } from '@/pages/NotFoundPage'
 import { AdminDashboardPage } from '@/pages/AdminDashboardPage'
 import { AdminArticlesPage } from '@/pages/AdminArticlesPage'
 import { AdminArticleFormPage } from '@/pages/AdminArticleFormPage'
+import { AdminCategoriesPage } from '@/pages/AdminCategoriesPage'
+import { AdminCategoryFormPage } from '@/pages/AdminCategoryFormPage'
+import { AdminCategoryDeletePage } from '@/pages/AdminCategoryDeletePage'
 import { HomePage } from '@/pages/HomePage'
 
 function App() {
@@ -74,6 +77,12 @@ function App() {
             <Route path="articles" element={<AdminArticlesPage />} />
             <Route path="articles/new" element={<AdminArticleFormPage />} />
             <Route path="articles/:id/edit" element={<AdminArticleFormPage />} />
+
+            {/* Categories routes */}
+            <Route path="categories" element={<AdminCategoriesPage />} />
+            <Route path="categories/new" element={<AdminCategoryFormPage />} />
+            <Route path="categories/:id/edit" element={<AdminCategoryFormPage />} />
+            <Route path="categories/:id/delete" element={<AdminCategoryDeletePage />} />
             <Route
               path="users"
               element={<div className="p-4 text-muted-foreground">Users — coming soon</div>}

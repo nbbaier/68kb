@@ -33,7 +33,14 @@ const SUB_NAV: Record<string, SubNavItem[]> = {
     { label: 'Dashboard', path: '/admin' },
     { label: 'Logout', action: 'logout' },
   ],
-  articles: [{ label: 'Articles', path: '/admin/articles' }],
+  articles: [
+    { label: 'Articles', path: '/admin/articles' },
+    { label: 'Categories', path: '/admin/categories' },
+  ],
+  categories: [
+    { label: 'Articles', path: '/admin/articles' },
+    { label: 'Categories', path: '/admin/categories' },
+  ],
   users: [{ label: 'Users', path: '/admin/users' }],
   modules: [{ label: 'Modules', path: '/admin/modules' }],
   settings: [{ label: 'Settings', path: '/admin/settings' }],

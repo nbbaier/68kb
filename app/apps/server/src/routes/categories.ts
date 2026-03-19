@@ -208,6 +208,31 @@ export function createCategoryRoutes(db: DrizzleDB) {
   })
 
   // -------------------------------------------------------------------------
+  // GET /api/admin/categories/:id/article-count
+  // Return the number of articles assigned to a category
+  // Must come before /:id to avoid route conflict
+  // -------------------------------------------------------------------------
+  router.get('/:id/article-count', (c) => {
+    const id = parseInt(c.req.param('id'), 10)
+    if (isNaN(id) || id <= 0) {
+      return c.json({ error: 'Invalid category ID' }, 400)
+    }
+
+    const category = db.select().from(categories).where(eq(categories.catId, id)).get()
+    if (!category) {
+      return c.json({ error: 'Category not found' }, 404)
+    }
+
+    const result = db
+      .select({ count: count() })
+      .from(article2cat)
+      .where(eq(article2cat.categoryIdRel, id))
+      .get()
+
+    return c.json({ data: { count: result?.count ?? 0 } })
+  })
+
+  // -------------------------------------------------------------------------
   // GET /api/admin/categories/:id/duplicate
   // Return category data to pre-fill a duplicate form
   // Must come before /:id to avoid route conflict
