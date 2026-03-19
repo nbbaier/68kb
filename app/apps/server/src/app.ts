@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { sessionMiddleware, CookieStore } from 'hono-sessions'
-import { db } from './db'
+import type { db } from './db'
 import { createAuthRoutes } from './routes/auth'
 import { createAdminRoutes } from './routes/admin'
 import type { AppVariables } from './types'
@@ -20,8 +20,11 @@ export function createApp(database: typeof db) {
     }),
   )
 
-  // Session middleware — requires SESSION_SECRET (min 32 chars)
-  const sessionSecret = process.env.SESSION_SECRET ?? 'default-dev-secret-key-min-32-chars!!'
+  // Session middleware — requires SESSION_SECRET from environment (min 32 chars)
+  const sessionSecret = process.env.SESSION_SECRET
+  if (!sessionSecret) {
+    throw new Error('SESSION_SECRET environment variable is required')
+  }
   if (sessionSecret.length < 32) {
     throw new Error('SESSION_SECRET must be at least 32 characters long')
   }
@@ -55,6 +58,6 @@ export function createApp(database: typeof db) {
   return app
 }
 
-// Default app instance using the real database
-const app = createApp(db)
-export default app
+// Note: The default app instance is created in index.ts, not here.
+// This keeps app.ts free of side effects so test files can import createApp
+// without triggering real database or environment variable access.

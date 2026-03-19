@@ -3,6 +3,16 @@ import { eq } from 'drizzle-orm'
 import { users, failedLogins, userGroups } from '../db/schema'
 import type { AppVariables, DrizzleDB } from '../types'
 
+// Pre-computed bcrypt hash used for timing-safe user-not-found responses.
+// Running Bun.password.verify() against this dummy hash when a user is not found
+// equalizes response time with the valid-user-wrong-password path, preventing
+// timing-based username enumeration attacks.
+// Computed once at module load time using top-level await (Bun/ESM supports this).
+const DUMMY_BCRYPT_HASH = await Bun.password.hash('__timing_safe_dummy_placeholder__', {
+  algorithm: 'bcrypt',
+  cost: 12,
+})
+
 // Permission keys returned in /api/auth/me
 const PERMISSION_KEYS = [
   'canAccessAdmin',
@@ -48,6 +58,9 @@ export function createAuthRoutes(db: DrizzleDB) {
     const user = db.select().from(users).where(eq(users.userUsername, username)).get()
 
     if (!user) {
+      // Run dummy verify to equalize timing with the valid-user-wrong-password path,
+      // preventing timing-based username enumeration attacks.
+      await Bun.password.verify(password, DUMMY_BCRYPT_HASH)
       // Track failed login — same response as wrong password (anti-enumeration)
       db.insert(failedLogins).values({
         failedUsername: username,
