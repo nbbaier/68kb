@@ -17,6 +17,7 @@ import { AdminCategoryFormPage } from '@/pages/AdminCategoryFormPage'
 import { AdminCategoryDeletePage } from '@/pages/AdminCategoryDeletePage'
 import { AdminCategoryDuplicatePage } from '@/pages/AdminCategoryDuplicatePage'
 import { HomePage } from '@/pages/HomePage'
+import { ArticleDetailPage } from '@/pages/ArticleDetailPage'
 import { CategoriesIndexPage } from '@/pages/CategoriesIndexPage'
 import { GlossaryPage } from '@/pages/GlossaryPage'
 import { SearchPage } from '@/pages/SearchPage'
@@ -31,6 +32,7 @@ function App() {
           {/* ---------------------------------------------------------------- */}
           <Route element={<PublicLayout />}>
             <Route path="/" element={<HomePage />} />
+            <Route path="/article/:slug" element={<ArticleDetailPage />} />
             <Route path="/categories" element={<CategoriesIndexPage />} />
             <Route path="/categories/:slug" element={<CategoriesIndexPage />} />
             <Route path="/glossary" element={<GlossaryPage />} />

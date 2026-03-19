@@ -274,6 +274,208 @@ describe('GET /api/articles/recent', () => {
 // ---------------------------------------------------------------------------
 // GET /api/settings/public
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// GET /api/articles/:slug
+// ---------------------------------------------------------------------------
+describe('GET /api/articles/:slug', () => {
+  // Use a dedicated fresh DB for article detail tests
+  const sqlite = new Database(':memory:')
+  sqlite.exec('PRAGMA foreign_keys = ON')
+  const db = drizzle({ client: sqlite, schema })
+  migrate(db, { migrationsFolder: MIGRATIONS_FOLDER })
+  db.insert(schema.userGroups)
+    .values({ groupId: 1, groupName: 'Admins', groupDescription: '', canViewSite: 'y', canAccessAdmin: 'y' })
+    .run()
+  db.insert(schema.settings)
+    .values({ optionName: 'site_name', optionValue: 'Test KB', optionGroup: 'site' })
+    .run()
+  process.env.SESSION_SECRET = 'test-session-secret-key-minimum-32-chars!!'
+  const detailApp = createApp(db as typeof db)
+
+  const now = Math.floor(Date.now() / 1000)
+
+  // Insert a visible article
+  const art = db
+    .insert(schema.articles)
+    .values({
+      articleTitle: 'Hello World',
+      articleUri: 'hello-world',
+      articleDisplay: 'y',
+      articleDescription: '<p>Hello <strong>world</strong> content</p>',
+      articleShortDesc: 'A short description',
+      articleKeywords: 'hello, world',
+      articleHits: 5,
+      articleDate: now - 3600,
+      articleModified: now,
+    })
+    .returning({ articleId: schema.articles.articleId })
+    .get()!
+
+  // Insert a hidden article
+  const hiddenArt = db
+    .insert(schema.articles)
+    .values({
+      articleTitle: 'Hidden Article',
+      articleUri: 'hidden-article',
+      articleDisplay: 'n',
+      articleDescription: '<p>Hidden</p>',
+      articleHits: 0,
+      articleDate: now,
+      articleModified: now,
+    })
+    .returning({ articleId: schema.articles.articleId })
+    .get()!
+
+  // Insert a visible category and link to article
+  const cat = db
+    .insert(schema.categories)
+    .values({ catName: 'Tech', catUri: 'tech', catDisplay: 'yes', catOrder: 1 })
+    .returning({ catId: schema.categories.catId })
+    .get()!
+
+  db.insert(schema.article2cat)
+    .values({ articleIdRel: art.articleId, categoryIdRel: cat.catId })
+    .run()
+
+  // Insert a hidden category and link to article (should be excluded)
+  const hiddenCat = db
+    .insert(schema.categories)
+    .values({ catName: 'Hidden Cat', catUri: 'hidden-cat', catDisplay: 'no', catOrder: 2 })
+    .returning({ catId: schema.categories.catId })
+    .get()!
+
+  db.insert(schema.article2cat)
+    .values({ articleIdRel: art.articleId, categoryIdRel: hiddenCat.catId })
+    .run()
+
+  // Insert an attachment
+  db.insert(schema.attachments)
+    .values({
+      articleId: art.articleId,
+      attachFile: 'doc.pdf',
+      attachTitle: 'My Document',
+      attachType: 'application/pdf',
+      attachSize: '12345',
+    })
+    .run()
+
+  // Insert a glossary term
+  db.insert(schema.glossary)
+    .values({ gTerm: 'world', gDefinition: 'The planet Earth' })
+    .run()
+
+  it('returns 200 with article data for valid visible slug', async () => {
+    const res = await detailApp.request('/api/articles/hello-world')
+    expect(res.status).toBe(200)
+    const json = await res.json()
+    expect(json.data).toBeDefined()
+    expect(json.data.articleTitle).toBe('Hello World')
+    expect(json.data.articleUri).toBe('hello-world')
+    expect(json.data.articleDescription).toBe('<p>Hello <strong>world</strong> content</p>')
+    expect(json.data.articleHits).toBe(5)
+  })
+
+  it('returns only visible categories', async () => {
+    const res = await detailApp.request('/api/articles/hello-world')
+    const json = await res.json()
+    const cats = json.data.categories as Array<{ catId: number; catName: string }>
+    expect(cats.length).toBe(1)
+    expect(cats[0].catName).toBe('Tech')
+    expect(cats.some((c) => c.catName === 'Hidden Cat')).toBe(false)
+  })
+
+  it('returns attachments', async () => {
+    const res = await detailApp.request('/api/articles/hello-world')
+    const json = await res.json()
+    const atts = json.data.attachments as Array<{ attachTitle: string }>
+    expect(atts.length).toBe(1)
+    expect(atts[0].attachTitle).toBe('My Document')
+  })
+
+  it('returns glossary terms', async () => {
+    const res = await detailApp.request('/api/articles/hello-world')
+    const json = await res.json()
+    const terms = json.data.glossaryTerms as Array<{ gTerm: string }>
+    expect(terms.length).toBeGreaterThan(0)
+    expect(terms[0].gTerm).toBe('world')
+  })
+
+  it('returns 404 for non-existent slug', async () => {
+    const res = await detailApp.request('/api/articles/does-not-exist')
+    expect(res.status).toBe(404)
+    const json = await res.json()
+    expect(json.error).toBeDefined()
+  })
+
+  it('returns 404 for hidden article slug', async () => {
+    const res = await detailApp.request('/api/articles/hidden-article')
+    expect(res.status).toBe(404)
+    expect(hiddenArt.articleId).toBeGreaterThan(0) // confirm article exists in DB
+  })
+})
+
+// ---------------------------------------------------------------------------
+// POST /api/articles/:id/hit
+// ---------------------------------------------------------------------------
+describe('POST /api/articles/:id/hit', () => {
+  const sqlite2 = new Database(':memory:')
+  sqlite2.exec('PRAGMA foreign_keys = ON')
+  const db2 = drizzle({ client: sqlite2, schema })
+  migrate(db2, { migrationsFolder: MIGRATIONS_FOLDER })
+  db2.insert(schema.userGroups)
+    .values({ groupId: 1, groupName: 'Admins', groupDescription: '', canViewSite: 'y', canAccessAdmin: 'y' })
+    .run()
+  db2.insert(schema.settings)
+    .values({ optionName: 'site_name', optionValue: 'Test KB', optionGroup: 'site' })
+    .run()
+  const hitApp = createApp(db2 as typeof db2)
+
+  const now = Math.floor(Date.now() / 1000)
+  const hitArt = db2
+    .insert(schema.articles)
+    .values({
+      articleTitle: 'Hit Test',
+      articleUri: 'hit-test',
+      articleDisplay: 'y',
+      articleHits: 10,
+      articleDate: now,
+      articleModified: now,
+    })
+    .returning({ articleId: schema.articles.articleId })
+    .get()!
+
+  it('increments article hit count by 1', async () => {
+    const res = await hitApp.request(`/api/articles/${hitArt.articleId}/hit`, {
+      method: 'POST',
+    })
+    expect(res.status).toBe(200)
+    const json = await res.json()
+    expect(json.data.hits).toBe(11)
+  })
+
+  it('increments again on repeated calls', async () => {
+    await hitApp.request(`/api/articles/${hitArt.articleId}/hit`, { method: 'POST' })
+    const res = await hitApp.request(`/api/articles/${hitArt.articleId}/hit`, {
+      method: 'POST',
+    })
+    const json = await res.json()
+    expect(json.data.hits).toBe(13) // 11 + 2 more
+  })
+
+  it('returns 400 for invalid ID', async () => {
+    const res = await hitApp.request('/api/articles/invalid/hit', { method: 'POST' })
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 404 for non-existent article ID', async () => {
+    const res = await hitApp.request('/api/articles/99999/hit', { method: 'POST' })
+    expect(res.status).toBe(404)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// GET /api/settings/public
+// ---------------------------------------------------------------------------
 describe('GET /api/settings/public', () => {
   it('returns site name from settings table', async () => {
     const res = await app.request('/api/settings/public')

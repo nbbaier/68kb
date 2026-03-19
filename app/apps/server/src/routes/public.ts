@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { eq, desc, asc, and, count, sql } from 'drizzle-orm'
-import { categories, articles, article2cat, settings } from '../db/schema'
+import { categories, articles, article2cat, settings, attachments, glossary } from '../db/schema'
 import type { AppVariables, DrizzleDB } from '../types'
 
 // ---------------------------------------------------------------------------
@@ -167,6 +167,96 @@ export function createPublicArticleRoutes(db: DrizzleDB) {
       .all()
 
     return c.json({ data: rows })
+  })
+
+  // GET /:slug → /api/articles/:slug
+  // Returns a single public article by URI slug.
+  // 404 for non-existent or hidden articles.
+  router.get('/:slug', (c) => {
+    const slug = c.req.param('slug')
+
+    const article = db
+      .select()
+      .from(articles)
+      .where(and(eq(articles.articleUri, slug), eq(articles.articleDisplay, 'y')))
+      .get()
+
+    if (!article) {
+      return c.json({ error: 'Article not found' }, 404)
+    }
+
+    // Get visible categories for this article
+    const articleCategories = db
+      .select({
+        catId: categories.catId,
+        catName: categories.catName,
+        catUri: categories.catUri,
+      })
+      .from(article2cat)
+      .innerJoin(
+        categories,
+        and(
+          eq(article2cat.categoryIdRel, categories.catId),
+          eq(categories.catDisplay, 'yes'),
+        ),
+      )
+      .where(eq(article2cat.articleIdRel, article.articleId))
+      .all()
+
+    // Get attachments for this article
+    const attachmentList = db
+      .select()
+      .from(attachments)
+      .where(eq(attachments.articleId, article.articleId))
+      .all()
+
+    // Get all glossary terms for tooltip processing on the client
+    const glossaryTerms = db
+      .select({ gTerm: glossary.gTerm, gDefinition: glossary.gDefinition })
+      .from(glossary)
+      .all()
+
+    return c.json({
+      data: {
+        articleId: article.articleId,
+        articleUri: article.articleUri,
+        articleTitle: article.articleTitle,
+        articleKeywords: article.articleKeywords,
+        articleDescription: article.articleDescription,
+        articleShortDesc: article.articleShortDesc,
+        articleDate: article.articleDate,
+        articleModified: article.articleModified,
+        articleDisplay: article.articleDisplay,
+        articleHits: article.articleHits,
+        articleAuthor: article.articleAuthor,
+        categories: articleCategories,
+        attachments: attachmentList,
+        glossaryTerms,
+      },
+    })
+  })
+
+  // POST /:id/hit → /api/articles/:id/hit
+  // Increments the article hit counter by 1.
+  router.post('/:id/hit', (c) => {
+    const id = parseInt(c.req.param('id'), 10)
+    if (isNaN(id) || id <= 0) {
+      return c.json({ error: 'Invalid article ID' }, 400)
+    }
+
+    const article = db.select().from(articles).where(eq(articles.articleId, id)).get()
+    if (!article) {
+      return c.json({ error: 'Article not found' }, 404)
+    }
+
+    const newHits = article.articleHits + 1
+    db
+      .update(articles)
+      .set({ articleHits: newHits })
+      .where(eq(articles.articleId, id))
+      .run()
+
+    return c.json({ data: { hits: newHits } })
   })
 
   return router
