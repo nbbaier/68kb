@@ -1,0 +1,34 @@
+{
+  "featureId": "auth-api-session-middleware",
+  "reviewedAt": "2026-03-19T03:52:21Z",
+  "commitId": "67d9a52",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "Core auth/session endpoints and middleware are implemented with strong test coverage, but two security requirements in this feature's fulfillment set are not met.",
+    "issues": [
+      {
+        "file": "app/apps/server/src/app.ts",
+        "line": 24,
+        "severity": "blocking",
+        "description": "SESSION_SECRET falls back to a hardcoded default (`process.env.SESSION_SECRET ?? 'default-dev-secret-key-min-32-chars!!'`). This violates VAL-SEC-003 (session secret must come from environment with no hardcoded secret)."
+      },
+      {
+        "file": "app/apps/server/src/routes/auth.ts",
+        "line": 50,
+        "severity": "blocking",
+        "description": "Login returns immediately for non-existent users and only runs `Bun.password.verify` when a user exists, creating measurable timing differences between invalid-username and invalid-password paths. This does not satisfy VAL-SEC-002 timing-consistency expectations."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `fullstack-worker` procedure assumes UI/manual browser verification as a standard step, but this feature was API-only. The worker feedback explicitly requested an API-only exception, suggesting the skill procedure should better distinguish API-only features from full UI flows.",
+      "evidence": ".factory/skills/fullstack-worker/SKILL.md step 8 requires agent-browser manual verification; handoff.skillFeedback.suggestedChanges for session d7ce6a37-9e80-48cc-94fe-5d9ea7014441 notes this mismatch."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Reviewed feature auth-api-session-middleware (commit 67d9a52) using handoff, transcript skeleton, and diff. Implementation is functionally substantial, but it fails security acceptance due to a hardcoded SESSION_SECRET fallback and login timing-path inconsistency."
+}

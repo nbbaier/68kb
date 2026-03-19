@@ -15,6 +15,7 @@ Environment variables, external dependencies, and setup notes.
 ## Bun-Specific Notes
 
 - Bun 1.3.10 installed at `/Users/nbbaier/.bun/bin/bun`
+- For TypeScript typings in Bun projects, use `bun-types` (not `@types/bun`)
 - `bun:sqlite` is built-in — no need for `better-sqlite3`
 - `Bun.password` is built-in — no need for `bcryptjs`
 - `bun --hot` swaps fetch handler without restart (use for dev server)

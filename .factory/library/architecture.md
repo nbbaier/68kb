@@ -58,11 +58,12 @@ app/
 
 - **Session cookies in tests**: hono-sessions CookieStore sets the cookie TWICE per request (empty + persisted). Use `response.headers.getSetCookie()` (returns array) and take the last element. See `auth.test.ts` `loginAsAdmin()` helper.
 - **Test isolation**: Auth tests use a factory pattern (`createApp`/`createAuthRoutes`) with in-memory SQLite DB for full isolation.
+- **SQLite WAL caveat**: `PRAGMA journal_mode = WAL` is not supported for in-memory SQLite databases. In tests using `:memory:`, expect `memory`/non-`wal` and assert WAL behavior only for file-backed DBs.
 
 ## API Patterns
 
 - Public routes: `/api/auth/*`, `/api/articles/*`, `/api/categories/*`, `/api/search/*`
 - Admin routes: `/api/admin/articles/*`, `/api/admin/categories/*`, `/api/admin/users/*`, etc.
-- Admin routes use `requireAuth` middleware that checks session + `can_access_admin` permission
+- Admin routes are protected via `createRequireAdmin(sessionStore)` helper, which enforces session auth plus `can_access_admin` permission checks.
 - Pagination: `?page=1&limit=20&sort=field&order=asc&search=term`
 - Responses: `{ data: T }` or `{ data: T[], total: number, page: number }` for lists

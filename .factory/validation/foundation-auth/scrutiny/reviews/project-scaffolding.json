@@ -1,0 +1,33 @@
+{
+  "featureId": "project-scaffolding",
+  "reviewedAt": "2026-03-19T03:52:14Z",
+  "commitId": "f22afc0",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The feature implementation satisfies the scaffolding requirements: Bun workspace monorepo structure, Hono API on 3100 with GET /api/health, Vite React client on 3101 with /api proxy, Drizzle config, dependency installation, and verification evidence for server/client startup, proxy, and typecheck.",
+    "issues": [
+      {
+        "file": "app/apps/server/src/db/index.ts",
+        "line": 5,
+        "severity": "non_blocking",
+        "description": "The default DB path is './data/68kb.db', which is CWD-dependent and inconsistent with drizzle.config.ts ('../../data/68kb.db'). When DB_FILE_NAME is unset, workspace-invoked scripts can target an unintended DB location."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "knowledge",
+      "observation": "Bun setup reference material is misleading for Bun type packages: worker had to replace '@types/bun' with 'bun-types' to make typecheck pass reliably.",
+      "evidence": ".factory/research/BUN_SHADCN_REFERENCE.md:152 recommends 'bun add -D drizzle-kit @types/bun'; transcript skeleton shows debugging and replacement to bun-types (entries around lines 650-657 and 1069)."
+    },
+    {
+      "area": "conventions",
+      "observation": "Testing guidance is inconsistent with this monorepo's mixed test runners; AGENTS still states root 'bun test' as the all-tests command, while service command and feature implementation require workspace-filtered test scripts.",
+      "evidence": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be/AGENTS.md:48 vs /Users/nbbaier/68kb/.factory/services.yaml command 'test: cd /Users/nbbaier/68kb/app && bun run --filter @68kb/server test && bun run --filter @68kb/client test'."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Reviewed feature project-scaffolding for milestone foundation-auth using its handoff, commit diff (f22afc0), transcript skeleton, and setup-worker skill. Result is PASS: required scaffolding behavior is present and verified. Logged one non-blocking code issue (DB default path consistency) and two shared-state documentation gaps."
+}
