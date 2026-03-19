@@ -1,0 +1,172 @@
+{
+  "groupId": "art-create-validations-attachments",
+  "testedAt": "2026-03-19T16:47:02Z",
+  "isolation": {
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "credentials": {
+      "username": "admin",
+      "password": "admin123"
+    },
+    "namespacePrefix": "g8val_"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "python3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-ART-012",
+      "title": "Add article — missing title validation",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to /admin/articles/new and click Save Article with title blank",
+          "expected": "Title required validation is shown and article is not created",
+          "observed": "Inline error 'Title is required' shown on form; no matching article row created"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-create-validations-attachments/VAL-ART-012-missing-title-validation.png"
+        ],
+        "consoleErrors": "none (see console-errors-check.txt)",
+        "network": "Supplemental API contract check: POST /api/admin/articles -> 400 {\"error\":\"Title is required\"} (network-curl-evidence.txt)",
+        "dbFileChecks": "db-file-checks.json: checks.VAL-ART-012.count = 0"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-013",
+      "title": "Add article — URI alpha-dash validation",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Enter title and invalid URI 'my article!' then submit",
+          "expected": "Validation rejects URI with alpha-dash error; no article created",
+          "observed": "Inline error 'URI may only contain letters, numbers, hyphens, and underscores' shown; no matching article row created"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-create-validations-attachments/VAL-ART-013-uri-alpha-dash-validation.png"
+        ],
+        "consoleErrors": "none (see console-errors-check.txt)",
+        "network": "Supplemental API contract check: POST /api/admin/articles -> 400 {\"error\":\"URI may only contain letters, numbers, hyphens, and underscores\"} (network-curl-evidence.txt)",
+        "dbFileChecks": "db-file-checks.json: checks.VAL-ART-013.count = 0"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-014",
+      "title": "Add article — weight must be numeric",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Attempt to enter non-numeric order value 'abc' and submit",
+          "expected": "Validation error 'Order must be a numeric value'; no article created",
+          "observed": "Browser number input blocks alpha typing; after temporary DOM type=text workaround, form showed 'Order must be a numeric value'; no matching article row created"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-create-validations-attachments/VAL-ART-014-weight-numeric-validation.png"
+        ],
+        "consoleErrors": "none (see console-errors-check.txt)",
+        "network": "Supplemental API contract check: POST /api/admin/articles with order=\"abc\" -> 400 {\"error\":\"Order must be a numeric value\"} (network-curl-evidence.txt)",
+        "dbFileChecks": "db-file-checks.json: checks.VAL-ART-014.count = 0"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-050",
+      "title": "Upload attachment on article add",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create article with namespaced title/URI and provide attachment title + valid .txt file on add form",
+          "expected": "Article created, attachment uploaded, redirect to edit page with attachment listed",
+          "observed": "Redirected to /admin/articles/15/edit; attachments table shows uploaded file and metadata"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-create-validations-attachments/VAL-ART-050-upload-attachment-on-add-success.png"
+        ],
+        "consoleErrors": "none (see console-errors-check.txt)",
+        "network": "Browser captured POST /api/admin/articles and POST /api/admin/articles/15/attachments; supplemental API verify GET /api/admin/articles/15 -> 200 with attachment metadata (network-requests-agent-browser.json, network-curl-evidence.txt)",
+        "dbFileChecks": "db-file-checks.json: checks.VAL-ART-050.attachmentsCount = 1 and file exists at /Users/nbbaier/68kb/app/uploads/15/1773938655871_g8val_valid_attachment.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-054",
+      "title": "Upload with invalid file type",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Create article on add form with attachment title + invalid .exe file",
+          "expected": "Upload rejected with visible error; no file stored; no attachment row",
+          "observed": "Article saved and redirected to edit page with success toast; no visible invalid-file error on add flow. Backend rejected invalid type and no attachment/file was created"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-create-validations-attachments/VAL-ART-054-invalid-file-type-on-add.png"
+        ],
+        "consoleErrors": "none (see console-errors-check.txt)",
+        "network": "Browser captured POST /api/admin/articles/16/attachments; supplemental API check POST /api/admin/articles/16/attachments with .exe -> 400 {\"error\":\"File type .exe is not allowed...\"} (network-requests-agent-browser.json, network-curl-evidence.txt)",
+        "dbFileChecks": "db-file-checks.json: checks.VAL-ART-054.attachmentsCount = 0 and upload dir absent"
+      },
+      "issues": "Add-article flow does not surface invalid attachment error; user only sees 'Article created successfully' despite upload rejection."
+    },
+    {
+      "id": "VAL-ART-055",
+      "title": "Upload with no file selected",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create article with attachment title filled but no file selected",
+          "expected": "Article saves without error and no attachment row is created",
+          "observed": "Redirected to /admin/articles/17/edit, no error shown, attachments section shows 'No attachments yet.'"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-create-validations-attachments/VAL-ART-055-attachment-title-without-file.png"
+        ],
+        "consoleErrors": "none (see console-errors-check.txt)",
+        "network": "Browser captured article create POST; supplemental API check POST /api/admin/articles/17/attachments with title only -> 200 {\"data\":null} (network-curl-evidence.txt)",
+        "dbFileChecks": "db-file-checks.json: checks.VAL-ART-055.attachmentsCount = 0 and upload dir absent"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "VAL-ART-014: input[type=number] blocks alphabetic typing, so 'abc' cannot be entered directly in browser automation.",
+      "resolved": true,
+      "resolution": "Temporarily switched the order input type to text in-page via agent-browser eval, then validated the expected numeric error message.",
+      "affectedAssertions": [
+        "VAL-ART-014"
+      ]
+    },
+    {
+      "description": "agent-browser network export includes method/URL/headers but omits response status/body details.",
+      "resolved": true,
+      "resolution": "Captured supplemental curl request/response evidence with status codes and payloads in network-curl-evidence.txt.",
+      "affectedAssertions": [
+        "VAL-ART-012",
+        "VAL-ART-013",
+        "VAL-ART-014",
+        "VAL-ART-050",
+        "VAL-ART-054",
+        "VAL-ART-055"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 6 assertions: 5 passed, 1 failed. Failed assertion: VAL-ART-054 (invalid attachment type is backend-rejected with no DB/file write, but add flow does not show a user-facing error)."
+}

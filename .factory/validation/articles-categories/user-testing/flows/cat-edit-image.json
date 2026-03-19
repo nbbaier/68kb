@@ -1,0 +1,228 @@
+{
+  "groupId": "cat-edit-image",
+  "testedAt": "2026-03-19T16:48:48Z",
+  "isolation": {
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "credentials": {
+      "username": "admin"
+    },
+    "namespacePrefix": "g4edit_",
+    "testRecords": {
+      "parentCategoryId": 12,
+      "targetCategoryId": 13,
+      "noImageCategoryId": 14
+    }
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "python3-sqlite3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-CAT-020",
+      "title": "Edit category pre-populates all fields",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /admin/categories/13/edit",
+          "expected": "All fields are pre-populated and existing image + delete control are visible",
+          "observed": "Name=g4edit_target_cei, URI segment=g4edit_target_uri, description/keywords/order populated, Display=No, Allow Ads=No, Parent=No Parent (root), existing image preview and Delete Image button shown"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-edit-image/VAL-CAT-020-prepopulated-form.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/admin/categories/13 -> 200; GET /api/admin/categories -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-021",
+      "title": "Edit category \u2014 update name",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Change target category name to g4edit_target_cei_renamed and submit",
+          "expected": "Name updates, success flow redirects to categories grid",
+          "observed": "PUT succeeded; redirected to /admin/categories; grid row shows g4edit_target_cei_renamed; DB row updated"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-edit-image/VAL-CAT-021-update-name-redirect-grid.png"
+        ],
+        "consoleErrors": "none",
+        "network": "PUT /api/admin/categories/13 -> 200; follow-up GET /api/admin/categories -> 200",
+        "dbChecks": "categories.cat_id=13 => cat_name='g4edit_target_cei_renamed'"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-022",
+      "title": "Edit category \u2014 change parent",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Set parent of category 13 to g4edit_parent_cei (id=12) and submit",
+          "expected": "cat_parent updates and hierarchical cat_uri rebuilt",
+          "observed": "PUT succeeded; DB shows cat_parent=12 and cat_uri='g4edit_parent_cei/g4edit_target_uri'"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-edit-image/VAL-CAT-022-change-parent-uri-rebuild.png"
+        ],
+        "consoleErrors": "none",
+        "network": "PUT /api/admin/categories/13 -> 200; follow-up GET /api/admin/categories -> 200",
+        "dbChecks": "categories.cat_id=13 => cat_parent=12, cat_uri='g4edit_parent_cei/g4edit_target_uri'"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-023",
+      "title": "Edit category \u2014 new image replaces old",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Upload g4edit_upload2.png on edit page and submit",
+          "expected": "New image persists, old image removed, DB points to new file",
+          "observed": "PUT succeeded; DB cat_image changed from 1773938589166_g4edit_upload1.png to 1773938751955_g4edit_upload2.png; old file removed; new file exists"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-edit-image/VAL-CAT-023-replaced-image-preview.png"
+        ],
+        "consoleErrors": "none",
+        "network": "PUT /api/admin/categories/13 -> 200",
+        "dbChecks": "categories.cat_id=13 => cat_image='1773938751955_g4edit_upload2.png'",
+        "fileChecks": "uploads/categories/1773938589166_g4edit_upload1.png absent; uploads/categories/1773938751955_g4edit_upload2.png present"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-024",
+      "title": "Edit category \u2014 delete existing image",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Click Delete Image on category 13",
+          "expected": "Image file removed, DB cat_image cleared, user remains on edit form",
+          "observed": "DELETE succeeded; URL remained /admin/categories/13/edit; image preview/delete controls removed; DB cat_image set to empty string; file removed from disk"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-edit-image/VAL-CAT-024-delete-existing-image.png"
+        ],
+        "consoleErrors": "none",
+        "network": "DELETE /api/admin/categories/13/image -> 200",
+        "dbChecks": "categories.cat_id=13 => cat_image=''",
+        "fileChecks": "uploads/categories/1773938751955_g4edit_upload2.png absent"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-025",
+      "title": "Edit category \u2014 validation applies",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Clear Name and submit",
+          "expected": "Validation error shown and record not modified",
+          "observed": "Inline error 'Name is required' shown; no API request sent; DB record unchanged"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-edit-image/VAL-CAT-025-empty-name-validation.png"
+        ],
+        "consoleErrors": "none",
+        "network": "No request sent (client-side validation blocked submit)",
+        "dbChecks": "categories.cat_id=13 remained cat_name='g4edit_target_cei_renamed', cat_order=7"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-026",
+      "title": "Edit category \u2014 order must be integer",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Set Order to 1.5 and submit",
+          "expected": "Server rejects with validation error and no persistence",
+          "observed": "PUT returned 400; remained on edit page; DB cat_order stayed 7"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-edit-image/VAL-CAT-026-non-integer-order-validation.png"
+        ],
+        "consoleErrors": "none",
+        "network": "PUT /api/admin/categories/13 -> 400",
+        "dbChecks": "categories.cat_id=13 => cat_order=7 (unchanged)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-027",
+      "title": "Edit category \u2014 existing image displayed",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open edit form while category had an image",
+          "expected": "Image preview (<img>) and delete link/button visible",
+          "observed": "Image preview rendered from /uploads/categories/1773938589166_g4edit_upload1.png and Delete Image button was visible"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-edit-image/VAL-CAT-027-existing-image-preview-delete-link.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/admin/categories/13 -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-028",
+      "title": "Edit category \u2014 no image section when empty",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /admin/categories/14/edit for category without image",
+          "expected": "No preview/delete control; only upload input",
+          "observed": "No image preview and no Delete Image button; upload input visible"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-edit-image/VAL-CAT-028-no-image-form-state.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/admin/categories/14 -> 200"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "`agent-browser network requests` returned no captured entries in this session for form actions.",
+      "resolved": true,
+      "resolution": "Captured request methods/statuses via in-page fetch logging (sessionStorage netlog) and supplemental authenticated GET checks.",
+      "affectedAssertions": [
+        "VAL-CAT-021",
+        "VAL-CAT-022",
+        "VAL-CAT-023",
+        "VAL-CAT-024",
+        "VAL-CAT-026"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 9 assertions (VAL-CAT-020..028): 9 passed, 0 failed, 0 blocked. Category edit prepopulation, parent/URI rebuild, image replace/delete, and validations behaved as expected for g4edit_ namespaced records."
+}

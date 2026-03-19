@@ -1,0 +1,171 @@
+{
+  "groupId": "art-grid",
+  "testedAt": "2026-03-19T16:26:51Z",
+  "isolation": {
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "repoRoot": "/Users/nbbaier/68kb",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "username": "admin",
+    "namespacePrefix": "g6grid_",
+    "testDataPrefixUsed": "g6grid_20260319112217"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "python3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-ART-001",
+      "title": "Article grid loads with server-side data",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to /admin/articles",
+          "expected": "Grid renders with columns (Title, Categories, Date Added, Date Edited, Display) and row checkboxes",
+          "observed": "Grid loaded with all expected columns, select-all checkbox, and 10 data rows on page 1"
+        },
+        {
+          "action": "Search for non-matching term g6grid_no_match_zzz",
+          "expected": "Empty-state message appears",
+          "observed": "Empty-state rendered: 'No articles match your search.'"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-grid/VAL-ART-001-grid-data.png",
+          "articles-categories/art-grid/VAL-ART-001-grid-empty-state.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Browser fetches: GET /api/admin/articles?page=1&limit=10&sort=date&order=desc and GET /api/admin/articles?page=1&limit=10&sort=date&order=desc&search=g6grid_no_match_zzz; supplemental curl: 200 (total=12,count=10) and 200 (total=0,count=0)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-002",
+      "title": "Article grid search filters results",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Search for g6grid_20260319112217_search_target",
+          "expected": "Rows filter to matching article(s) and count updates",
+          "observed": "Grid filtered to a single matching row: g6grid_20260319112217_search_target"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-grid/VAL-ART-002-search-before.png",
+          "articles-categories/art-grid/VAL-ART-002-search-after.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Browser fetch: GET /api/admin/articles?...&search=g6grid_20260319112217_search_target; supplemental curl: 200 with total=1,count=1"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-003",
+      "title": "Article grid sorting by column",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Click Title sort header once",
+          "expected": "Rows reorder ascending",
+          "observed": "Ascending order shown; top rows begin with article_00, article_01, article_02"
+        },
+        {
+          "action": "Click Title sort header again",
+          "expected": "Rows reorder descending",
+          "observed": "Descending order shown; top rows begin with search_target, article_11, article_10"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-grid/VAL-ART-003-sort-title-asc.png",
+          "articles-categories/art-grid/VAL-ART-003-sort-title-desc.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Browser fetches: GET /api/admin/articles?page=1&limit=10&sort=title&order=asc and ...order=desc; supplemental curl confirms both 200 with reordered titles"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-004",
+      "title": "Article grid pagination",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "View page 1 with 12 total rows",
+          "expected": "Pagination controls appear for multiple pages",
+          "observed": "Pagination controls displayed (Previous, 1, 2, Next)"
+        },
+        {
+          "action": "Navigate to page 2",
+          "expected": "Second page shows remaining slice of records",
+          "observed": "Page 2 displayed different rows (article_01, article_00), count=2"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-grid/VAL-ART-004-pagination-page1.png",
+          "articles-categories/art-grid/VAL-ART-004-pagination-page2.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Browser fetch: GET /api/admin/articles?page=2&limit=10&sort=title&order=desc; supplemental curl: 200 with total=12,page=2,count=2"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-005",
+      "title": "Article grid displays category names",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Inspect Categories column on page 1",
+          "expected": "Assigned categories shown by name; no-category rows show empty state",
+          "observed": "Category names rendered (e.g., g6grid_..._cat_alpha/cat_beta) and uncategorized rows show em-dash"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-grid/VAL-ART-005-category-names.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Supplemental curl /api/admin/articles?page=1&limit=10&sort=title&order=desc -> 200; payload includes categories arrays with catName values and empty arrays for uncategorized rows"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-006",
+      "title": "Article grid displays active/inactive status",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Inspect Display column badges",
+          "expected": "Both active and inactive states are visually indicated according to article display setting",
+          "observed": "Both 'Active' and 'Inactive' badges are visible across seeded rows"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-grid/VAL-ART-006-display-status.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Supplemental curl /api/admin/articles?page=1&limit=10&sort=title&order=desc -> 200; payload contains mix of articleDisplay='y' and 'n' matching visible badges"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Pagination number controls did not resolve via role-link query in agent-browser; controls are rendered as clickable elements without href.",
+      "resolved": true,
+      "resolution": "Used DOM click by aria-label (Page 2/Page 1) via agent-browser eval for deterministic navigation.",
+      "affectedAssertions": [
+        "VAL-ART-004"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 6 assertions for admin article grid: 6 passed, 0 failed, 0 blocked."
+}

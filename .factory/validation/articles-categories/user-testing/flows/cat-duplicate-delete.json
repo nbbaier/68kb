@@ -1,0 +1,220 @@
+{
+  "groupId": "cat-duplicate-delete",
+  "testedAt": "2026-03-19T11:58:00Z",
+  "isolation": {
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "credentials": {
+      "admin": "admin / admin123",
+      "limitedUser": "g5dupdel_1773939084_user / admin123"
+    },
+    "namespacePrefix": "g5dupdel_",
+    "namespacedRecords": {
+      "sourceCategoryId": 17,
+      "duplicatedCategoryId": 22,
+      "deleteNoArticlesCategoryId": 18,
+      "deleteWithArticlesCategoryId": 19,
+      "replacementCategoryId": 16,
+      "limitedUserDeleteTargetCategoryId": 23,
+      "articleId": 18
+    }
+  },
+  "toolsUsed": ["agent-browser", "curl", "sqlite3"],
+  "assertions": [
+    {
+      "id": "VAL-CAT-030",
+      "title": "Duplicate pre-fills add form",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "From /admin/categories, click Duplicate for g5dupdel_1773939084_src (id=17)",
+          "expected": "Duplicate form opens with source values pre-filled and Duplicate heading",
+          "observed": "Opened /admin/categories/new?duplicateId=17; form fields pre-filled: name, uri segment, description, display, allow ads, parent, keywords, order"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-duplicate-delete/VAL-CAT-030-duplicate-form-prefilled.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/admin/categories/17/duplicate -> 200 (curl evidence)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-031",
+      "title": "Duplicate creates new record",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Submit duplicate form with Create Category",
+          "expected": "New category row created with new ID; original unchanged",
+          "observed": "Redirected to /admin/categories; DB shows original id=17 unchanged and duplicate id=22 created with URI suffix _1"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-duplicate-delete/VAL-CAT-031-after-duplicate-create.png"
+        ],
+        "consoleErrors": "none",
+        "network": "POST /api/admin/categories observed in browser network log",
+        "dbChecks": "articles-categories/cat-duplicate-delete/db-after-tests.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-032",
+      "title": "Duplicate — invalid ID",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Navigate to /admin/categories/new?duplicateId=abc",
+          "expected": "Redirect to /admin/categories with error flash",
+          "observed": "No redirect; stayed on /admin/categories/new?duplicateId=abc and rendered inline error 'Invalid category ID' with Back to Categories link"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-duplicate-delete/VAL-CAT-032-invalid-duplicate-id.png"
+        ],
+        "consoleErrors": "none",
+        "network": "UI called GET /api/admin/categories/NaN/duplicate; supplemental curl GET /api/admin/categories/abc/duplicate -> 400"
+      },
+      "issues": "Behavior does not match contract redirect+flash requirement; current implementation shows inline error page instead."
+    },
+    {
+      "id": "VAL-CAT-040",
+      "title": "Delete category with no articles",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /admin/categories/18/delete and confirm delete",
+          "expected": "Category deleted, redirected with success, image removed, no orphan links",
+          "observed": "Redirected to /admin/categories; category id=18 removed; image file g5dupdel_1773939084_noart.png removed; no junction rows remain"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-duplicate-delete/VAL-CAT-040-delete-no-articles-confirm.png",
+          "articles-categories/cat-duplicate-delete/VAL-CAT-040-after-delete.png"
+        ],
+        "consoleErrors": "none",
+        "network": "DELETE /api/admin/categories/18 observed in browser network log",
+        "dbChecks": [
+          "articles-categories/cat-duplicate-delete/db-before-delete.txt",
+          "articles-categories/cat-duplicate-delete/db-after-tests.txt",
+          "articles-categories/cat-duplicate-delete/file-before-delete.txt",
+          "articles-categories/cat-duplicate-delete/file-after-delete.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-041",
+      "title": "Delete category with articles — reassignment prompt",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /admin/categories/19/delete for category with one linked article",
+          "expected": "Prompt shows article count and replacement dropdown with hierarchy",
+          "observed": "Prompt displayed 'This category has 1 article' and replacement dropdown with indented hierarchy entries (e.g., » g5dupdel_1773939084_repl_child)"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-duplicate-delete/VAL-CAT-041-reassignment-prompt.png",
+          "articles-categories/cat-duplicate-delete/VAL-CAT-041-replacement-dropdown-open.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/admin/categories/19, GET /api/admin/categories/19/article-count, GET /api/admin/categories observed in browser network log"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-042",
+      "title": "Delete category with articles — reassignment executes",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Select replacement category id=16 and submit delete",
+          "expected": "Articles reassigned, old category deleted, success redirect",
+          "observed": "Redirected to /admin/categories; old category id=19 removed; article2cat for article id=18 moved from category 19 to 16"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-duplicate-delete/VAL-CAT-042-replacement-selected.png",
+          "articles-categories/cat-duplicate-delete/VAL-CAT-042-after-reassignment-delete.png"
+        ],
+        "consoleErrors": "none",
+        "network": "DELETE /api/admin/categories/19 observed in browser network log",
+        "dbChecks": [
+          "articles-categories/cat-duplicate-delete/db-before-delete.txt",
+          "articles-categories/cat-duplicate-delete/db-after-tests.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-043",
+      "title": "Delete category — requires authorization",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Login as g5dupdel_1773939084_user (group without can_delete_categories) and attempt delete on id=23",
+          "expected": "Delete rejected with authorization error",
+          "observed": "Delete request rejected; supplemental API call returned 403 Forbidden: insufficient permissions; category id=23 remained"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-duplicate-delete/VAL-CAT-043-limited-user-logged-in.png",
+          "articles-categories/cat-duplicate-delete/VAL-CAT-043-unauthorized-delete-page.png",
+          "articles-categories/cat-duplicate-delete/VAL-CAT-043-unauthorized-delete-attempt.png"
+        ],
+        "consoleErrors": "none",
+        "network": "DELETE /api/admin/categories/23 -> 403 {\"error\":\"Forbidden: insufficient permissions\"} (curl evidence)",
+        "dbChecks": "articles-categories/cat-duplicate-delete/db-after-tests.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-044",
+      "title": "Delete category — invalid ID",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to /admin/categories/abc/delete",
+          "expected": "Redirect to categories grid with error flash and no deletion",
+          "observed": "Immediately redirected to /admin/categories; no category deleted; API also returns 400 for invalid ID"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-duplicate-delete/VAL-CAT-044-invalid-delete-id.png"
+        ],
+        "consoleErrors": "none",
+        "network": "DELETE /api/admin/categories/abc -> 400 {\"error\":\"Invalid category ID\"} (curl evidence)",
+        "dbChecks": "articles-categories/cat-duplicate-delete/db-after-tests.txt"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser wait --url '**/admin' and '**/login' timed out despite successful navigation to matching sub-routes with query params",
+      "resolved": true,
+      "resolution": "Used get url + snapshot to confirm landed route and continued flow",
+      "affectedAssertions": ["VAL-CAT-043"]
+    },
+    {
+      "description": "agent-browser network output did not include HTTP status codes for captured requests",
+      "resolved": true,
+      "resolution": "Added supplemental curl captures for status/body assertions (400/403 and duplicate endpoint 200)",
+      "affectedAssertions": ["VAL-CAT-030", "VAL-CAT-032", "VAL-CAT-043", "VAL-CAT-044"]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 8 assertions: 7 passed, 1 failed. Failure: VAL-CAT-032 because invalid duplicate ID does not redirect to grid with flash; it renders inline error on duplicate form route instead."
+}

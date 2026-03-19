@@ -1,0 +1,69 @@
+{
+  "groupId": "cat-empty-state",
+  "testedAt": "2026-03-19T16:19:27Z",
+  "isolation": {
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "milestone": "articles-categories",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "credentials": {
+      "username": "admin",
+      "password": "provided"
+    },
+    "namespacePrefix": "g1empty_"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "python3 (sqlite3/http)"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-CAT-007",
+      "title": "Category grid empty state",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Query SQLite categories table count",
+          "expected": "0 categories before UI validation",
+          "observed": "categoriesCount = 0"
+        },
+        {
+          "action": "Login as admin and navigate to /admin/categories",
+          "expected": "Categories grid page loads",
+          "observed": "Loaded http://localhost:3101/admin/categories"
+        },
+        {
+          "action": "Inspect empty-state text in categories grid",
+          "expected": "No-records/empty-state message is shown",
+          "observed": "Displayed message: \"No categories found. Add your first category to get started.\""
+        },
+        {
+          "action": "Check browser console errors",
+          "expected": "No console errors",
+          "observed": "none"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-empty-state/VAL-CAT-007-categories-empty-grid.png"
+        ],
+        "consoleErrors": "none (see articles-categories/cat-empty-state/VAL-CAT-007-console-errors.txt)",
+        "network": "POST /api/auth/login -> 200; GET /api/admin/categories -> 200 with {\"data\":[]} (see articles-categories/cat-empty-state/VAL-CAT-007-network-check.json)",
+        "database": "categories count = 0 (see articles-categories/cat-empty-state/VAL-CAT-007-db-categories-check.json)"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser network request log returned no captured requests for this session.",
+      "resolved": true,
+      "resolution": "Captured supplemental authenticated API evidence via Python HTTP requests.",
+      "affectedAssertions": [
+        "VAL-CAT-007"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 1 assertion: 1 passed, 0 failed, 0 blocked."
+}

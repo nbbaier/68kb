@@ -1,0 +1,30 @@
+{
+  "milestone": "articles-categories",
+  "round": 2,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 5,
+    "passed": 3,
+    "failed": 1,
+    "blocked": 1
+  },
+  "passedAssertions": [
+    "VAL-ART-041",
+    "VAL-ART-051",
+    "VAL-ART-054"
+  ],
+  "failedAssertions": [
+    {
+      "id": "VAL-CAT-032",
+      "reason": "Expected redirect to /admin/categories with error flash, but UI stayed on duplicate form route and rendered inline 'Invalid category ID'."
+    }
+  ],
+  "blockedAssertions": [
+    {
+      "id": "VAL-TAG-003",
+      "blockedBy": "No user-visible related-articles surface exists in this build (public article route renders 404 and related endpoint probes returned 404)."
+    }
+  ],
+  "appliedUpdates": [],
+  "previousRound": ".factory/validation/articles-categories/user-testing/synthesis.round1.json"
+}

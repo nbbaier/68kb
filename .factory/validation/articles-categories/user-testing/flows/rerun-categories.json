@@ -1,0 +1,48 @@
+{
+  "groupId": "rerun-categories",
+  "testedAt": "2026-03-19T17:29:56Z",
+  "isolation": {
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "credentials": "admin / admin123",
+    "dataPrefix": "rerun-categories-",
+    "notes": "No new test records were created for this assertion rerun."
+  },
+  "toolsUsed": [
+    "agent-browser"
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-CAT-032",
+      "title": "Duplicate — invalid ID",
+      "status": "fail",
+      "reason": "Expected redirect to /admin/categories with error flash, but UI stayed on duplicate form route and rendered inline 'Invalid category ID'.",
+      "steps": [
+        {
+          "action": "Login as admin at /login",
+          "expected": "Authenticated admin session",
+          "observed": "Logged in and landed on http://localhost:3101/admin"
+        },
+        {
+          "action": "Navigate to /admin/categories/new?duplicateId=abc",
+          "expected": "Redirect to /admin/categories and show error flash",
+          "observed": "Stayed on http://localhost:3101/admin/categories/new?duplicateId=abc and displayed inline text 'Invalid category ID' with 'Back to Categories' link"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/rerun-categories/VAL-CAT-032-invalid-duplicate-id-inline-error.png"
+        ],
+        "url": "http://localhost:3101/admin/categories/new?duplicateId=abc",
+        "flashObserved": "none",
+        "inlineErrorObserved": "Invalid category ID",
+        "consoleErrors": "none",
+        "network": "No requests captured by agent-browser network exporter during this rerun"
+      }
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Reran VAL-CAT-032. Assertion still fails: non-numeric duplicate ID does not redirect to categories grid with error flash; inline error page is shown on duplicate route instead."
+}

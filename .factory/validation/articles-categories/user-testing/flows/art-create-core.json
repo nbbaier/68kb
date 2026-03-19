@@ -1,0 +1,228 @@
+{
+  "groupId": "art-create-core",
+  "testedAt": "2026-03-19T16:38:34Z",
+  "isolation": {
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "credentials": {
+      "username": "admin",
+      "password": "admin123"
+    },
+    "namespacePrefix": "g7core_",
+    "recordsCreated": {
+      "categories": [
+        "g7core_cat_a_20260319113257",
+        "g7core_cat_b_20260319113257"
+      ],
+      "articles": [
+        "g7core_full_20260319113257",
+        "g7core minimal uri 20260319113257"
+      ],
+      "articleIds": [13, 14]
+    }
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "sqlite3",
+    "python3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-ART-010",
+      "title": "Add article with all fields",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /admin/articles/new and fill title, URI, short/full WYSIWYG content, display=Yes, keywords, weight, two categories, attachment title+file",
+          "expected": "All provided fields accepted in add form",
+          "observed": "All fields accepted; category checkboxes selected and attachment chosen"
+        },
+        {
+          "action": "Submit Save article",
+          "expected": "Article persisted with attachment and category/tag relations",
+          "observed": "Redirected to /admin/articles/13/edit; API/DB show persisted article, attachment, categories, tags"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-create-core/VAL-ART-010-all-fields-before-save.png",
+          "articles-categories/art-create-core/VAL-ART-018-redirect-edit-page.png"
+        ],
+        "consoleErrors": "none (agent-browser errors --json => [])",
+        "network": "Browser network export includes POST /api/admin/articles during create flow (see evidence/network-requests.json); curl GET /api/admin/articles/13 -> HTTP 200 with persisted payload",
+        "dbChecks": "articles.id=13 persisted with article_uri=g7core-full-uri-20260319113257, article_display=y, article_order=7; attachments row exists (attach_id=1, attach_file=1773938074371_g7core_attachment.txt); file exists at app/uploads/13/1773938074371_g7core_attachment.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-011",
+      "title": "Add article with minimum required fields",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /admin/articles/new, fill only Title (g7core minimal uri 20260319113257), leave URI blank and submit",
+          "expected": "Article created with defaults",
+          "observed": "Article created and redirected to /admin/articles/14/edit"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-create-core/VAL-ART-011-minimal-before-save.png",
+          "articles-categories/art-create-core/VAL-ART-011-minimal-redirect-edit.png"
+        ],
+        "consoleErrors": "none (agent-browser errors --json => [])",
+        "network": "POST /api/admin/articles followed by GET /api/admin/articles/14 captured in browser network export",
+        "dbChecks": "articles.id=14 created with article_title='g7core minimal uri 20260319113257', article_uri='g7core-minimal-uri-20260319113257', article_order=0, article_author=1"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-015",
+      "title": "Add article — auto-generates URI from title",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create minimal article with URI field intentionally blank",
+          "expected": "URI slug generated from title",
+          "observed": "Edit form URI value is g7core-minimal-uri-20260319113257"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-create-core/VAL-ART-015-uri-auto-generated.png"
+        ],
+        "consoleErrors": "none (agent-browser errors --json => [])",
+        "network": "POST /api/admin/articles in browser network export for created record id=14",
+        "dbChecks": "articles.id=14 has auto-generated article_uri='g7core-minimal-uri-20260319113257'"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-016",
+      "title": "Add article — WYSIWYG editors render",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open add article form",
+          "expected": "Short/full rich-text editors with formatting toolbar controls are visible",
+          "observed": "Both editors rendered with toolbar buttons (B, I, code, bulleted list, numbered list, link, undo, redo)"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-create-core/VAL-ART-016-wysiwyg-render.png"
+        ],
+        "consoleErrors": "none (agent-browser errors --json => [])",
+        "network": "GET /admin/articles/new and related editor assets loaded in browser network export",
+        "dbChecks": null
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-017",
+      "title": "Add article — category multi-select",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Select g7core_cat_a_20260319113257 and g7core_cat_b_20260319113257 checkboxes on add form and save",
+          "expected": "Both categories persist",
+          "observed": "Edit form shows both checkboxes checked; junction rows saved for both categories"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-create-core/VAL-ART-017-categories-selected.png",
+          "articles-categories/art-create-core/VAL-ART-017-grid-categories.png"
+        ],
+        "consoleErrors": "none (agent-browser errors --json => [])",
+        "network": "curl GET /api/admin/articles?search=g7core_full_20260319113257 -> HTTP 200 and categories array includes cat_id 6 + 7",
+        "dbChecks": "article2cat has rows (article_id_rel=13, category_id_rel=6) and (article_id_rel=13, category_id_rel=7)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-018",
+      "title": "Add article — Save redirects to edit page",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Submit Save on add form (full and minimal variants)",
+          "expected": "Redirect to edit/{id} with populated form",
+          "observed": "Redirects observed to /admin/articles/13/edit and /admin/articles/14/edit"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-create-core/VAL-ART-018-redirect-edit-page.png",
+          "articles-categories/art-create-core/VAL-ART-011-minimal-redirect-edit.png"
+        ],
+        "consoleErrors": "none (agent-browser errors --json => [])",
+        "network": "POST /api/admin/articles followed by GET /api/admin/articles/{id} captured in browser network export",
+        "dbChecks": "Edit forms were pre-populated for IDs 13 and 14 after redirect"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-019",
+      "title": "Add article — sets timestamps",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create articles and query article_date/article_modified",
+          "expected": "Both timestamps are set on creation",
+          "observed": "id=13: date=1773938074, modified=1773938074; id=14: date=1773938134, modified=1773938134; both within ~3 minutes of now"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-create-core/VAL-ART-019-post-create-edit-page.png"
+        ],
+        "consoleErrors": "none (agent-browser errors --json => [])",
+        "network": "curl GET /api/admin/articles/13 -> HTTP 200 includes articleDate and articleModified",
+        "dbChecks": "SQLite query confirms non-null, equal create timestamps for ids 13 and 14; python delta check: +161s and +101s from current epoch"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-020",
+      "title": "Add article — records current user as author",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create article while logged in as admin",
+          "expected": "article_author set to current user",
+          "observed": "article_author=1 for ids 13 and 14; edit form author list shows selected 'admin admin@example.com'"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-create-core/VAL-ART-020-author-edit-view.png"
+        ],
+        "consoleErrors": "none (agent-browser errors --json => [])",
+        "network": "curl GET /api/admin/articles/13 -> HTTP 200 with author object { userId: 1, username: 'admin' }",
+        "dbChecks": "articles table: article_author=1 on ids 13 and 14"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser network export does not include HTTP status codes for each request entry",
+      "resolved": true,
+      "resolution": "Captured supplemental authenticated curl responses with explicit HTTP status for key article endpoints",
+      "affectedAssertions": [
+        "VAL-ART-010",
+        "VAL-ART-011",
+        "VAL-ART-015",
+        "VAL-ART-017",
+        "VAL-ART-018",
+        "VAL-ART-019",
+        "VAL-ART-020"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 8 assertions: 8 passed, 0 failed, 0 blocked. Core article creation behaviors validated for full and minimal submissions, URI generation, WYSIWYG rendering, category persistence, redirect behavior, timestamps, and author attribution."
+}

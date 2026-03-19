@@ -1,0 +1,232 @@
+{
+  "groupId": "art-edit-attachments",
+  "testedAt": "2026-03-19T17:00:11Z",
+  "isolation": {
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "credentials": "admin / admin123",
+    "namespacePrefix": "g9edit_",
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "sqlite3",
+    "curl",
+    "python3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-ART-030",
+      "title": "Edit form pre-populates all fields",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /admin/articles/19/edit as admin",
+          "expected": "Edit form loads with existing values",
+          "observed": "Form loaded with title, URI, WYSIWYG HTML content, display=Yes, keywords, order=7, category g9edit_cat_old checked, and author g9edit_author_1773939132 (ID 3)."
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-edit-attachments/VAL-ART-030-prepopulated-form.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Form data loaded in UI; agent-browser request export was limited for this page load."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-031",
+      "title": "Edit article \u2014 update title",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Change title to g9edit_article_title_updated_1773939132 and submit",
+          "expected": "Title updates, modified timestamp updates, redirect remains edit page with success state",
+          "observed": "Title field and DB row updated; article_modified changed from 1773939032 to 1773939223; URL remained /admin/articles/19/edit."
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-edit-attachments/VAL-ART-031-title-updated-redirect.png"
+        ],
+        "consoleErrors": "none",
+        "network": "UI submit completed successfully; DB verification captured in db-final-state.json."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-032",
+      "title": "Edit article \u2014 change categories",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Uncheck g9edit_cat_old_1773939132 and check g9edit_cat_new_1773939132, then submit",
+          "expected": "Old category relation removed and new relation added",
+          "observed": "UI checkbox state updated after save; article2cat changed from category_id_rel=20 to category_id_rel=21."
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-edit-attachments/VAL-ART-032-categories-updated.png"
+        ],
+        "consoleErrors": "none",
+        "network": "UI submit completed successfully; junction verification done via sqlite query and db-final-state.json."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-033",
+      "title": "Edit article \u2014 validation applies",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Clear Title and submit edit form",
+          "expected": "Validation error shown and article not modified",
+          "observed": "Validation text \"Title is required\" shown; DB remained unchanged at title g9edit_article_title_1773939132 and modified 1773939032 for that attempt."
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-edit-attachments/VAL-ART-033-empty-title-validation.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Client-side validation prevented invalid save; no server-side change observed."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-034",
+      "title": "Edit article \u2014 author search (AJAX)",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Type g9edit_authorb in Author search",
+          "expected": "AJAX results appear",
+          "observed": "Dropdown showed g9edit_authorb_1773939284 result."
+        },
+        {
+          "action": "Select dropdown author",
+          "expected": "Author selection updates current author",
+          "observed": "Author field updated to g9edit_authorb_1773939284 with ID: 4; persisted to DB (article_author=4) after save."
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-edit-attachments/VAL-ART-034-author-search-results.png",
+          "articles-categories/art-edit-attachments/VAL-ART-034-author-selected.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Browser performance entries recorded fetches to /api/admin/users/search; supplemental curl GET /api/admin/users/search?q=g9edit_authorb -> 200 (network-statuses.txt)."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-035",
+      "title": "Edit article \u2014 URI can be changed",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Change URI to g9edit_article_uri_updated_1773939132 and save",
+          "expected": "article_uri updated in DB",
+          "observed": "URI field and DB article_uri updated to g9edit_article_uri_updated_1773939132."
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-edit-attachments/VAL-ART-035-uri-updated.png"
+        ],
+        "consoleErrors": "none",
+        "network": "UI save succeeded; DB evidence in db-final-state.json."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-051",
+      "title": "Upload attachment on article edit",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Choose g9edit_attachment_source.txt, set attachment title, click Upload on edit form",
+          "expected": "New attachment row appears and file/DB record is created",
+          "observed": "UI remained at \"No attachments yet\" and no attachments row was created in DB for article_id=19."
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-edit-attachments/VAL-ART-051-upload-attempt-no-row.png"
+        ],
+        "consoleErrors": "none",
+        "network": "No attachment POST request was observed from the UI flow; supplemental API check shows endpoint works (POST /api/admin/articles/19/attachments -> 201 via curl, network-statuses.txt)."
+      },
+      "issues": "Attachment upload action on edit form did not create a record/file through the UI despite file selection."
+    },
+    {
+      "id": "VAL-ART-052",
+      "title": "Attachment list displays all fields",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open edit form with one namespaced attachment row present",
+          "expected": "Table shows Title, File, Type, Size, Delete with correct values",
+          "observed": "Table rendered headers [Title, File, Type, Size, Delete] and row values g9edit_manual_title_1773939132 / g9edit_manual_attach_1773939132.txt / text/plain / 53 B."
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-edit-attachments/VAL-ART-052-attachment-table-fields.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Delete button action endpoint available for listed row; table values validated in DOM and screenshot."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-053",
+      "title": "Delete individual attachment",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Click delete button for g9edit_manual_title_1773939132",
+          "expected": "Attachment row removed, DB row deleted, file removed, remain on edit form",
+          "observed": "Row disappeared from UI, attachments table cleared, DB contains no attachments for article_id=19, file removed from app/uploads/19, URL remained /admin/articles/19/edit."
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-edit-attachments/VAL-ART-053-attachment-deleted.png"
+        ],
+        "consoleErrors": "none",
+        "network": "DELETE /api/admin/articles/19/attachments/{id} -> 200 in supplemental curl (network-statuses.txt)."
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser network request export was inconsistent for this SPA; request lists were often empty.",
+      "resolved": true,
+      "resolution": "Used browser performance resource entries and supplemental authenticated curl traces saved to evidence files.",
+      "affectedAssertions": [
+        "VAL-ART-031",
+        "VAL-ART-032",
+        "VAL-ART-034",
+        "VAL-ART-035",
+        "VAL-ART-051",
+        "VAL-ART-053"
+      ]
+    },
+    {
+      "description": "Edit-page attachment upload via UI did not create any attachment record/file even when a file was selected.",
+      "resolved": true,
+      "resolution": "Marked VAL-ART-051 as fail; used a namespaced seeded attachment only to validate VAL-ART-052 and VAL-ART-053 independently.",
+      "affectedAssertions": [
+        "VAL-ART-051",
+        "VAL-ART-052",
+        "VAL-ART-053"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 9 assertions: 8 passed, 1 failed (VAL-ART-051 upload on edit). Non-pass reason: UI upload attempt did not create attachment row/file; endpoint itself responded 201 in supplemental API check."
+}

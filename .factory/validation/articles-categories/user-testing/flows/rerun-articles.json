@@ -1,0 +1,172 @@
+{
+  "groupId": "rerun-articles",
+  "testedAt": "2026-03-19T17:34:57Z",
+  "isolation": {
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "credentials": "admin / admin123",
+    "dataPrefix": "rerun-articles-",
+    "recordsCreated": {
+      "articles": [
+        {
+          "articleId": 24,
+          "articleTitle": "rerun-articles-1773941394-main",
+          "articleUri": "rerun-articles-1773941394-main"
+        },
+        {
+          "articleId": 25,
+          "articleTitle": "rerun-articles-1773941394-peer",
+          "articleUri": "rerun-articles-1773941394-peer"
+        }
+      ]
+    }
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "sqlite3"
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-ART-041",
+      "title": "Delete article — invalid ID",
+      "status": "pass",
+      "reason": "Both invalid delete attempts returned 404 Not Found and did not modify the namespaced article records.",
+      "steps": [
+        {
+          "action": "DELETE /api/admin/articles/not-a-number (authenticated)",
+          "expected": "404 or redirect with no DB modification",
+          "observed": "HTTP 404 with {\"error\":\"Article not found\"}"
+        },
+        {
+          "action": "DELETE /api/admin/articles/999999 (authenticated)",
+          "expected": "404 or redirect with no DB modification",
+          "observed": "HTTP 404 with {\"error\":\"Article not found\"}"
+        },
+        {
+          "action": "Compare namespaced DB rows before/after invalid deletes",
+          "expected": "No unrelated deletion",
+          "observed": "Articles 24/25 remained present; attachment count for article 24 unchanged during this check"
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "n/a (API assertion)",
+        "network": "articles-categories/rerun-articles/VAL-ART-041-api-db-check.txt",
+        "dbChecks": "articles-categories/rerun-articles/VAL-ART-041-api-db-check.txt"
+      }
+    },
+    {
+      "id": "VAL-ART-051",
+      "title": "Upload attachment on article edit",
+      "status": "pass",
+      "reason": "Uploading a valid .txt attachment on the edit form created attachment rows and files on disk, and the edit UI displayed the new attachments table rows.",
+      "steps": [
+        {
+          "action": "Open /admin/articles/24/edit and upload rerun-articles-1773941394-valid.txt",
+          "expected": "Attachment upload succeeds and appears on edit form",
+          "observed": "Attachment row(s) displayed with delete action on the form"
+        },
+        {
+          "action": "Verify DB and filesystem",
+          "expected": "Attachment record(s) exist and uploaded file(s) exist in uploads/24",
+          "observed": "attachments table contains rows for article 24 and files are present in app/uploads/24"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/rerun-articles/VAL-ART-051-new-article-form.png",
+          "articles-categories/rerun-articles/VAL-ART-051-article-created-edit-page.png",
+          "articles-categories/rerun-articles/VAL-ART-051-attachment-uploaded.png",
+          "articles-categories/rerun-articles/VAL-ART-051-attachment-uploaded-rerun.png"
+        ],
+        "consoleErrors": "none (articles-categories/rerun-articles/VAL-ART-051-errors.txt is empty)",
+        "network": "articles-categories/rerun-articles/browser-network.txt (POST /api/admin/articles/24/attachments)",
+        "dbChecks": "articles-categories/rerun-articles/VAL-ART-051-054-final-db-filesystem-check.txt"
+      }
+    },
+    {
+      "id": "VAL-ART-054",
+      "title": "Upload with invalid file type",
+      "status": "pass",
+      "reason": "Disallowed .exe upload was rejected with visible error text, HTTP 400 from API, and no .exe DB row or filesystem artifact.",
+      "steps": [
+        {
+          "action": "Upload rerun-articles-1773941394-invalid.exe on /admin/articles/24/edit",
+          "expected": "Upload rejected with error",
+          "observed": "Form alert/toast text: File type '.exe' is not allowed"
+        },
+        {
+          "action": "Verify persistence after rejection",
+          "expected": "No invalid attachment record or file stored",
+          "observed": "DB .exe count is 0 and uploads/24 has 0 .exe files"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/rerun-articles/VAL-ART-054-invalid-type-error.png",
+          "articles-categories/rerun-articles/VAL-ART-054-invalid-type-error-final.png"
+        ],
+        "consoleErrors": "none (articles-categories/rerun-articles/VAL-ART-054-errors.txt is empty)",
+        "network": "articles-categories/rerun-articles/VAL-ART-051-054-db-filesystem-check.txt (POST /api/admin/articles/24/attachments -> 400)",
+        "dbChecks": "articles-categories/rerun-articles/VAL-ART-051-054-final-db-filesystem-check.txt",
+        "uiErrorSnapshot": "articles-categories/rerun-articles/VAL-ART-054-alert-snapshot.txt"
+      }
+    },
+    {
+      "id": "VAL-TAG-003",
+      "title": "Tag-based related articles",
+      "status": "blocked",
+      "reason": "No user-visible related-articles surface exists in this build (article route resolves to 404 page and no related-articles API route is available).",
+      "steps": [
+        {
+          "action": "Create two articles sharing tag rerun-articles-shared-1773941394",
+          "expected": "Data exists to evaluate related-article behavior",
+          "observed": "Articles 24 and 25 share the same tag"
+        },
+        {
+          "action": "Open /article/rerun-articles-1773941394-main in browser",
+          "expected": "Article detail surface where related content could be viewed",
+          "observed": "Rendered 404 page ('Page not found'); no related section"
+        },
+        {
+          "action": "Probe likely related API endpoints",
+          "expected": "Endpoint/function output listing related articles excluding self",
+          "observed": "GET /api/articles/24/related and /api/articles/25/related returned 404 Not Found"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/rerun-articles/VAL-TAG-003-second-article-created.png",
+          "articles-categories/rerun-articles/VAL-TAG-003-public-article-route-final.png"
+        ],
+        "consoleErrors": "none (articles-categories/rerun-articles/VAL-TAG-003-errors.txt is empty)",
+        "network": "articles-categories/rerun-articles/VAL-TAG-003-absence-check.txt",
+        "dbChecks": "articles-categories/rerun-articles/VAL-TAG-003-absence-check.txt"
+      }
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser network export lists requests but omits HTTP status/body details needed for assertion-level API response proof.",
+      "resolved": true,
+      "resolution": "Captured supplemental authenticated curl responses in evidence text files for precise status/body validation.",
+      "affectedAssertions": [
+        "VAL-ART-041",
+        "VAL-ART-054",
+        "VAL-TAG-003"
+      ]
+    }
+  ],
+  "blockers": [
+    {
+      "description": "Missing user-visible related-articles surface for tag-based relation validation.",
+      "affectedAssertions": [
+        "VAL-TAG-003"
+      ],
+      "quickFixAttempted": "Created two shared-tag articles (24, 25), opened the expected public article route, and probed likely related endpoints; public route showed 404 UI and related endpoints returned 404."
+    }
+  ],
+  "summary": "Reran 4 assertions: 3 passed (VAL-ART-041, VAL-ART-051, VAL-ART-054) and 1 blocked (VAL-TAG-003) due to missing related-articles user surface/API in this build."
+}

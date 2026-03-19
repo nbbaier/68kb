@@ -1,0 +1,271 @@
+{
+  "groupId": "cat-grid-create-core",
+  "testedAt": "2026-03-19T16:28:40.366952+00:00",
+  "isolation": {
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "credentials": {
+      "username": "admin"
+    },
+    "namespacePrefix": "g2core_"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "sqlite3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-CAT-001",
+      "title": "Category grid loads and displays tree",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to /admin/categories after admin login",
+          "expected": "Grid renders with columns Title, Allow Ads, Display, Duplicate, Delete",
+          "observed": "Grid rendered with all required columns"
+        },
+        {
+          "action": "Inspect rows after creating g2core hierarchy",
+          "expected": "Tree rows visible including indented children",
+          "observed": "Rows shown for g2core_6a598d_root, child, grandchild with tree markers"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-grid-create-core/VAL-CAT-001-initial-grid.png",
+          "articles-categories/cat-grid-create-core/VAL-CAT-002-hierarchy-grid.png"
+        ],
+        "consoleErrors": "none (errors cleared, then checked on /admin/categories and /admin/categories/new)",
+        "network": "GET /api/admin/categories -> 200 (supporting curl evidence)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-002",
+      "title": "Category grid indentation reflects hierarchy",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create Root -> Child -> Grandchild categories in g2core namespace",
+          "expected": "Three levels exist",
+          "observed": "Created cat_ids 3 (root), 4 (child), 5 (grandchild)"
+        },
+        {
+          "action": "View /admin/categories grid",
+          "expected": "Root no indent, child one » , grandchild two »",
+          "observed": "Displayed as g2core_6a598d_root, » g2core_6a598d_child, »» g2core_6a598d_grandchild"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-grid-create-core/VAL-CAT-002-hierarchy-grid.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/admin/categories -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-003",
+      "title": "Category grid shows Allow Ads status",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create categories with mixed allow ads values",
+          "expected": "Allow Ads shows Yes for yes and No for no",
+          "observed": "root=Yes, child=No, grandchild=No"
+        },
+        {
+          "action": "Inspect Allow Ads column in grid",
+          "expected": "Status matches stored values",
+          "observed": "Grid badges matched stored cat_allowads values"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-grid-create-core/VAL-CAT-002-hierarchy-grid.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/admin/categories -> 200 (catAllowads: yes/no mix present)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-004",
+      "title": "Category grid shows Display status",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create categories with mixed display values",
+          "expected": "Display shows Yes for yes and No for no",
+          "observed": "root=Yes, child=No, grandchild=Yes"
+        },
+        {
+          "action": "Inspect Display column in grid",
+          "expected": "Status matches stored values",
+          "observed": "Grid badges matched stored cat_display values"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-grid-create-core/VAL-CAT-002-hierarchy-grid.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/admin/categories -> 200 (catDisplay: yes/no mix present)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-005",
+      "title": "Category grid has Duplicate action link",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Click Duplicate on g2core_6a598d_root row",
+          "expected": "Navigation to duplicate route/form",
+          "observed": "Navigated to /admin/categories/new?duplicateId=3"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-grid-create-core/VAL-CAT-005-duplicate-route.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/admin/categories/3/duplicate -> 200 (curl evidence)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-006",
+      "title": "Category grid has Delete action link",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Click Delete on g2core_6a598d_grandchild row",
+          "expected": "Navigation to delete route",
+          "observed": "Navigated to /admin/categories/5/delete with delete confirmation UI"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-grid-create-core/VAL-CAT-006-delete-route.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/admin/categories/5/article-count -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-010",
+      "title": "Add root category with all fields",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Fill add-category form with name, URI, description, display=yes, allowAds=yes, parent=No Parent, keywords, order, image",
+          "expected": "Submission succeeds and redirects",
+          "observed": "Redirected to /admin/categories with success flash"
+        },
+        {
+          "action": "Verify persisted values",
+          "expected": "All values persisted and image uploaded",
+          "observed": "DB row saved for g2core_6a598d_root with cat_image=1773937441074_g2core-root.png, and file exists under app/uploads/categories"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-grid-create-core/VAL-CAT-010-root-form-filled.png",
+          "articles-categories/cat-grid-create-core/VAL-CAT-010-root-created-grid.png"
+        ],
+        "consoleErrors": "none",
+        "network": "UI submit redirected successfully; supporting GET /api/admin/categories -> 200",
+        "dbChecks": [
+          "SELECT cat_id, cat_parent, cat_uri, cat_name, cat_keywords, cat_image, cat_allowads, cat_display, cat_order FROM categories WHERE cat_name='g2core_6a598d_root'",
+          "cat_id=3, cat_parent=0, cat_uri='g2core-6a598d-root', cat_allowads='yes', cat_display='yes', cat_order=11, cat_image='1773937441074_g2core-root.png'",
+          "File exists: /Users/nbbaier/68kb/app/uploads/categories/1773937441074_g2core-root.png (68 bytes)"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-011",
+      "title": "Add sub-category",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create child category with parent set to g2core_6a598d_root",
+          "expected": "Parent relationship and hierarchical URI persist",
+          "observed": "DB shows cat_parent=3 and cat_uri='g2core-6a598d-root/g2core-6a598d-child'"
+        },
+        {
+          "action": "View categories grid",
+          "expected": "Child appears indented",
+          "observed": "Child displayed as '» g2core_6a598d_child'"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-grid-create-core/VAL-CAT-011-child-form-filled.png",
+          "articles-categories/cat-grid-create-core/VAL-CAT-011-child-created-grid.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/admin/categories -> 200",
+        "dbChecks": [
+          "SELECT cat_id, cat_parent, cat_uri, cat_name FROM categories WHERE cat_name='g2core_6a598d_child'",
+          "cat_id=4, cat_parent=3, cat_uri='g2core-6a598d-root/g2core-6a598d-child'"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-018",
+      "title": "Add category parent dropdown hierarchy",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /admin/categories/new and expand Parent Category dropdown",
+          "expected": "No Parent first, then hierarchical category options",
+          "observed": "Options order: No Parent (root), ... , g2core_6a598d_root, » g2core_6a598d_child, »» g2core_6a598d_grandchild"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-grid-create-core/VAL-CAT-018-parent-dropdown-open.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/admin/categories -> 200 (hierarchy source)",
+        "dbChecks": [
+          "Hierarchy confirmed in categories table: root (id=3) -> child (id=4) -> grandchild (id=5)"
+        ]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser select @ref intermittently failed on combobox fields even when refs were present.",
+      "resolved": true,
+      "resolution": "Used DOM evaluation to set select values and dispatch change events, then submitted through normal UI.",
+      "affectedAssertions": [
+        "VAL-CAT-010",
+        "VAL-CAT-011"
+      ]
+    },
+    {
+      "description": "agent-browser network request list returned no entries during this flow.",
+      "resolved": true,
+      "resolution": "Captured supporting network evidence using curl against authenticated API endpoints.",
+      "affectedAssertions": [
+        "VAL-CAT-001",
+        "VAL-CAT-005",
+        "VAL-CAT-006",
+        "VAL-CAT-010",
+        "VAL-CAT-011",
+        "VAL-CAT-018"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 9 assertions: 9 passed, 0 failed, 0 blocked. Core categories grid, create root/sub/hierarchy behavior, action links, and parent dropdown hierarchy all validated in g2core_ namespace."
+}

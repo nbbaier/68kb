@@ -1,0 +1,224 @@
+{
+  "groupId": "art-delete-tags",
+  "testedAt": "2026-03-19T17:07:17Z",
+  "isolation": {
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "credentials": "admin / admin123",
+    "namespacePrefix": "test_",
+    "recordsCreated": {
+      "category": {
+        "catId": 24,
+        "catName": "test-tag"
+      },
+      "articles": [
+        {
+          "articleId": 20,
+          "articleTitle": "test-article-a"
+        },
+        {
+          "articleId": 21,
+          "articleTitle": "test-article-b"
+        },
+        {
+          "articleId": 22,
+          "articleTitle": "test-tag",
+          "deletedDuringTest": true
+        }
+      ]
+    }
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "sqlite3",
+    "rg"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-TAG-001",
+      "title": "Tags created from article keywords on save",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create article test-article-a in /admin/articles/new with keywords: test-shared, test-multi, test-dupe",
+          "expected": "Saving article creates corresponding tags and article_tags links",
+          "observed": "Article saved as id=20; tags rows exist and article_tags links exist for all three keywords"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-delete-tags/VAL-TAG-001-article-a-form.png",
+          "articles-categories/art-delete-tags/VAL-TAG-001-article-a-saved.png"
+        ],
+        "consoleErrors": "none (see articles-categories/art-delete-tags/console-errors.json and console-errors-final.json)",
+        "network": "POST /api/admin/articles executed via UI save; supplemental API evidence in delete-api-responses.txt and tag-related-check.txt",
+        "dbChecks": "articles-categories/art-delete-tags/db-before-delete.txt (TAGS + ARTICLE_TAGS JOIN sections)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TAG-004",
+      "title": "Tags many-to-many integrity",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create article A (id=20) with multiple tags and article B (id=21) sharing two tags",
+          "expected": "One article can map to many tags; one tag can map to multiple articles",
+          "observed": "article 20 links to 3 tags; tag test-shared links to article 20 and 21; test-dupe links to article 20 and 21"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-delete-tags/VAL-TAG-004-005-article-b-saved.png",
+          "articles-categories/art-delete-tags/VAL-TAG-004-article-grid-after-delete.png"
+        ],
+        "consoleErrors": "none",
+        "network": "UI saves for article ids 20 and 21 completed successfully",
+        "dbChecks": "articles-categories/art-delete-tags/db-before-delete.txt and db-tag-integrity-post-delete.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TAG-005",
+      "title": "Duplicate tags not created",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Save two articles using shared keywords test-shared and test-dupe",
+          "expected": "Only one tags row per keyword; both articles linked through article_tags",
+          "observed": "tags table has exactly one row for each shared keyword; both article ids 20 and 21 are linked to same tag ids"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-delete-tags/VAL-TAG-004-005-article-b-saved.png"
+        ],
+        "consoleErrors": "none",
+        "network": "UI save requests completed for both articles",
+        "dbChecks": "articles-categories/art-delete-tags/db-before-delete.txt (DUPLICATE CHECK) and db-tag-integrity-post-delete.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TAG-003",
+      "title": "Tag-based related articles",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Probe for a related-articles user surface/API using created shared-tag articles (20, 21)",
+          "expected": "A callable function/API returns related articles excluding the current article",
+          "observed": "No related-articles route exists in current server routes; GET /api/articles/20/related returns 404"
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "n/a",
+        "network": "articles-categories/art-delete-tags/tag-related-check.txt",
+        "dbChecks": "articles-categories/art-delete-tags/tag-related-expected-sql.txt shows expected related candidate (article 21) if such function existed"
+      },
+      "issues": "Blocked by missing related-articles user surface in this milestone build (no route/UI available to validate exclusion-of-self behavior)."
+    },
+    {
+      "id": "VAL-ART-040",
+      "title": "Delete article removes record and associations",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create delete-target article id=22 with category (cat_id=24), tags, and one attachment file",
+          "expected": "Delete operation has all association types to remove",
+          "observed": "Pre-delete checks confirmed article row, article2cat row, article_tags rows, attachments row, and uploads/22 file"
+        },
+        {
+          "action": "DELETE /api/admin/articles/22",
+          "expected": "Article row removed; junction rows removed; attachment file removed from disk",
+          "observed": "HTTP 200 delete success; article, article2cat, article_tags, and attachments rows all removed; uploads/22 directory removed"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-delete-tags/VAL-ART-040-delete-target-form.png",
+          "articles-categories/art-delete-tags/VAL-ART-040-delete-target-saved.png",
+          "articles-categories/art-delete-tags/VAL-ART-040-deleted-edit-load-error.png"
+        ],
+        "consoleErrors": "none",
+        "network": "articles-categories/art-delete-tags/delete-api-responses.txt (DELETE /api/admin/articles/22 -> 200)",
+        "dbChecks": "articles-categories/art-delete-tags/pre-delete-integrity.txt and post-delete-integrity.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TAG-002",
+      "title": "Tags deleted when article is deleted",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Delete article id=22 which had article_tags links",
+          "expected": "All article_tags rows for article 22 removed",
+          "observed": "Pre-delete had rows (22,19) and (22,22); post-delete article_tags query for tags_article_id=22 returned no rows"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/art-delete-tags/VAL-ART-040-delete-target-saved.png"
+        ],
+        "consoleErrors": "none",
+        "network": "articles-categories/art-delete-tags/delete-api-responses.txt",
+        "dbChecks": "articles-categories/art-delete-tags/pre-delete-integrity.txt and post-delete-integrity.txt"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-ART-041",
+      "title": "Delete article — invalid ID",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "DELETE /api/admin/articles/not-a-number",
+          "expected": "404 or redirect and no DB modification",
+          "observed": "Returned 400 Bad Request with {\"error\":\"Invalid article ID\"}"
+        },
+        {
+          "action": "DELETE /api/admin/articles/999999",
+          "expected": "404 or redirect and no DB modification",
+          "observed": "Returned 404 Not Found with {\"error\":\"Article not found\"}"
+        },
+        {
+          "action": "Verify namespaced non-target records remain",
+          "expected": "No unrelated deletion",
+          "observed": "article ids 20 and 21 remained in DB; namespace article count remained 2 after invalid delete attempts"
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "n/a",
+        "network": "articles-categories/art-delete-tags/delete-api-responses.txt",
+        "dbChecks": "articles-categories/art-delete-tags/art-041-db-check.txt"
+      },
+      "issues": "Non-numeric invalid-id path returns HTTP 400 instead of the contract's expected 404/redirect."
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser network requests export returned an empty list for this SPA session, so request status/payload details were incomplete from browser-only capture.",
+      "resolved": true,
+      "resolution": "Used authenticated curl captures for explicit status codes and response bodies (delete-api-responses.txt, tag-related-check.txt, network-category-create.txt).",
+      "affectedAssertions": [
+        "VAL-ART-040",
+        "VAL-ART-041",
+        "VAL-TAG-003"
+      ]
+    }
+  ],
+  "blockers": [
+    {
+      "description": "No implemented related-articles user surface (route/UI/function output) was available to validate VAL-TAG-003 behavior in this build.",
+      "affectedAssertions": [
+        "VAL-TAG-003"
+      ],
+      "quickFixAttempted": "Probed /api/articles/20/related and searched server route sources for related route support; probe returned 404 and no route was found."
+    }
+  ],
+  "summary": "Tested 7 assertions: 5 passed, 1 failed, 1 blocked. Non-pass assertions: VAL-ART-041 failed because non-numeric delete returns 400 instead of expected 404/redirect; VAL-TAG-003 blocked because no related-articles user surface exists to validate exclusion-of-self behavior."
+}

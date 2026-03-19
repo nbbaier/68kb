@@ -44,3 +44,4 @@ Testing surface, tools, and resource cost classification for validators.
 - `agent-browser` network request exports may omit response status/body details for some fetch/XHR entries.
 - For assertions that require explicit status codes, headers, or response payload verification, capture supplemental `curl` evidence.
 - Sonner toasts can disappear quickly; for style-sensitive flash assertions, capture evidence immediately after trigger and record computed styles via in-page evaluation.
+- Browser numeric inputs (`input[type=number]`) may reject non-numeric keystrokes before submit; for “non-numeric validation” assertions, use a boundary request or temporary DOM-type swap in automation to exercise server-side validation paths.

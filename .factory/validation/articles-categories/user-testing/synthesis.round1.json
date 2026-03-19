@@ -1,0 +1,109 @@
+{
+  "milestone": "articles-categories",
+  "round": 1,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 69,
+    "passed": 64,
+    "failed": 4,
+    "blocked": 1
+  },
+  "passedAssertions": [
+    "VAL-ART-001",
+    "VAL-ART-002",
+    "VAL-ART-003",
+    "VAL-ART-004",
+    "VAL-ART-005",
+    "VAL-ART-006",
+    "VAL-ART-010",
+    "VAL-ART-011",
+    "VAL-ART-012",
+    "VAL-ART-013",
+    "VAL-ART-014",
+    "VAL-ART-015",
+    "VAL-ART-016",
+    "VAL-ART-017",
+    "VAL-ART-018",
+    "VAL-ART-019",
+    "VAL-ART-020",
+    "VAL-ART-030",
+    "VAL-ART-031",
+    "VAL-ART-032",
+    "VAL-ART-033",
+    "VAL-ART-034",
+    "VAL-ART-035",
+    "VAL-ART-040",
+    "VAL-ART-050",
+    "VAL-ART-052",
+    "VAL-ART-053",
+    "VAL-ART-055",
+    "VAL-CAT-001",
+    "VAL-CAT-002",
+    "VAL-CAT-003",
+    "VAL-CAT-004",
+    "VAL-CAT-005",
+    "VAL-CAT-006",
+    "VAL-CAT-007",
+    "VAL-CAT-010",
+    "VAL-CAT-011",
+    "VAL-CAT-012",
+    "VAL-CAT-013",
+    "VAL-CAT-014",
+    "VAL-CAT-015",
+    "VAL-CAT-016",
+    "VAL-CAT-017",
+    "VAL-CAT-018",
+    "VAL-CAT-020",
+    "VAL-CAT-021",
+    "VAL-CAT-022",
+    "VAL-CAT-023",
+    "VAL-CAT-024",
+    "VAL-CAT-025",
+    "VAL-CAT-026",
+    "VAL-CAT-027",
+    "VAL-CAT-028",
+    "VAL-CAT-030",
+    "VAL-CAT-031",
+    "VAL-CAT-040",
+    "VAL-CAT-041",
+    "VAL-CAT-042",
+    "VAL-CAT-043",
+    "VAL-CAT-044",
+    "VAL-TAG-001",
+    "VAL-TAG-002",
+    "VAL-TAG-004",
+    "VAL-TAG-005"
+  ],
+  "failedAssertions": [
+    {
+      "id": "VAL-ART-041",
+      "reason": "Non-numeric invalid-id path returns HTTP 400 instead of the contract's expected 404/redirect."
+    },
+    {
+      "id": "VAL-ART-051",
+      "reason": "Attachment upload action on edit form did not create a record/file through the UI despite file selection."
+    },
+    {
+      "id": "VAL-ART-054",
+      "reason": "Add-article flow does not surface invalid attachment error; user only sees 'Article created successfully' despite upload rejection."
+    },
+    {
+      "id": "VAL-CAT-032",
+      "reason": "Behavior does not match contract redirect+flash requirement; current implementation shows inline error page instead."
+    }
+  ],
+  "blockedAssertions": [
+    {
+      "id": "VAL-TAG-003",
+      "blockedBy": "Blocked by missing related-articles user surface in this milestone build (no route/UI available to validate exclusion-of-self behavior)."
+    }
+  ],
+  "appliedUpdates": [
+    {
+      "target": "user-testing.md",
+      "description": "Added guidance for validating numeric inputs that block non-numeric typing during browser automation.",
+      "source": "flow-report"
+    }
+  ],
+  "previousRound": null
+}

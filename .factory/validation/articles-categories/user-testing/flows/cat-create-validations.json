@@ -1,0 +1,178 @@
+{
+  "groupId": "cat-create-validations",
+  "testedAt": "2026-03-19T16:35:44.904504+00:00",
+  "isolation": {
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "credentials": {
+      "username": "admin"
+    },
+    "namespacePrefix": "g3val_"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "python3-sqlite3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-CAT-012",
+      "title": "Add category — name required validation",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /admin/categories/new and click Create Category with Name left blank",
+          "expected": "Validation error shown and no category created",
+          "observed": "Inline error 'Name is required' displayed on form; remained on /admin/categories/new"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-create-validations/VAL-CAT-012-empty-name-validation.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Only GET /api/admin/categories observed; no POST /api/admin/categories was sent (client-side validation blocked submit)",
+        "dbChecks": [
+          "SELECT COUNT(*) FROM categories WHERE TRIM(cat_name) = '' -> 0"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-013",
+      "title": "Add category — URI alpha-dash validation",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Enter Name and invalid URI 'bad uri!' then submit",
+          "expected": "Validation rejects URI with spaces/special characters",
+          "observed": "Inline error 'URI may only contain letters, numbers, hyphens, and underscores' shown; form not submitted"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-create-validations/VAL-CAT-013-invalid-uri-validation.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Only GET /api/admin/categories observed; no POST /api/admin/categories was sent for invalid URI input"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-014",
+      "title": "Add category — auto-generates URI from name",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Submit category with Name='g3val auto uri 014 1773937954' and blank URI",
+          "expected": "Category created and URI slug auto-generated from name",
+          "observed": "Redirected to /admin/categories after submit; DB row stored auto-generated slug"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-create-validations/VAL-CAT-014-auto-uri-created.png"
+        ],
+        "consoleErrors": "none",
+        "network": "POST /api/admin/categories observed in browser request log during submit",
+        "dbChecks": [
+          "SELECT cat_id, cat_name, cat_uri, cat_order FROM categories WHERE cat_name='g3val auto uri 014 1773937954' -> {cat_id: 8, cat_uri: 'g3val-auto-uri-014-1773937954', cat_order: 0}"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-015",
+      "title": "Add category — URI uniqueness",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create two categories with identical Name='g3val dup uri 015 1773937954' and blank URI",
+          "expected": "Second category gets unique URI suffix",
+          "observed": "Both rows created; first URI='g3val-dup-uri-015-1773937954', second URI='g3val-dup-uri-015-1773937954_1'"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-create-validations/VAL-CAT-015-uri-uniqueness-second-create.png"
+        ],
+        "consoleErrors": "none",
+        "network": "POST /api/admin/categories observed during both create submissions",
+        "dbChecks": [
+          "SELECT cat_id, cat_name, cat_uri FROM categories WHERE cat_name='g3val dup uri 015 1773937954' ORDER BY cat_id ASC -> [{cat_id:9, cat_uri:'g3val-dup-uri-015-1773937954'}, {cat_id:10, cat_uri:'g3val-dup-uri-015-1773937954_1'}]"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-016",
+      "title": "Add category — order defaults to 0",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Submit category with Name='g3val order blank 016 1773937954' and blank Order",
+          "expected": "Category created with cat_order = 0",
+          "observed": "Redirected to /admin/categories; DB record saved with cat_order 0"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-create-validations/VAL-CAT-016-order-default-created.png"
+        ],
+        "consoleErrors": "none",
+        "network": "POST /api/admin/categories observed in browser request log during submit",
+        "dbChecks": [
+          "SELECT cat_id, cat_name, cat_uri, cat_order FROM categories WHERE cat_name='g3val order blank 016 1773937954' -> {cat_id: 11, cat_order: 0}"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CAT-017",
+      "title": "Add category — image upload constraints",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Submit with oversized PNG g3val_large.png (529728 bytes)",
+          "expected": "Rejected with >100KB validation error and no category/file persisted",
+          "observed": "Stayed on /admin/categories/new with error 'Image is too large. Maximum size is 100KB (102400 bytes). File is 529728 bytes.'"
+        },
+        {
+          "action": "Submit with BMP file g3val_invalid.bmp",
+          "expected": "Rejected as invalid image type and no category/file persisted",
+          "observed": "Stayed on /admin/categories/new with error 'Image type \".bmp\" is not allowed. Allowed types: gif, jpg, jpeg, png'"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "articles-categories/cat-create-validations/VAL-CAT-017-image-too-large-rejected.png",
+          "articles-categories/cat-create-validations/VAL-CAT-017-image-bmp-rejected.png"
+        ],
+        "consoleErrors": "none",
+        "network": "POST /api/admin/categories observed on both rejected uploads",
+        "dbChecks": [
+          "SELECT cat_id, cat_name, cat_uri FROM categories WHERE cat_name IN ('g3val image large 017 1773937954','g3val image bmp 017 1773937954') -> []",
+          "app/uploads/categories glob g3val* -> no matching files"
+        ]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser network request export lists URLs/methods but not reliable status codes and includes repeated historical entries.",
+      "resolved": true,
+      "resolution": "Used UI outcomes (inline/toast errors and redirects) plus DB/file checks to verify assertion pass/fail criteria.",
+      "affectedAssertions": [
+        "VAL-CAT-012",
+        "VAL-CAT-013",
+        "VAL-CAT-014",
+        "VAL-CAT-015",
+        "VAL-CAT-016",
+        "VAL-CAT-017"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 6 assertions: 6 passed, 0 failed, 0 blocked. Create-form validations/defaults and image upload constraints behaved as specified for g3val_ test data."
+}
