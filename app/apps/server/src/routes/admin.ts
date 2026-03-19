@@ -3,6 +3,7 @@ import { eq, count } from 'drizzle-orm'
 import { settings, users } from '../db/schema'
 import { createRequireAdmin } from '../middleware/auth'
 import { createArticleRoutes } from './articles'
+import { createCategoryRoutes } from './categories'
 import { createUserRoutes } from './users'
 import type { AppVariables, DrizzleDB } from '../types'
 
@@ -45,6 +46,9 @@ export function createAdminRoutes(db: DrizzleDB) {
 
   // Mount articles CRUD routes
   admin.route('/articles', createArticleRoutes(db))
+
+  // Mount categories routes
+  admin.route('/categories', createCategoryRoutes(db))
 
   // Mount user routes (includes /search)
   admin.route('/users', createUserRoutes(db))

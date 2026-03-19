@@ -10,6 +10,7 @@ import { LogoutPage } from '@/pages/LogoutPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { AdminDashboardPage } from '@/pages/AdminDashboardPage'
 import { AdminArticlesPage } from '@/pages/AdminArticlesPage'
+import { AdminArticleFormPage } from '@/pages/AdminArticleFormPage'
 import { HomePage } from '@/pages/HomePage'
 
 function App() {
@@ -69,8 +70,10 @@ function App() {
             {/* Default admin page: /admin → Dashboard */}
             <Route index element={<AdminDashboardPage />} />
 
-            {/* Placeholder sub-routes for future features */}
+            {/* Articles routes */}
             <Route path="articles" element={<AdminArticlesPage />} />
+            <Route path="articles/new" element={<AdminArticleFormPage />} />
+            <Route path="articles/:id/edit" element={<AdminArticleFormPage />} />
             <Route
               path="users"
               element={<div className="p-4 text-muted-foreground">Users — coming soon</div>}
