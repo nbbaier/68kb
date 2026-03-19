@@ -6,6 +6,7 @@ import { AdminLayout } from '@/components/AdminLayout'
 import { LoginPage } from '@/pages/LoginPage'
 import { RegisterPage } from '@/pages/RegisterPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
+import { LogoutPage } from '@/pages/LogoutPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { AdminDashboardPage } from '@/pages/AdminDashboardPage'
 import { HomePage } from '@/pages/HomePage'
@@ -49,12 +50,17 @@ function App() {
           />
 
           {/* ---------------------------------------------------------------- */}
+          {/* Logout route — accessible with or without session, always redirects to /login */}
+          {/* ---------------------------------------------------------------- */}
+          <Route path="/logout" element={<LogoutPage />} />
+
+          {/* ---------------------------------------------------------------- */}
           {/* Protected admin routes — all wrapped in AdminLayout */}
           {/* ---------------------------------------------------------------- */}
           <Route
             path="/admin"
             element={
-              <AuthGuard>
+              <AuthGuard requireAdmin>
                 <AdminLayout />
               </AuthGuard>
             }

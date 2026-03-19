@@ -71,37 +71,66 @@ process.env.SESSION_SECRET = 'test-session-secret-key-minimum-32-chars!!'
 
 const app = createApp(testDb as typeof testDb)
 
-// Seed admin user
+// Seed admin and registered users
 beforeAll(async () => {
   const adminPasswordHash = await Bun.password.hash('admin123', { algorithm: 'bcrypt', cost: 12 })
+  const registeredPasswordHash = await Bun.password.hash('user123', { algorithm: 'bcrypt', cost: 12 })
   const now = Math.floor(Date.now() / 1000)
   testDb
     .insert(schema.users)
-    .values({
-      userIp: '127.0.0.1',
-      userEmail: 'admin@example.com',
-      userUsername: 'admin',
-      userPassword: adminPasswordHash,
-      userGroup: 1,
-      userJoinDate: now,
-      userLastLogin: 0,
-      lastActivity: 0,
-      userCookie: '',
-      userSession: '',
-      userApiKey: 'testadminapikey123456789012345678',
-      userVerify: '',
-    })
+    .values([
+      {
+        userIp: '127.0.0.1',
+        userEmail: 'admin@example.com',
+        userUsername: 'admin',
+        userPassword: adminPasswordHash,
+        userGroup: 1,
+        userJoinDate: now,
+        userLastLogin: 0,
+        lastActivity: 0,
+        userCookie: '',
+        userSession: '',
+        userApiKey: 'testadminapikey123456789012345678',
+        userVerify: '',
+      },
+      {
+        userIp: '127.0.0.1',
+        userEmail: 'user@example.com',
+        userUsername: 'regularuser',
+        userPassword: registeredPasswordHash,
+        userGroup: 2,
+        userJoinDate: now,
+        userLastLogin: 0,
+        lastActivity: 0,
+        userCookie: '',
+        userSession: '',
+        userApiKey: 'testuserapikey1234567890123456789',
+        userVerify: '',
+      },
+    ])
     .run()
 })
 
 // ---------------------------------------------------------------------------
-// Helper: extract Set-Cookie header from login response
+// Helpers: extract Set-Cookie header from login response
 // ---------------------------------------------------------------------------
 async function loginAsAdmin(): Promise<string> {
   const res = await app.request('/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: 'admin', password: 'admin123' }),
+  })
+  const cookies = (res.headers as unknown as { getSetCookie(): string[] }).getSetCookie()
+  if (!cookies || cookies.length === 0) throw new Error('No session cookie set after login')
+  const lastCookie = cookies[cookies.length - 1]
+  return lastCookie.split(';')[0]
+}
+
+async function loginAsRegisteredUser(): Promise<string> {
+  const res = await app.request('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: 'regularuser', password: 'user123' }),
   })
   const cookies = (res.headers as unknown as { getSetCookie(): string[] }).getSetCookie()
   if (!cookies || cookies.length === 0) throw new Error('No session cookie set after login')
@@ -155,5 +184,50 @@ describe('GET /api/auth/me (with permissions)', () => {
     expect(json.data.permissions.canManageModules).toBe(true)
     // Should NOT return password
     expect(json.data.userPassword).toBeUndefined()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Non-admin user blocked from /api/admin/* (VAL-GUARD-006)
+// ---------------------------------------------------------------------------
+describe('Admin route access control', () => {
+  it('returns 403 for registered (group 2) user on /api/admin/stats', async () => {
+    const sessionCookie = await loginAsRegisteredUser()
+
+    const res = await app.request('/api/admin/stats', {
+      headers: { Cookie: sessionCookie },
+    })
+    expect(res.status).toBe(403)
+    const json = await res.json()
+    expect(json.error).toContain('Forbidden')
+  })
+
+  it('returns 403 for registered user on any unknown /api/admin/* route', async () => {
+    const sessionCookie = await loginAsRegisteredUser()
+
+    const res = await app.request('/api/admin/nonexistent', {
+      headers: { Cookie: sessionCookie },
+    })
+    // requireAdmin middleware fires first (403 before the catch-all 404)
+    expect(res.status).toBe(403)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// /api/* catch-all returns 404 JSON (VAL-PUBLIC-002)
+// ---------------------------------------------------------------------------
+describe('API catch-all 404', () => {
+  it('returns 404 JSON for unknown /api/* routes', async () => {
+    const res = await app.request('/api/nonexistent')
+    expect(res.status).toBe(404)
+    const json = await res.json()
+    expect(json.error).toBe('Not found')
+  })
+
+  it('returns 404 JSON for deeply nested unknown /api/* routes', async () => {
+    const res = await app.request('/api/some/deeply/nested/path')
+    expect(res.status).toBe(404)
+    const json = await res.json()
+    expect(json.error).toBe('Not found')
   })
 })

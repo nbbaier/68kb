@@ -195,6 +195,59 @@ describe('POST /api/auth/login', () => {
     })
     expect(resNoUser.status).toBe(400)
   })
+
+  it('failed login does not create an authenticated session (VAL-AUTH-003/004)', async () => {
+    // Attempt login with wrong password — no prior session
+    const res = await app.request('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'admin', password: 'wrongpassword' }),
+    })
+    expect(res.status).toBe(401)
+
+    // Extract any cookies from the 401 response
+    const cookies = (res.headers as unknown as { getSetCookie(): string[] }).getSetCookie()
+
+    // Using cookies from the 401 response should NOT give authenticated access
+    const cookieHeader = cookies.length > 0 ? cookies[cookies.length - 1].split(';')[0] : ''
+    const meRes = await app.request('/api/auth/me', {
+      headers: cookieHeader ? { Cookie: cookieHeader } : {},
+    })
+    expect(meRes.status).toBe(401)
+  })
+
+  it('failed login clears an existing authenticated session (VAL-AUTH-003/004)', async () => {
+    // First login successfully
+    const sessionCookie = await loginAsAdmin()
+
+    // Verify authenticated
+    const meBeforeRes = await app.request('/api/auth/me', {
+      headers: { Cookie: sessionCookie },
+    })
+    expect(meBeforeRes.status).toBe(200)
+
+    // Attempt login with wrong password, sending existing session cookie
+    const failRes = await app.request('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: sessionCookie,
+      },
+      body: JSON.stringify({ username: 'admin', password: 'wrongpassword' }),
+    })
+    expect(failRes.status).toBe(401)
+
+    // The 401 response cookies should not maintain an authenticated session
+    const failCookies = (failRes.headers as unknown as { getSetCookie(): string[] }).getSetCookie()
+    const newCookieHeader = failCookies.length > 0
+      ? failCookies[failCookies.length - 1].split(';')[0]
+      : sessionCookie
+
+    const meAfterRes = await app.request('/api/auth/me', {
+      headers: { Cookie: newCookieHeader },
+    })
+    expect(meAfterRes.status).toBe(401)
+  })
 })
 
 // ---------------------------------------------------------------------------

@@ -55,6 +55,12 @@ export function createApp(database: typeof db) {
   // Admin routes
   app.route('/api/admin', createAdminRoutes(database))
 
+  // Catch-all for unknown /api/* routes — return 404 JSON
+  // Must come AFTER all real API routes
+  app.all('/api/*', (c) => {
+    return c.json({ error: 'Not found' }, 404)
+  })
+
   return app
 }
 

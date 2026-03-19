@@ -43,6 +43,7 @@ export function LoginPage() {
   const onSubmit = async (values: LoginFormValues) => {
     try {
       await login(values.username, values.password)
+      toast.success('Signed in successfully')
       navigate(redirectTo, { replace: true })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed'

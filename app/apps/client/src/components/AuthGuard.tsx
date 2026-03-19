@@ -5,6 +5,11 @@ type AuthGuardProps = {
   children: React.ReactNode
   /** If provided, redirects authenticated users away (for auth pages like /login, /register) */
   redirectIfAuthenticated?: string
+  /**
+   * If true, also checks that the authenticated user has canAccessAdmin permission.
+   * Non-admin users are redirected to / instead of being shown admin content.
+   */
+  requireAdmin?: boolean
 }
 
 /**
@@ -14,8 +19,9 @@ type AuthGuardProps = {
  * - If redirectIfAuthenticated is provided and user IS authenticated, redirects to that path.
  *   On auth pages that have a ?redirect= query param (e.g. /login?redirect=/admin/settings),
  *   the authenticated redirect uses the ?redirect= value so post-login deep-links work correctly.
+ * - If requireAdmin is true, non-admin users (canAccessAdmin=false) are redirected to /.
  */
-export function AuthGuard({ children, redirectIfAuthenticated }: AuthGuardProps) {
+export function AuthGuard({ children, redirectIfAuthenticated, requireAdmin }: AuthGuardProps) {
   const { user, isLoading } = useAuth()
   const location = useLocation()
   const [searchParams] = useSearchParams()
@@ -41,6 +47,11 @@ export function AuthGuard({ children, redirectIfAuthenticated }: AuthGuardProps)
   if (!redirectIfAuthenticated && !user) {
     const intendedPath = location.pathname + location.search
     return <Navigate to={`/login?redirect=${encodeURIComponent(intendedPath)}`} replace />
+  }
+
+  // Admin guard: redirect authenticated non-admin users to homepage
+  if (requireAdmin && user && !user.permissions.canAccessAdmin) {
+    return <Navigate to="/" replace />
   }
 
   return <>{children}</>

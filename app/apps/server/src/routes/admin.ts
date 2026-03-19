@@ -9,12 +9,15 @@ export function createAdminRoutes(db: DrizzleDB) {
 
   const requireAdmin = createRequireAdmin(db)
 
+  // Apply requireAdmin middleware globally to all /api/admin/* routes
+  admin.use('*', requireAdmin)
+
   // ---------------------------------------------------------------------------
   // GET /api/admin/stats
   // Dashboard statistics: app version, user count
-  // Requires admin session
+  // Requires admin session (enforced globally above)
   // ---------------------------------------------------------------------------
-  admin.get('/stats', requireAdmin, (c) => {
+  admin.get('/stats', (c) => {
     const versionSetting = db
       .select({ optionValue: settings.optionValue })
       .from(settings)

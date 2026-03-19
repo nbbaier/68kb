@@ -67,6 +67,9 @@ export function createAuthRoutes(db: DrizzleDB) {
         failedIp: ip,
         failedDate: now,
       }).run()
+      // Delete session to ensure no session cookie is set/retained on 401 responses
+      const session = c.get('session')
+      session.deleteSession()
       return c.json({ error: INVALID_CREDENTIALS_MSG }, 401)
     }
 
@@ -80,6 +83,9 @@ export function createAuthRoutes(db: DrizzleDB) {
         failedIp: ip,
         failedDate: now,
       }).run()
+      // Delete session to ensure no session cookie is set/retained on 401 responses
+      const session = c.get('session')
+      session.deleteSession()
       return c.json({ error: INVALID_CREDENTIALS_MSG }, 401)
     }
 
