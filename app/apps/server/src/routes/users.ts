@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { eq, like, or, and, ne, count, asc, desc } from 'drizzle-orm'
 import { createHash } from 'node:crypto'
-import { users, userGroups } from '../db/schema'
+import { users, userGroups, userNotes } from '../db/schema'
 import { createRequireRole } from '../middleware/auth'
 import type { AppVariables, DrizzleDB } from '../types'
 
@@ -469,6 +469,146 @@ export function createUserRoutes(db: DrizzleDB) {
     db.update(users).set({ userApiKey: newKey }).where(eq(users.userId, id)).run()
 
     return c.json({ data: { userApiKey: newKey } })
+  })
+
+  // -------------------------------------------------------------------------
+  // GET /api/admin/users/:id/notes
+  // List all notes for a user (important notes first, then by date desc)
+  // -------------------------------------------------------------------------
+  router.get('/:id/notes', requireManageUsers, async (c) => {
+    const id = parseInt(c.req.param('id'), 10)
+    if (isNaN(id)) {
+      return c.json({ error: 'Invalid user ID' }, 400)
+    }
+
+    const user = db.select({ userId: users.userId }).from(users).where(eq(users.userId, id)).get()
+    if (!user) {
+      return c.json({ error: 'User not found' }, 404)
+    }
+
+    const notes = db
+      .select()
+      .from(userNotes)
+      .where(eq(userNotes.noteUserId, id))
+      .orderBy(desc(userNotes.noteImportant), desc(userNotes.noteDate))
+      .all()
+
+    return c.json({ data: notes })
+  })
+
+  // -------------------------------------------------------------------------
+  // POST /api/admin/users/:id/notes
+  // Create a new note for a user
+  // Body: { note: string (required), noteImportant?: 'y' | 'n' }
+  // Sets noteAddedBy from the current session user
+  // -------------------------------------------------------------------------
+  router.post('/:id/notes', requireManageUsers, async (c) => {
+    const id = parseInt(c.req.param('id'), 10)
+    if (isNaN(id)) {
+      return c.json({ error: 'Invalid user ID' }, 400)
+    }
+
+    const user = db.select({ userId: users.userId }).from(users).where(eq(users.userId, id)).get()
+    if (!user) {
+      return c.json({ error: 'User not found' }, 404)
+    }
+
+    const body = await c.req.json() as {
+      note?: string
+      noteImportant?: string
+    }
+
+    const noteText = (body.note ?? '').trim()
+    if (!noteText) {
+      return c.json({ error: 'Note text is required' }, 400)
+    }
+
+    const noteImportant: 'y' | 'n' = body.noteImportant === 'y' ? 'y' : 'n'
+    const addedBy = c.get('session').get('userId') ?? 0
+    const now = Math.floor(Date.now() / 1000)
+
+    const [inserted] = db
+      .insert(userNotes)
+      .values({
+        noteUserId: id,
+        noteAddedBy: addedBy,
+        noteDate: now,
+        note: noteText,
+        noteImportant,
+        noteShowUser: 'n',
+      })
+      .returning()
+      .all()
+
+    return c.json({ data: inserted }, 201)
+  })
+
+  // -------------------------------------------------------------------------
+  // PUT /api/admin/users/:id/notes/:noteId
+  // Update a note
+  // Body: { note: string (required), noteImportant?: 'y' | 'n' }
+  // -------------------------------------------------------------------------
+  router.put('/:id/notes/:noteId', requireManageUsers, async (c) => {
+    const id = parseInt(c.req.param('id'), 10)
+    const noteId = parseInt(c.req.param('noteId'), 10)
+    if (isNaN(id) || isNaN(noteId)) {
+      return c.json({ error: 'Invalid ID' }, 400)
+    }
+
+    const existing = db
+      .select()
+      .from(userNotes)
+      .where(and(eq(userNotes.noteId, noteId), eq(userNotes.noteUserId, id)))
+      .get()
+    if (!existing) {
+      return c.json({ error: 'Note not found' }, 404)
+    }
+
+    const body = await c.req.json() as {
+      note?: string
+      noteImportant?: string
+    }
+
+    const noteText = (body.note ?? '').trim()
+    if (!noteText) {
+      return c.json({ error: 'Note text is required' }, 400)
+    }
+
+    const noteImportant: 'y' | 'n' = body.noteImportant === 'y' ? 'y' : 'n'
+
+    const [updated] = db
+      .update(userNotes)
+      .set({ note: noteText, noteImportant })
+      .where(eq(userNotes.noteId, noteId))
+      .returning()
+      .all()
+
+    return c.json({ data: updated })
+  })
+
+  // -------------------------------------------------------------------------
+  // DELETE /api/admin/users/:id/notes/:noteId
+  // Delete a note
+  // -------------------------------------------------------------------------
+  router.delete('/:id/notes/:noteId', requireManageUsers, async (c) => {
+    const id = parseInt(c.req.param('id'), 10)
+    const noteId = parseInt(c.req.param('noteId'), 10)
+    if (isNaN(id) || isNaN(noteId)) {
+      return c.json({ error: 'Invalid ID' }, 400)
+    }
+
+    const existing = db
+      .select()
+      .from(userNotes)
+      .where(and(eq(userNotes.noteId, noteId), eq(userNotes.noteUserId, id)))
+      .get()
+    if (!existing) {
+      return c.json({ error: 'Note not found' }, 404)
+    }
+
+    db.delete(userNotes).where(eq(userNotes.noteId, noteId)).run()
+
+    return c.json({ data: { success: true } })
   })
 
   return router

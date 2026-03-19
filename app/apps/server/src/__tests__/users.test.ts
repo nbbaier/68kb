@@ -738,3 +738,229 @@ describe('POST /api/admin/users/:id/reset-api-key', () => {
     expect(json.data.userApiKey).not.toBe(oldKey)
   })
 })
+
+// ---------------------------------------------------------------------------
+// User Notes: GET/POST/PUT/DELETE /api/admin/users/:id/notes
+// ---------------------------------------------------------------------------
+describe('User Notes API', () => {
+  // Helper to get johndoe's userId
+  async function getJohndoeId(cookie: string): Promise<number> {
+    const listRes = await app.request('/api/admin/users', { headers: { Cookie: cookie } })
+    const listJson = await listRes.json() as { data: Array<{ userId: number; userUsername: string }> }
+    const johndoe = listJson.data.find((u) => u.userUsername === 'johndoe')
+    if (!johndoe) throw new Error('johndoe not found')
+    return johndoe.userId
+  }
+
+  // Helper to create a note
+  async function createNote(cookie: string, userId: number, note: string, noteImportant = 'n') {
+    return app.request(`/api/admin/users/${userId}/notes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
+      body: JSON.stringify({ note, noteImportant }),
+    })
+  }
+
+  describe('GET /api/admin/users/:id/notes', () => {
+    it('returns 401 without session', async () => {
+      const res = await app.request('/api/admin/users/1/notes')
+      expect(res.status).toBe(401)
+    })
+
+    it('returns 404 for nonexistent user', async () => {
+      const cookie = await loginAsAdmin()
+      const res = await app.request('/api/admin/users/99999/notes', { headers: { Cookie: cookie } })
+      expect(res.status).toBe(404)
+    })
+
+    it('returns 400 for invalid user ID', async () => {
+      const cookie = await loginAsAdmin()
+      const res = await app.request('/api/admin/users/abc/notes', { headers: { Cookie: cookie } })
+      expect(res.status).toBe(400)
+    })
+
+    it('returns empty array when user has no notes', async () => {
+      const cookie = await loginAsAdmin()
+      const userId = await getJohndoeId(cookie)
+      const res = await app.request(`/api/admin/users/${userId}/notes`, { headers: { Cookie: cookie } })
+      expect(res.status).toBe(200)
+      const json = await res.json() as { data: unknown[] }
+      expect(Array.isArray(json.data)).toBe(true)
+    })
+
+    it('returns notes with important notes first', async () => {
+      const cookie = await loginAsAdmin()
+      const userId = await getJohndoeId(cookie)
+
+      // Create regular note first
+      await createNote(cookie, userId, 'Regular note', 'n')
+      // Then important note
+      await createNote(cookie, userId, 'Important note', 'y')
+
+      const res = await app.request(`/api/admin/users/${userId}/notes`, { headers: { Cookie: cookie } })
+      expect(res.status).toBe(200)
+      const json = await res.json() as { data: Array<{ note: string; noteImportant: string }> }
+      expect(json.data.length).toBeGreaterThanOrEqual(2)
+      // Important note should come first
+      const firstImportant = json.data.findIndex((n) => n.noteImportant === 'y')
+      const firstRegular = json.data.findIndex((n) => n.noteImportant === 'n')
+      expect(firstImportant).toBeLessThan(firstRegular)
+    })
+  })
+
+  describe('POST /api/admin/users/:id/notes', () => {
+    it('returns 401 without session', async () => {
+      const res = await app.request('/api/admin/users/1/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: 'test' }),
+      })
+      expect(res.status).toBe(401)
+    })
+
+    it('returns 404 for nonexistent user', async () => {
+      const cookie = await loginAsAdmin()
+      const res = await createNote(cookie, 99999, 'test note')
+      expect(res.status).toBe(404)
+    })
+
+    it('returns 400 for invalid user ID', async () => {
+      const cookie = await loginAsAdmin()
+      const res = await app.request('/api/admin/users/abc/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: JSON.stringify({ note: 'test' }),
+      })
+      expect(res.status).toBe(400)
+    })
+
+    it('returns 400 when note text is missing', async () => {
+      const cookie = await loginAsAdmin()
+      const userId = await getJohndoeId(cookie)
+      const res = await createNote(cookie, userId, '')
+      expect(res.status).toBe(400)
+      const json = await res.json() as { error: string }
+      expect(json.error.toLowerCase()).toContain('note')
+    })
+
+    it('creates a note with required fields', async () => {
+      const cookie = await loginAsAdmin()
+      const userId = await getJohndoeId(cookie)
+      const res = await createNote(cookie, userId, 'A test note')
+      expect(res.status).toBe(201)
+      const json = await res.json() as { data: Record<string, unknown> }
+      expect(json.data.noteId).toBeDefined()
+      expect(json.data.note).toBe('A test note')
+      expect(json.data.noteImportant).toBe('n')
+      expect(json.data.noteUserId).toBe(userId)
+      expect(json.data.noteAddedBy).toBeDefined()
+      expect(json.data.noteDate).toBeDefined()
+    })
+
+    it('creates an important note', async () => {
+      const cookie = await loginAsAdmin()
+      const userId = await getJohndoeId(cookie)
+      const res = await createNote(cookie, userId, 'An important note', 'y')
+      expect(res.status).toBe(201)
+      const json = await res.json() as { data: { noteImportant: string } }
+      expect(json.data.noteImportant).toBe('y')
+    })
+  })
+
+  describe('PUT /api/admin/users/:id/notes/:noteId', () => {
+    it('returns 401 without session', async () => {
+      const res = await app.request('/api/admin/users/1/notes/1', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: 'updated' }),
+      })
+      expect(res.status).toBe(401)
+    })
+
+    it('returns 404 for nonexistent note', async () => {
+      const cookie = await loginAsAdmin()
+      const userId = await getJohndoeId(cookie)
+      const res = await app.request(`/api/admin/users/${userId}/notes/99999`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: JSON.stringify({ note: 'updated' }),
+      })
+      expect(res.status).toBe(404)
+    })
+
+    it('returns 400 when note text is empty', async () => {
+      const cookie = await loginAsAdmin()
+      const userId = await getJohndoeId(cookie)
+      // First create a note
+      const createRes = await createNote(cookie, userId, 'Original note')
+      const createJson = await createRes.json() as { data: { noteId: number } }
+      const noteId = createJson.data.noteId
+
+      const res = await app.request(`/api/admin/users/${userId}/notes/${noteId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: JSON.stringify({ note: '' }),
+      })
+      expect(res.status).toBe(400)
+    })
+
+    it('updates note text and importance', async () => {
+      const cookie = await loginAsAdmin()
+      const userId = await getJohndoeId(cookie)
+      // Create a regular note
+      const createRes = await createNote(cookie, userId, 'Original text', 'n')
+      const createJson = await createRes.json() as { data: { noteId: number } }
+      const noteId = createJson.data.noteId
+
+      const res = await app.request(`/api/admin/users/${userId}/notes/${noteId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: JSON.stringify({ note: 'Updated text', noteImportant: 'y' }),
+      })
+      expect(res.status).toBe(200)
+      const json = await res.json() as { data: { note: string; noteImportant: string } }
+      expect(json.data.note).toBe('Updated text')
+      expect(json.data.noteImportant).toBe('y')
+    })
+  })
+
+  describe('DELETE /api/admin/users/:id/notes/:noteId', () => {
+    it('returns 401 without session', async () => {
+      const res = await app.request('/api/admin/users/1/notes/1', { method: 'DELETE' })
+      expect(res.status).toBe(401)
+    })
+
+    it('returns 404 for nonexistent note', async () => {
+      const cookie = await loginAsAdmin()
+      const userId = await getJohndoeId(cookie)
+      const res = await app.request(`/api/admin/users/${userId}/notes/99999`, {
+        method: 'DELETE',
+        headers: { Cookie: cookie },
+      })
+      expect(res.status).toBe(404)
+    })
+
+    it('deletes a note successfully', async () => {
+      const cookie = await loginAsAdmin()
+      const userId = await getJohndoeId(cookie)
+      // Create a note to delete
+      const createRes = await createNote(cookie, userId, 'Note to delete')
+      const createJson = await createRes.json() as { data: { noteId: number } }
+      const noteId = createJson.data.noteId
+
+      const deleteRes = await app.request(`/api/admin/users/${userId}/notes/${noteId}`, {
+        method: 'DELETE',
+        headers: { Cookie: cookie },
+      })
+      expect(deleteRes.status).toBe(200)
+      const json = await deleteRes.json() as { data: { success: boolean } }
+      expect(json.data.success).toBe(true)
+
+      // Verify it's gone - list notes and check
+      const listRes = await app.request(`/api/admin/users/${userId}/notes`, { headers: { Cookie: cookie } })
+      const listJson = await listRes.json() as { data: Array<{ noteId: number }> }
+      const found = listJson.data.find((n) => n.noteId === noteId)
+      expect(found).toBeUndefined()
+    })
+  })
+})

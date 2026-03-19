@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -22,6 +23,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
 
 // ---------------------------------------------------------------------------
@@ -43,6 +51,16 @@ type UserData = {
   userApiKey: string
   groupName: string | null
   gravatarHash: string
+}
+
+type UserNote = {
+  noteId: number
+  noteUserId: number
+  noteAddedBy: number
+  noteDate: number
+  note: string
+  noteImportant: 'y' | 'n'
+  noteShowUser: 'y' | 'n'
 }
 
 // ---------------------------------------------------------------------------
@@ -107,6 +125,285 @@ function formatDate(timestamp: number): string {
     month: 'short',
     day: 'numeric',
   })
+}
+
+// ---------------------------------------------------------------------------
+// Note form schema
+// ---------------------------------------------------------------------------
+
+const noteFormSchema = z.object({
+  note: z.string().min(1, 'Note text is required'),
+  noteImportant: z.enum(['y', 'n']),
+})
+
+type NoteFormValues = z.infer<typeof noteFormSchema>
+
+// ---------------------------------------------------------------------------
+// UserNotesSection — Notes management on the edit page
+// ---------------------------------------------------------------------------
+
+type UserNotesSectionProps = {
+  userId: number
+}
+
+function UserNotesSection({ userId }: UserNotesSectionProps) {
+  const [notes, setNotes] = useState<UserNote[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingNote, setEditingNote] = useState<UserNote | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
+
+  const noteForm = useForm<NoteFormValues>({
+    resolver: zodResolver(noteFormSchema),
+    defaultValues: { note: '', noteImportant: 'n' },
+  })
+
+  const fetchNotes = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/notes`, { credentials: 'include' })
+      if (!res.ok) throw new Error('Failed to load notes')
+      const json = await res.json() as { data: UserNote[] }
+      setNotes(json.data)
+    } catch {
+      toast.error('Failed to load notes')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [userId])
+
+  useEffect(() => {
+    fetchNotes()
+  }, [fetchNotes])
+
+  function openAddDialog() {
+    setEditingNote(null)
+    noteForm.reset({ note: '', noteImportant: 'n' })
+    setDialogOpen(true)
+  }
+
+  function openEditDialog(note: UserNote) {
+    setEditingNote(note)
+    noteForm.reset({ note: note.note, noteImportant: note.noteImportant })
+    setDialogOpen(true)
+  }
+
+  async function onNoteSubmit(values: NoteFormValues) {
+    setIsSaving(true)
+    try {
+      const url = editingNote
+        ? `/api/admin/users/${userId}/notes/${editingNote.noteId}`
+        : `/api/admin/users/${userId}/notes`
+      const method = editingNote ? 'PUT' : 'POST'
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(values),
+      })
+
+      if (!res.ok) {
+        const json = await res.json() as { error?: string }
+        throw new Error(json.error ?? 'Failed to save note')
+      }
+
+      toast.success(editingNote ? 'Note updated' : 'Note added')
+      setDialogOpen(false)
+      await fetchNotes()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save note')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function handleDeleteNote(noteId: number) {
+    setDeletingId(noteId)
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/notes/${noteId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+      if (!res.ok) {
+        const json = await res.json() as { error?: string }
+        throw new Error(json.error ?? 'Failed to delete note')
+      }
+      toast.success('Note deleted')
+      await fetchNotes()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete note')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  function formatNoteDate(timestamp: number): string {
+    if (!timestamp) return ''
+    return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
+  }
+
+  const importantNotes = notes.filter((n) => n.noteImportant === 'y')
+  const regularNotes = notes.filter((n) => n.noteImportant === 'n')
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Notes</h2>
+        <Button type="button" variant="outline" size="sm" onClick={openAddDialog}>
+          Add Note
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading notes…</p>
+      ) : notes.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No notes yet.</p>
+      ) : (
+        <div className="space-y-3">
+          {/* Important notes — highlighted in yellow at top */}
+          {importantNotes.map((note) => (
+            <div
+              key={note.noteId}
+              className="rounded-lg border border-yellow-400 bg-yellow-50 p-3 space-y-1"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <span className="inline-block text-xs font-semibold text-yellow-800 bg-yellow-200 rounded px-1.5 py-0.5 mb-1">
+                    Important
+                  </span>
+                  <p className="text-sm whitespace-pre-wrap break-words">{note.note}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{formatNoteDate(note.noteDate)}</p>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => openEditDialog(note)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                    onClick={() => handleDeleteNote(note.noteId)}
+                    disabled={deletingId === note.noteId}
+                  >
+                    {deletingId === note.noteId ? '…' : 'Delete'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* Regular notes */}
+          {regularNotes.map((note) => (
+            <div
+              key={note.noteId}
+              className="rounded-lg border bg-card p-3 space-y-1"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm whitespace-pre-wrap break-words">{note.note}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{formatNoteDate(note.noteDate)}</p>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => openEditDialog(note)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                    onClick={() => handleDeleteNote(note.noteId)}
+                    disabled={deletingId === note.noteId}
+                  >
+                    {deletingId === note.noteId ? '…' : 'Delete'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add/Edit Note Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingNote ? 'Edit Note' : 'Add Note'}</DialogTitle>
+          </DialogHeader>
+          <Form {...noteForm}>
+            <form onSubmit={noteForm.handleSubmit(onNoteSubmit)} className="space-y-4">
+              <FormField
+                control={noteForm.control}
+                name="note"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Note <span className="text-destructive">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Enter note text…"
+                        className="min-h-24"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={noteForm.control}
+                name="noteImportant"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Importance</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger aria-label="Note importance">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="n">Normal</SelectItem>
+                        <SelectItem value="y">Important</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSaving}>
+                  {isSaving ? 'Saving…' : editingNote ? 'Update Note' : 'Add Note'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -458,6 +755,14 @@ export function AdminUserFormPage() {
             </div>
           </form>
         </Form>
+
+        {/* Notes section — edit mode only */}
+        {isEdit && userData && (
+          <>
+            <Separator className="my-8" />
+            <UserNotesSection userId={userData.userId} />
+          </>
+        )}
       </div>
 
       {/* ------------------------------------------------------------------ */}
