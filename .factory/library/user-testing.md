@@ -53,6 +53,9 @@ Testing surface, tools, and resource cost classification for validators.
 - `VAL-HOME-004` and `VAL-HOME-005` require specific DB state manipulation during testing (empty categories/articles states). These cannot be validated with the standard seeded database because the seed creates categories and articles. To test these: (1) use a fresh database snapshot before seeding, or (2) temporarily delete/hide all categories and articles for the test, then restore. A separate test DB instance is recommended.
 - `VAL-SEARCH-004` pagination requires visible matches strictly greater than `site_max_search` (default: 20). The seed script now creates 26 articles with the keyword "tutorial" and "programming" — searching for "tutorial" should return >20 results and trigger pagination.
 - `VAL-SEARCH-008` requires an expired search hash fixture (older than 1 hour). This cannot be reliably created during real-time testing. To test: (1) manually insert a `search` table row with `search_date` set to `(current_unix_timestamp - 3700)`, then access `/search/results/{that_hash}` to verify it redirects to no-results. This requires direct DB manipulation during the test session.
+- `VAL-DETAIL-010` can be blocked if no hidden article fixture exists (`article_display != 'y'`). If the seeded DB has only visible articles, create a temporary hidden fixture article, verify hidden-URI behavior + exclusion from listings/search, then clean it up.
+- For `VAL-DETAIL-008`, the seeded fixture currently resolves at `/article/introduction-to-algorithms` (navigate via homepage link if direct URI assumptions drift).
+- `VAL-SEARCH-004` can be validated with lower-risk fixtureing by temporarily setting `settings.site_max_search` to `2`, running a broad query (e.g., `php`), then restoring `site_max_search` to `20`.
 
 ## Seed Data Summary (updated 2026-03-19)
 

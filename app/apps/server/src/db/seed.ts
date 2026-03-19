@@ -435,6 +435,36 @@ async function seed() {
     console.log(`  → Categories already exist (${existingCategories.length} found), skipping categories and articles`)
   }
 
+  // -------------------------------------------------------------------------
+  // 7. Hidden Article (required for VAL-DETAIL-010 validation)
+  //    Ensures at least one article with article_display='n' exists.
+  //    Run unconditionally so it is added even when categories already exist.
+  // -------------------------------------------------------------------------
+  const existingHiddenArticle = db
+    .select()
+    .from(schema.articles)
+    .where(eq(schema.articles.articleUri, 'draft-hidden-article'))
+    .get()
+
+  if (!existingHiddenArticle) {
+    console.log('Seeding hidden article for validation...')
+    const now = Math.floor(Date.now() / 1000)
+    db.insert(schema.articles).values({
+      articleUri: 'draft-hidden-article',
+      articleTitle: 'Draft: Hidden Article (not published)',
+      articleKeywords: 'draft, hidden, unpublished',
+      articleDescription: '<p>This article is not published and should not be publicly accessible.</p>',
+      articleShortDesc: '<p>A hidden/draft article for testing access control.</p>',
+      articleDisplay: 'n',
+      articleHits: 0,
+      articleDate: now,
+      articleModified: now,
+    }).run()
+    console.log('  ✓ Seeded hidden article (URI: draft-hidden-article, article_display=n)')
+  } else {
+    console.log('  → Hidden article already exists (URI: draft-hidden-article), skipping')
+  }
+
   console.log('Seed complete.')
 }
 

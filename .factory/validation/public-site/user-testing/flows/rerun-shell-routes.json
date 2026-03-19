@@ -1,0 +1,281 @@
+{
+  "groupId": "rerun-shell-routes",
+  "testedAt": "2026-03-19T20:53:32Z",
+  "isolation": {
+    "surface": "web",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "evidenceDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be/evidence/public-site/rerun-shell-routes",
+    "reportPath": "/Users/nbbaier/68kb/.factory/validation/public-site/user-testing/flows/rerun-shell-routes.json"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "python3-sqlite3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-PUB-002",
+      "title": "User Navigation (Logged Out)",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Clear browser cookies and open /",
+          "expected": "Logged-out header state is shown",
+          "observed": "Logged-out header rendered"
+        },
+        {
+          "action": "Inspect top-right auth links",
+          "expected": "Login -> /login and Register -> /register",
+          "observed": "Login href=/login and Register href=/register"
+        },
+        {
+          "action": "Check authenticated-only text",
+          "expected": "No Welcome/My Account text",
+          "observed": "Welcome/My Account text absent"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/rerun-shell-routes/VAL-PUB-002-logged-out-nav.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET / loaded successfully in browser."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-PUB-003",
+      "title": "User Navigation (Logged In)",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Sign in via /login with seeded credentials",
+          "expected": "Authenticated session established",
+          "observed": "Login succeeded and redirected to /admin"
+        },
+        {
+          "action": "Open / and inspect top-right user navigation",
+          "expected": "Shows Welcome, {username} and My Account -> /admin",
+          "observed": "Shows Welcome, admin and My Account href=/admin"
+        },
+        {
+          "action": "Check guest links",
+          "expected": "Login/Register hidden while authenticated",
+          "observed": "Login/Register links absent"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/rerun-shell-routes/VAL-PUB-003-logged-in-nav.png"
+        ],
+        "consoleErrors": "none",
+        "network": "UI login request succeeded (redirect to /admin), then authenticated homepage rendered."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-BROWSE-004",
+      "title": "Breadcrumb Navigation",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to deeply nested category /categories/php/oop/patterns",
+          "expected": "Breadcrumb shows Categories -> ancestors -> current",
+          "observed": "Breadcrumb shows Categories -> PHP -> PHP OOP -> Design Patterns"
+        },
+        {
+          "action": "Inspect breadcrumb link targets",
+          "expected": "Each segment is a link with correct href",
+          "observed": "All segments are links: /categories, /categories/php, /categories/php/oop, /categories/php/oop/patterns"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/rerun-shell-routes/VAL-BROWSE-004-breadcrumb-deep-nested.png"
+        ],
+        "artifacts": [
+          "public-site/rerun-shell-routes/VAL-BROWSE-004-api-category-breadcrumb.txt"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/categories/php/oop/patterns?page=1&limit=10 -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-BROWSE-007",
+      "title": "Invalid Category URI Redirect",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to /categories/ut-rerun-shell-routes-invalid-category",
+          "expected": "Client-side redirect to /categories after invalid category lookup",
+          "observed": "Browser URL changed to /categories"
+        },
+        {
+          "action": "Verify invalid category API response",
+          "expected": "API reports not found",
+          "observed": "GET /api/categories/ut-rerun-shell-routes-invalid-category?page=1&limit=10 returned 404 with {\"error\":\"Category not found\"}"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/rerun-shell-routes/VAL-BROWSE-007-invalid-category-redirect.png"
+        ],
+        "artifacts": [
+          "public-site/rerun-shell-routes/VAL-BROWSE-007-api-invalid-category.txt"
+        ],
+        "consoleErrors": "none",
+        "network": "Invalid category API -> 404; SPA redirected browser to /categories."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DETAIL-009",
+      "title": "Article Not Found (404)",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to /article/ut-rerun-shell-routes-nonexistent-article",
+          "expected": "Client-side not-found UI renders",
+          "observed": "404 page rendered with not-found text"
+        },
+        {
+          "action": "Verify article API status for nonexistent slug",
+          "expected": "GET /api/articles/{slug} returns 404",
+          "observed": "GET /api/articles/ut-rerun-shell-routes-nonexistent-article returned 404"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/rerun-shell-routes/VAL-DETAIL-009-not-found-page.png"
+        ],
+        "artifacts": [
+          "public-site/rerun-shell-routes/VAL-DETAIL-009-api-404.txt"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/articles/ut-rerun-shell-routes-nonexistent-article -> 404"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DETAIL-010",
+      "title": "Hidden Article Not Accessible",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Query DB for hidden article fixtures (article_display != 'y')",
+          "expected": "At least one hidden article exists for validation",
+          "observed": "No hidden articles found (count=0)"
+        },
+        {
+          "action": "Check previously used hidden slug route/API as fallback",
+          "expected": "Known hidden fixture still present",
+          "observed": "Slug returned generic not-found (UI 404/API 404), but hidden-vs-nonexistent behavior could not be distinguished"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/rerun-shell-routes/VAL-DETAIL-010-hidden-article-route-check.png"
+        ],
+        "artifacts": [
+          "public-site/rerun-shell-routes/VAL-DETAIL-010-hidden-fixture-check.txt",
+          "public-site/rerun-shell-routes/VAL-DETAIL-010-api-candidate-hidden-slug.txt"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/articles/g6grid_20260319112217-article-03 -> 404 (not enough to prove hidden-fixture semantics)"
+      },
+      "issues": "Blocked: no hidden article fixture exists in the shared dataset, so hidden-article exclusion behavior could not be validated without creating temporary data."
+    },
+    {
+      "id": "VAL-SEARCH-001",
+      "title": "Advanced Search Form",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Navigate to /search and inspect UI",
+          "expected": "Keywords input, Category dropdown, submit button, and Search breadcrumb present",
+          "observed": "All required controls and Search breadcrumb rendered"
+        },
+        {
+          "action": "Compare dropdown options with visible categories",
+          "expected": "Dropdown contains all visible categories hierarchically",
+          "observed": "Dropdown contained all 8 visible categories, including depth-2 options (Design Patterns, React)"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/rerun-shell-routes/VAL-SEARCH-001-advanced-search-form.png"
+        ],
+        "artifacts": [
+          "public-site/rerun-shell-routes/VAL-SEARCH-001-db-visible-categories.txt",
+          "public-site/rerun-shell-routes/VAL-SEARCH-001-api-categories.txt"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/categories -> 200"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TAG-003",
+      "title": "Tag-based related articles",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Open /article/getting-started-with-php",
+          "expected": "Related articles section appears for shared-tag article",
+          "observed": "Related Articles section rendered with 5 related links"
+        },
+        {
+          "action": "Verify related list excludes current article",
+          "expected": "Current article not present in related list",
+          "observed": "Related links excluded /article/getting-started-with-php"
+        },
+        {
+          "action": "Verify related API output",
+          "expected": "Related API returns related article records",
+          "observed": "GET /api/articles/getting-started-with-php/related returned 200 with related entries"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/rerun-shell-routes/VAL-TAG-003-related-articles.png"
+        ],
+        "artifacts": [
+          "public-site/rerun-shell-routes/VAL-TAG-003-api-related.txt"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/articles/getting-started-with-php/related -> 200"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser errors command returned empty output when there were no errors, so explicit 'none' results were recorded in each assertion.",
+      "resolved": true,
+      "resolution": "Captured console checks after each assertion flow and treated empty output as no console errors.",
+      "affectedAssertions": [
+        "VAL-PUB-002",
+        "VAL-PUB-003",
+        "VAL-BROWSE-004",
+        "VAL-BROWSE-007",
+        "VAL-DETAIL-009",
+        "VAL-DETAIL-010",
+        "VAL-SEARCH-001",
+        "VAL-TAG-003"
+      ]
+    }
+  ],
+  "blockers": [
+    {
+      "description": "No hidden article fixture exists in current shared DB snapshot (article_display != 'y' count = 0).",
+      "affectedAssertions": [
+        "VAL-DETAIL-010"
+      ],
+      "quickFixAttempted": "Queried SQLite directly for hidden articles and checked a previously known hidden slug via UI/API; both confirmed not-found but did not provide a hidden-fixture case."
+    }
+  ],
+  "summary": "Tested 8 assigned assertions: 7 passed, 1 blocked (VAL-DETAIL-010 missing hidden-article fixture)."
+}

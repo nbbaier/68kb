@@ -1,277 +1,110 @@
 {
   "milestone": "public-site",
-  "round": 1,
-  "generatedAt": "2026-03-19T20:25:31.591402+00:00",
+  "round": 2,
+  "generatedAt": "2026-03-19T21:09:01.715768+00:00",
   "status": "fail",
   "assertionsSummary": {
-    "total": 55,
-    "passed": 41,
-    "failed": 9,
-    "blocked": 5
+    "total": 14,
+    "passed": 12,
+    "failed": 1,
+    "blocked": 1
   },
   "passedAssertions": [
-    "VAL-DETAIL-001",
-    "VAL-DETAIL-002",
-    "VAL-DETAIL-003",
-    "VAL-DETAIL-004",
-    "VAL-DETAIL-005",
-    "VAL-DETAIL-006",
-    "VAL-DETAIL-007",
-    "VAL-XCUT-004",
-    "VAL-BROWSE-001",
-    "VAL-BROWSE-002",
-    "VAL-BROWSE-003",
-    "VAL-BROWSE-005",
-    "VAL-BROWSE-006",
-    "VAL-BROWSE-008",
-    "VAL-XCUT-002",
-    "VAL-GLOSS-ADMIN-001",
-    "VAL-GLOSS-ADMIN-002",
-    "VAL-GLOSS-ADMIN-003",
-    "VAL-GLOSS-ADMIN-004",
-    "VAL-GLOSS-ADMIN-005",
-    "VAL-GLOSS-001",
-    "VAL-GLOSS-002",
-    "VAL-GLOSS-003",
-    "VAL-GLOSS-004",
-    "VAL-GLOSS-005",
-    "VAL-GLOSS-006",
-    "VAL-PUB-001",
-    "VAL-PUB-004",
-    "VAL-PUB-005",
-    "VAL-PUB-006",
-    "VAL-PUB-007",
-    "VAL-HOME-001",
-    "VAL-HOME-002",
-    "VAL-HOME-003",
-    "VAL-SEARCH-002",
-    "VAL-SEARCH-003",
-    "VAL-SEARCH-005",
-    "VAL-SEARCH-006",
-    "VAL-SEARCH-007",
-    "VAL-SEARCH-009",
-    "VAL-XCUT-001"
+    "VAL-PUB-002",
+    "VAL-PUB-003",
+    "VAL-BROWSE-004",
+    "VAL-BROWSE-007",
+    "VAL-DETAIL-009",
+    "VAL-SEARCH-001",
+    "VAL-TAG-003",
+    "VAL-XCUT-003",
+    "VAL-HOME-004",
+    "VAL-HOME-005",
+    "VAL-SEARCH-004",
+    "VAL-SEARCH-008"
   ],
   "failedAssertions": [
     {
-      "id": "VAL-DETAIL-009",
-      "reason": "Route renders 404 UI but returns HTTP 200 instead of 404."
-    },
-    {
-      "id": "VAL-DETAIL-010",
-      "reason": "Hidden article content is blocked and excluded from listings, but endpoint does not return required HTTP 404 status."
-    },
-    {
-      "id": "VAL-TAG-003",
-      "reason": "Related-by-tag results are not displayed on article detail despite existing shared-tag candidates."
-    },
-    {
-      "id": "VAL-BROWSE-004",
-      "reason": "Current category breadcrumb segment is not a link, which does not meet the assertion contract wording that each segment be linked."
-    },
-    {
-      "id": "VAL-BROWSE-007",
-      "reason": "Observed client-side redirect behavior, but contract requires HTTP 302 redirect response."
-    },
-    {
-      "id": "VAL-XCUT-003",
-      "reason": "documentElement.scrollWidth exceeded viewport width at 768 and 1024, indicating horizontal overflow."
-    },
-    {
-      "id": "VAL-PUB-002",
-      "reason": "Route targets do not match contract: expected /users/login and /users/register but implementation uses /login and /register."
-    },
-    {
-      "id": "VAL-PUB-003",
-      "reason": "Authenticated header links do not match contract routing expectations (expected profile + /users/account; actual links point to /admin)."
-    },
-    {
-      "id": "VAL-SEARCH-001",
-      "reason": "Category dropdown omitted visible category g2core_6a598d_grandchild (cat_id=5)."
+      "id": "VAL-DETAIL-008",
+      "reason": "Glossary tooltip wrapping is missing on article detail content; contract requirement for <a class='tooltip'> title/href behavior is not met."
     }
   ],
   "blockedAssertions": [
     {
-      "id": "VAL-DETAIL-008",
-      "blockedBy": "Blocked by missing test fixture data: no available article body includes glossary terms, so first-occurrence tooltip behavior cannot be exercised end-to-end on current dataset."
-    },
-    {
-      "id": "VAL-HOME-004",
-      "blockedBy": "Blocked by shared seeded dataset: could not safely create a no-categories global state without destructive cross-worker impact."
-    },
-    {
-      "id": "VAL-HOME-005",
-      "blockedBy": "Blocked by shared seeded dataset: could not safely create a no-articles global state without destructive cross-worker impact."
-    },
-    {
-      "id": "VAL-SEARCH-004",
-      "blockedBy": "Precondition unmet: available visible data does not exceed pagination threshold."
-    },
-    {
-      "id": "VAL-SEARCH-008",
-      "blockedBy": "Precondition unmet: no expired hash fixture available without mutating shared data or waiting >1h."
+      "id": "VAL-DETAIL-010",
+      "blockedBy": "Blocked: no hidden article fixture exists in the shared dataset, so hidden-article exclusion behavior could not be validated without creating temporary data."
     }
   ],
   "toolsUsed": [
     "agent-browser",
     "curl",
-    "python3",
-    "python3-sqlite",
     "python3-sqlite3",
+    "python3",
     "sqlite3"
   ],
   "appliedUpdates": [
     {
       "target": "user-testing.md",
-      "description": "Added public-site fixture and isolation learnings (glossary concurrency, empty-state fixtures, search pagination/expiry fixtures, glossary-term article fixture requirements).",
+      "description": "Added rerun learnings for hidden-article fixture requirements (VAL-DETAIL-010), canonical glossary fixture route for VAL-DETAIL-008, and low-risk pagination fixtureing for VAL-SEARCH-004.",
       "source": "flow-report"
     }
   ],
   "flowReports": [
-    ".factory/validation/public-site/user-testing/flows/article-detail.json",
-    ".factory/validation/public-site/user-testing/flows/category-browse-crosscut.json",
-    ".factory/validation/public-site/user-testing/flows/glossary-admin.json",
-    ".factory/validation/public-site/user-testing/flows/glossary-public.json",
-    ".factory/validation/public-site/user-testing/flows/public-shell-home.json",
-    ".factory/validation/public-site/user-testing/flows/search-security.json"
+    ".factory/validation/public-site/user-testing/flows/rerun-shell-routes.json",
+    ".factory/validation/public-site/user-testing/flows/rerun-tooltips-responsive.json",
+    ".factory/validation/public-site/user-testing/flows/rerun-stateful-home-search.json"
   ],
-  "previousRound": null,
+  "previousRound": ".factory/validation/public-site/user-testing/synthesis.round1.json",
   "triage": {
     "frictions": [
       {
-        "description": "Advanced search page has duplicate 'Keywords' labels (main form + sidebar search), causing strict locator conflicts in agent-browser.",
+        "description": "agent-browser errors command returned empty output when there were no errors, so explicit 'none' results were recorded in each assertion.",
         "resolved": true,
-        "resolution": "Switched to element refs from snapshot (filled @e9 and clicked @e31) to target the correct form.",
+        "resolution": "Captured console checks after each assertion flow and treated empty output as no console errors.",
         "affectedAssertions": [
-          "VAL-DETAIL-010"
-        ]
-      },
-      {
-        "description": "agent-browser network request log returned no captured requests in this run.",
-        "resolved": true,
-        "resolution": "Captured explicit route/asset status codes with curl as supplemental network evidence.",
-        "affectedAssertions": [
-          "VAL-DETAIL-006",
+          "VAL-PUB-002",
+          "VAL-PUB-003",
+          "VAL-BROWSE-004",
+          "VAL-BROWSE-007",
           "VAL-DETAIL-009",
           "VAL-DETAIL-010",
-          "VAL-XCUT-004"
+          "VAL-SEARCH-001",
+          "VAL-TAG-003"
         ]
       },
       {
-        "description": "Existing seeded data did not provide enough visible articles in one category to exercise pagination transitions for VAL-BROWSE-003.",
+        "description": "Guidance references an article title with URI-like text ending in 'and-data-structures', but direct navigation to that URI returned the not-found page. The assertion was validated by navigating from the homepage article link instead.",
         "resolved": true,
-        "resolution": "Created temporary prefixed articles (ut_browse_crosscut_pag_*) for validation, captured evidence, then removed all temporary rows after testing.",
+        "resolution": "Used homepage link for 'Introduction to Algorithms and Data Structures' to reach canonical URI /article/introduction-to-algorithms.",
         "affectedAssertions": [
-          "VAL-BROWSE-003"
+          "VAL-DETAIL-008"
         ]
       },
       {
-        "description": "agent-browser network export does not include response status codes.",
+        "description": "agent-browser semantic locators for Keywords/Search were ambiguous because both header quick-search and advanced search form expose similar labels.",
         "resolved": true,
-        "resolution": "Captured supplemental curl evidence for required status codes and payload snippets.",
+        "resolution": "Switched to snapshot refs (@e9/@e20) for deterministic targeting of advanced search controls.",
         "affectedAssertions": [
-          "VAL-BROWSE-001",
-          "VAL-BROWSE-002",
-          "VAL-BROWSE-003",
-          "VAL-BROWSE-004",
-          "VAL-BROWSE-005",
-          "VAL-BROWSE-006",
-          "VAL-BROWSE-007",
-          "VAL-BROWSE-008",
-          "VAL-XCUT-002",
-          "VAL-XCUT-003"
+          "VAL-SEARCH-004"
         ]
       },
       {
-        "description": "Bulk action dropdown/update controls are hidden until at least one row checkbox is selected.",
+        "description": "agent-browser network export returned \"No requests captured\" for one search capture attempt.",
         "resolved": true,
-        "resolution": "Selected a glossary row first; controls appeared and delete action became available.",
+        "resolution": "Captured supplemental curl API evidence with explicit HTTP status and payload details.",
         "affectedAssertions": [
-          "VAL-GLOSS-ADMIN-004"
-        ]
-      },
-      {
-        "description": "Invalid edit route handling is SPA/client-driven (document request returns SPA shell; not an HTTP 302 redirect).",
-        "resolved": true,
-        "resolution": "Captured final redirected UI state and supplemental API 404 evidence for invalid ID handling.",
-        "affectedAssertions": [
-          "VAL-GLOSS-ADMIN-005"
-        ]
-      },
-      {
-        "description": "Glossary data changed during parallel validation (new admin-created term appeared mid-run), so /glossary evidence had to be re-captured to align UI and DB counts at one point in time.",
-        "resolved": true,
-        "resolution": "Re-ran /glossary capture and DB query immediately afterward; final UI and DB both show 8 terms.",
-        "affectedAssertions": [
-          "VAL-GLOSS-002"
-        ]
-      },
-      {
-        "description": "agent-browser network request export returned \"No requests captured\" during this session, so explicit status/body evidence had to be collected with supplemental curl calls.",
-        "resolved": true,
-        "resolution": "Captured API request/response evidence with curl for /api/search, /api/categories, /api/settings/public, /api/articles/popular, and /api/articles/recent.",
-        "affectedAssertions": [
-          "VAL-PUB-004",
-          "VAL-PUB-005",
-          "VAL-PUB-006",
-          "VAL-HOME-001",
-          "VAL-HOME-002",
-          "VAL-HOME-003"
-        ]
-      },
-      {
-        "description": "agent-browser label locator for 'Keywords' matched both main search form input and sidebar search input.",
-        "resolved": true,
-        "resolution": "Switched to ref-based interaction (@e9/@e31) after snapshot to target the intended advanced search form.",
-        "affectedAssertions": [
-          "VAL-SEARCH-002",
-          "VAL-SEARCH-003",
           "VAL-SEARCH-004",
-          "VAL-SEARCH-005",
-          "VAL-SEARCH-006",
-          "VAL-SEARCH-007",
-          "VAL-XCUT-001"
-        ]
-      },
-      {
-        "description": "agent-browser network request log did not capture useful /search request details in this run.",
-        "resolved": true,
-        "resolution": "Used supplemental curl checks and SQLite evidence for status/behavior validation where needed.",
-        "affectedAssertions": [
-          "VAL-SEARCH-006",
-          "VAL-SEARCH-009"
+          "VAL-SEARCH-008"
         ]
       }
     ],
     "blockers": [
       {
-        "description": "No current article body contains any glossary term, so first-occurrence tooltip behavior cannot be triggered through existing public data.",
+        "description": "No hidden article fixture exists in current shared DB snapshot (article_display != 'y' count = 0).",
         "affectedAssertions": [
-          "VAL-DETAIL-008"
+          "VAL-DETAIL-010"
         ],
-        "quickFixAttempted": "Queried glossary terms and all article descriptions in SQLite; found zero matches."
-      },
-      {
-        "description": "Shared seeded environment did not provide an isolated way to enforce global empty categories/articles preconditions for homepage empty-state assertions.",
-        "affectedAssertions": [
-          "VAL-HOME-004",
-          "VAL-HOME-005"
-        ],
-        "quickFixAttempted": "Reviewed current dataset and avoided destructive global data mutation per shared-infrastructure rules."
-      },
-      {
-        "description": "Pagination precondition not met: site_max_search=20 while maximum visible matched records in dataset were 9.",
-        "affectedAssertions": [
-          "VAL-SEARCH-004"
-        ],
-        "quickFixAttempted": "Ran broad keyword search ('g') and verified DB match count; still below pagination threshold."
-      },
-      {
-        "description": "No expired search hashes available for expiration-path validation.",
-        "affectedAssertions": [
-          "VAL-SEARCH-008"
-        ],
-        "quickFixAttempted": "Queried search table for rows older than 1 hour; found 0. Avoided mutating shared DB timestamps."
+        "quickFixAttempted": "Queried SQLite directly for hidden articles and checked a previously known hidden slug via UI/API; both confirmed not-found but did not provide a hidden-fixture case."
       }
     ]
   }

@@ -1,0 +1,228 @@
+{
+  "groupId": "rerun-stateful-home-search",
+  "testedAt": "2026-03-19T21:06:25Z",
+  "isolation": {
+    "surface": "web",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "evidenceDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be/evidence/public-site/rerun-stateful-home-search",
+    "reportPath": "/Users/nbbaier/68kb/.factory/validation/public-site/user-testing/flows/rerun-stateful-home-search.json",
+    "dataMutationBoundary": "Temporary DB fixture mutations allowed for assigned assertions only; all cleanup completed and verified."
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "sqlite3",
+    "curl",
+    "python3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-HOME-004",
+      "title": "Empty State (No Categories)",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Backup category display flags and set all categories to cat_display='no'",
+          "expected": "Homepage category grid renders empty-state without crashing",
+          "observed": "No categories message displayed, category cards count=0, page remained functional"
+        },
+        {
+          "action": "Open / and inspect categories area",
+          "expected": "No categories UI appears and article sections still render",
+          "observed": "\"No categories have been created yet.\" present; Most Popular and Recent sections remained visible"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/rerun-stateful-home-search/VAL-HOME-004-no-categories.png"
+        ],
+        "artifacts": [
+          "public-site/rerun-stateful-home-search/VAL-HOME-004-page-check.json",
+          "public-site/rerun-stateful-home-search/VAL-HOME-004-console-errors.txt",
+          "public-site/rerun-stateful-home-search/fixture-actions.log"
+        ],
+        "consoleErrors": "none (empty file: public-site/rerun-stateful-home-search/VAL-HOME-004-console-errors.txt)",
+        "network": "Homepage loaded via browser with empty-category fixture; no UI runtime failures observed."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-HOME-005",
+      "title": "Empty State (No Articles)",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Backup article display flags and set all articles to article_display='n'",
+          "expected": "Popular and Recent sections render empty state without errors",
+          "observed": "Both sections rendered \"No articles found.\" and contained zero list items"
+        },
+        {
+          "action": "Open / and inspect article panels",
+          "expected": "No crash and empty placeholders/messages shown",
+          "observed": "No-articles message count=2 (Most Popular + Recent), layout remained intact"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/rerun-stateful-home-search/VAL-HOME-005-no-articles.png"
+        ],
+        "artifacts": [
+          "public-site/rerun-stateful-home-search/VAL-HOME-005-page-check.json",
+          "public-site/rerun-stateful-home-search/VAL-HOME-005-console-errors.txt",
+          "public-site/rerun-stateful-home-search/fixture-actions.log"
+        ],
+        "consoleErrors": "none (empty file: public-site/rerun-stateful-home-search/VAL-HOME-005-console-errors.txt)",
+        "network": "Homepage loaded via browser with empty-articles fixture; no UI runtime failures observed."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-SEARCH-004",
+      "title": "Search Results Pagination",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Temporarily set settings.site_max_search to 2",
+          "expected": "A query with >2 matches should paginate",
+          "observed": "Keyword \"php\" returned total=6 with limit=2"
+        },
+        {
+          "action": "Submit advanced search for \"php\" and inspect page 1",
+          "expected": "Pagination controls appear when total > per-page",
+          "observed": "Results page showed \"Page 1 of 3\" with Previous/Next controls"
+        },
+        {
+          "action": "Navigate to page 2",
+          "expected": "Different results from page 1",
+          "observed": "Page 2 titles differed from page 1 and pagination updated to \"Page 2 of 3\""
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/rerun-stateful-home-search/VAL-SEARCH-004-results-page1.png",
+          "public-site/rerun-stateful-home-search/VAL-SEARCH-004-results-page2.png"
+        ],
+        "artifacts": [
+          "public-site/rerun-stateful-home-search/VAL-SEARCH-004-page1-data.json",
+          "public-site/rerun-stateful-home-search/VAL-SEARCH-004-page2-data.json",
+          "public-site/rerun-stateful-home-search/VAL-SEARCH-004-curl-network.txt",
+          "public-site/rerun-stateful-home-search/VAL-SEARCH-004-console-errors.txt",
+          "public-site/rerun-stateful-home-search/fixture-actions.log"
+        ],
+        "consoleErrors": "none (empty file: public-site/rerun-stateful-home-search/VAL-SEARCH-004-console-errors.txt)",
+        "network": "POST /api/search -> 200; GET /api/search/results/{hash}?page=1 -> 200; GET /api/search/results/{hash}?page=2 -> 200 (see VAL-SEARCH-004-curl-network.txt)."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-SEARCH-008",
+      "title": "Search Hash Expiration",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Insert expired search cache row (search_date=now-3700) for hash a1b2c3d4e5f60718293a4b5c6d7e8f90",
+          "expected": "Expired hash should be deleted/invalid on access",
+          "observed": "Fixture inserted with age 3700 seconds"
+        },
+        {
+          "action": "Navigate to /search/results/a1b2c3d4e5f60718293a4b5c6d7e8f90",
+          "expected": "Redirect to no-results page",
+          "observed": "Browser redirected to /search/no-results"
+        },
+        {
+          "action": "Verify fixture cleanup",
+          "expected": "Expired hash removed after clean-up path",
+          "observed": "search row count for fixture hash was 0 after access and remained 0 after explicit cleanup"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/rerun-stateful-home-search/VAL-SEARCH-008-expired-hash-no-results.png"
+        ],
+        "artifacts": [
+          "public-site/rerun-stateful-home-search/VAL-SEARCH-008-curl-response.txt",
+          "public-site/rerun-stateful-home-search/VAL-SEARCH-008-console-errors.txt",
+          "public-site/rerun-stateful-home-search/fixture-actions.log",
+          "public-site/rerun-stateful-home-search/fixture-cleanup-verification.txt"
+        ],
+        "consoleErrors": "none (empty file: public-site/rerun-stateful-home-search/VAL-SEARCH-008-console-errors.txt)",
+        "network": "GET /api/search/results/a1b2c3d4e5f60718293a4b5c6d7e8f90?page=1 -> 404 {\"error\":\"Search results not found or expired\"}."
+      },
+      "issues": null
+    }
+  ],
+  "fixtureMutations": [
+    {
+      "scope": "VAL-SEARCH-004",
+      "setupActions": [
+        "UPDATE settings SET option_value='2' WHERE option_name='site_max_search'"
+      ],
+      "cleanupActions": [
+        "UPDATE settings SET option_value='20' WHERE option_name='site_max_search'"
+      ],
+      "cleanupCompleted": true
+    },
+    {
+      "scope": "VAL-SEARCH-008",
+      "setupActions": [
+        "DELETE FROM search WHERE search_id='a1b2c3d4e5f60718293a4b5c6d7e8f90'",
+        "INSERT INTO search (search_id, search_date, search_keywords, search_user_id, search_ip, search_total) VALUES ('a1b2c3d4e5f60718293a4b5c6d7e8f90', now-3700, '{\"keywords\":\"ut_rerun_stateful_expired\",\"categoryId\":null}', 0, 'ut_rerun_stateful_expired_ip', 1)"
+      ],
+      "cleanupActions": [
+        "Accessed expired hash URL to trigger cleanExpiredSearchCache",
+        "DELETE FROM search WHERE search_id='a1b2c3d4e5f60718293a4b5c6d7e8f90' (safety cleanup)"
+      ],
+      "cleanupCompleted": true
+    },
+    {
+      "scope": "VAL-HOME-004",
+      "setupActions": [
+        "CREATE TABLE ut_rerun_stateful_backup_categories AS SELECT cat_id, cat_display FROM categories",
+        "UPDATE categories SET cat_display='no'"
+      ],
+      "cleanupActions": [
+        "UPDATE categories SET cat_display=(SELECT cat_display FROM ut_rerun_stateful_backup_categories WHERE cat_id=categories.cat_id)",
+        "DROP TABLE ut_rerun_stateful_backup_categories"
+      ],
+      "cleanupCompleted": true
+    },
+    {
+      "scope": "VAL-HOME-005",
+      "setupActions": [
+        "CREATE TABLE ut_rerun_stateful_backup_articles AS SELECT article_id, article_display FROM articles",
+        "UPDATE articles SET article_display='n'"
+      ],
+      "cleanupActions": [
+        "UPDATE articles SET article_display=(SELECT article_display FROM ut_rerun_stateful_backup_articles WHERE article_id=articles.article_id)",
+        "DROP TABLE ut_rerun_stateful_backup_articles"
+      ],
+      "cleanupCompleted": true
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser semantic locators for Keywords/Search were ambiguous because both header quick-search and advanced search form expose similar labels.",
+      "resolved": true,
+      "resolution": "Switched to snapshot refs (@e9/@e20) for deterministic targeting of advanced search controls.",
+      "affectedAssertions": [
+        "VAL-SEARCH-004"
+      ]
+    },
+    {
+      "description": "agent-browser network export returned \"No requests captured\" for one search capture attempt.",
+      "resolved": true,
+      "resolution": "Captured supplemental curl API evidence with explicit HTTP status and payload details.",
+      "affectedAssertions": [
+        "VAL-SEARCH-004",
+        "VAL-SEARCH-008"
+      ]
+    }
+  ],
+  "blockers": [],
+  "testingLearnings": [
+    "In this dataset, using a temporary site_max_search reduction is a lower-risk way to exercise pagination than bulk article insertion.",
+    "Search hash expiration can be validated deterministically by inserting a hash older than 3600 seconds and immediately loading /search/results/{hash}."
+  ],
+  "summary": "Tested 4 assigned assertions: 4 passed (VAL-HOME-004, VAL-HOME-005, VAL-SEARCH-004, VAL-SEARCH-008). Temporary fixture mutations were fully cleaned up and restoration was verified in fixture-cleanup-verification.txt."
+}

@@ -162,8 +162,13 @@ describe('ArticleDetailPage', () => {
       renderArticleDetailPage('hello-world')
 
       await waitFor(() => {
-        // Check text content is rendered (HTML is parsed, not escaped)
-        expect(screen.getByText(/full content/i)).toBeInTheDocument()
+        // Check text content is rendered as HTML (not escaped).
+        // Glossary tooltip injection splits terms into separate anchor elements,
+        // so "full content" may span multiple DOM nodes. Check the container's
+        // overall textContent instead of querying for a single element.
+        const content = document.querySelector('.article-content')
+        expect(content).not.toBeNull()
+        expect(content?.textContent).toMatch(/full content/i)
       })
     })
 
@@ -276,6 +281,53 @@ describe('ArticleDetailPage', () => {
           opts?.method === 'POST',
       )
       expect(hitCalls.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe('Glossary Tooltips (VAL-DETAIL-008)', () => {
+    it('wraps the first occurrence of a glossary term with a tooltip anchor', async () => {
+      setupFetchMock(mockArticle)
+      renderArticleDetailPage('hello-world')
+
+      await waitFor(() => {
+        // mockArticle has glossaryTerms: [{ gTerm: 'content', gDefinition: '...' }]
+        // and articleDescription: '<p>This is the <strong>full content</strong> of the article.</p>'
+        // The first occurrence of "content" should be wrapped in <a class="tooltip">
+        const tooltipLink = document.querySelector('a.tooltip')
+        expect(tooltipLink).not.toBeNull()
+        expect(tooltipLink?.textContent).toBe('content')
+        expect(tooltipLink?.getAttribute('href')).toContain('/glossary/term/')
+        expect(tooltipLink?.getAttribute('title')).toMatch(/content\s*-/)
+      })
+    })
+
+    it('tooltip title contains truncated definition (≤75 chars after term)', async () => {
+      setupFetchMock(mockArticle)
+      renderArticleDetailPage('hello-world')
+
+      await waitFor(() => {
+        const tooltipLink = document.querySelector('a.tooltip')
+        expect(tooltipLink).not.toBeNull()
+        const title = tooltipLink?.getAttribute('title') ?? ''
+        // Title format: "{term} - {definition up to 75 chars}"
+        const defPart = title.split(' - ').slice(1).join(' - ')
+        expect(defPart.length).toBeLessThanOrEqual(75)
+      })
+    })
+
+    it('does not render tooltip anchors when glossary terms are empty', async () => {
+      setupFetchMock(mockArticleNoAttachments)
+      renderArticleDetailPage('no-attachments')
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+          'No Attachments Article',
+        )
+      })
+
+      // mockArticleNoAttachments has glossaryTerms: [] — no tooltips expected
+      const tooltipLink = document.querySelector('a.tooltip')
+      expect(tooltipLink).toBeNull()
     })
   })
 

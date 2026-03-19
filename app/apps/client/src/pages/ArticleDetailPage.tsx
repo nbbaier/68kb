@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useParams, Link } from 'react-router'
 
 // ---------------------------------------------------------------------------
@@ -161,6 +161,20 @@ function applyGlossaryTooltips(
   }
 }
 
+/**
+ * Process an HTML string and inject glossary tooltip anchors for the first
+ * occurrence of each glossary term. Works on a detached DOM element so that
+ * the result can be passed directly to dangerouslySetInnerHTML, avoiding any
+ * timing issues between React's commit phase and useEffect scheduling.
+ */
+function injectGlossaryTooltips(html: string, terms: GlossaryTerm[]): string {
+  if (!terms.length || !html) return html
+  const container = document.createElement('div')
+  container.innerHTML = html
+  applyGlossaryTooltips(container, terms)
+  return container.innerHTML
+}
+
 // ---------------------------------------------------------------------------
 // Article content renderer with glossary tooltips
 // ---------------------------------------------------------------------------
@@ -172,22 +186,24 @@ function ArticleContent({
   html: string
   glossaryTerms: GlossaryTerm[]
 }) {
-  const contentRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!contentRef.current) return
-    applyGlossaryTooltips(contentRef.current, glossaryTerms)
-    // Only re-run when the article HTML or glossary terms change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [html, glossaryTerms])
+  // Process the HTML synchronously during render so tooltips are visible on
+  // the first paint without relying on a post-commit useEffect. Using useMemo
+  // ensures re-processing only happens when the HTML content or terms change.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const processedHtml = useMemo(
+    () => injectGlossaryTooltips(html, glossaryTerms),
+    // We intentionally depend on the array reference; when article state is
+    // updated (e.g. hit counter) a new reference is created but injectGlossaryTooltips
+    // produces the same HTML string so React skips the DOM update.
+    [html, glossaryTerms],
+  )
 
   return (
     <div
-      ref={contentRef}
       className="prose prose-slate max-w-none article-content"
       // Article description is stored as HTML in the database.
       // eslint-disable-next-line react/no-danger
-      dangerouslySetInnerHTML={{ __html: html }}
+      dangerouslySetInnerHTML={{ __html: processedHtml }}
     />
   )
 }

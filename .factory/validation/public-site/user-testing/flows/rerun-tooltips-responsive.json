@@ -1,0 +1,111 @@
+{
+  "groupId": "rerun-tooltips-responsive",
+  "testedAt": "2026-03-19T20:59:46Z",
+  "isolation": {
+    "missionDir": "/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "boundary": "Read-only interaction with shared app/DB; no global DB mutations"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "python3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-DETAIL-008",
+      "title": "Glossary Tooltips",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Open homepage and navigate via the 'Introduction to Algorithms and Data Structures' article link",
+          "expected": "Article detail page loads with glossary-tooltipped terms",
+          "observed": "Article loaded at /article/introduction-to-algorithms"
+        },
+        {
+          "action": "Inspect article DOM for tooltip anchors and term wrapping",
+          "expected": "First occurrence of each glossary term wrapped in <a class=\"tooltip\"> with title and glossary link",
+          "observed": "DOM audit found tooltipCount=0 and no glossary anchor links in article content"
+        },
+        {
+          "action": "Check repeated glossary terms behavior",
+          "expected": "First occurrence wrapped, subsequent occurrences unwrapped",
+          "observed": "Occurrences of 'algorithm', 'variable', and 'array' were present only as unwrapped text"
+        },
+        {
+          "action": "Review network activity for glossary-related data",
+          "expected": "Glossary-related request(s) supporting tooltip rendering",
+          "observed": "No glossary endpoint requests were captured during article render"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/rerun-tooltips-responsive/VAL-DETAIL-008-article-page.png",
+          "public-site/rerun-tooltips-responsive/VAL-DETAIL-008-article-body-full.png"
+        ],
+        "consoleErrors": "none",
+        "network": "GET /api/articles/introduction-to-algorithms (+ related/settings/categories/auth calls); no glossary requests captured",
+        "artifacts": [
+          "public-site/rerun-tooltips-responsive/VAL-DETAIL-008-dom-audit.json",
+          "public-site/rerun-tooltips-responsive/VAL-DETAIL-008-api-check.json"
+        ]
+      },
+      "issues": "Glossary tooltip wrapping is missing on article detail content; contract requirement for <a class='tooltip'> title/href behavior is not met."
+    },
+    {
+      "id": "VAL-XCUT-003",
+      "title": "Responsive/Accessible Layout",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Set viewport to 320x900 and verify layout",
+          "expected": "No horizontal overflow; navigation remains accessible",
+          "observed": "scrollWidth matched viewport width (320); mobile header showed an 'Open menu' control and menu exposed nav links when opened"
+        },
+        {
+          "action": "Set viewport to 768x900 and verify layout",
+          "expected": "No horizontal overflow; navigation readable and accessible",
+          "observed": "scrollWidth matched viewport width (768); header nav links were visible and usable"
+        },
+        {
+          "action": "Set viewport to 1024x900 and verify layout",
+          "expected": "No horizontal overflow; navigation readable and accessible",
+          "observed": "scrollWidth matched viewport width (1024); header nav links visible"
+        },
+        {
+          "action": "Set viewport to 1440x900 and verify layout",
+          "expected": "No horizontal overflow; navigation readable and accessible",
+          "observed": "scrollWidth matched viewport width (1440); header nav links visible"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "public-site/rerun-tooltips-responsive/VAL-XCUT-003-viewport-320.png",
+          "public-site/rerun-tooltips-responsive/VAL-XCUT-003-viewport-320-menu-open.png",
+          "public-site/rerun-tooltips-responsive/VAL-XCUT-003-viewport-768.png",
+          "public-site/rerun-tooltips-responsive/VAL-XCUT-003-viewport-1024.png",
+          "public-site/rerun-tooltips-responsive/VAL-XCUT-003-viewport-1440.png"
+        ],
+        "consoleErrors": "none",
+        "network": "Homepage API fetches observed for /api/settings/public, /api/categories, /api/articles/popular, /api/articles/recent, /api/auth/me",
+        "artifacts": [
+          "public-site/rerun-tooltips-responsive/VAL-XCUT-003-layout-metrics.json",
+          "public-site/rerun-tooltips-responsive/VAL-XCUT-003-api-status-check.json"
+        ]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Guidance references an article title with URI-like text ending in 'and-data-structures', but direct navigation to that URI returned the not-found page. The assertion was validated by navigating from the homepage article link instead.",
+      "resolved": true,
+      "resolution": "Used homepage link for 'Introduction to Algorithms and Data Structures' to reach canonical URI /article/introduction-to-algorithms.",
+      "affectedAssertions": [
+        "VAL-DETAIL-008"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 2 assertions: 1 passed (VAL-XCUT-003), 1 failed (VAL-DETAIL-008 due to missing glossary tooltip wrapping)."
+}
