@@ -18,6 +18,22 @@ type GlossaryTerm = {
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 
 // ---------------------------------------------------------------------------
+// Sanitize HTML — strips all tags, returning plain text only.
+// Used to safely render glossary definitions without XSS risk.
+// ---------------------------------------------------------------------------
+
+function stripTags(html: string): string {
+  if (!html) return ''
+  if (typeof document === 'undefined') {
+    // Fallback for non-browser environments (e.g., SSR/tests)
+    return html.replace(/<[^>]*>/g, '')
+  }
+  const tmp = document.createElement('div')
+  tmp.innerHTML = html
+  return tmp.textContent ?? ''
+}
+
+// ---------------------------------------------------------------------------
 // A-Z navigation bar
 // ---------------------------------------------------------------------------
 
@@ -102,10 +118,9 @@ function TermList({ terms }: { terms: GlossaryTerm[] }) {
               {term.gTerm}
             </a>
           </dt>
-          <dd
-            className="mt-1 text-sm text-muted-foreground pl-4"
-            dangerouslySetInnerHTML={{ __html: term.gDefinition }}
-          />
+          <dd className="mt-1 text-sm text-muted-foreground pl-4">
+            {stripTags(term.gDefinition)}
+          </dd>
         </div>
       ))}
     </dl>

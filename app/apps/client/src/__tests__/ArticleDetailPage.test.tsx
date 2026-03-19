@@ -148,13 +148,15 @@ describe('ArticleDetailPage', () => {
       })
     })
 
-    it('renders view count', async () => {
+    it('renders view count (updated after hit increment)', async () => {
       setupFetchMock(mockArticle)
       renderArticleDetailPage('hello-world')
 
       await waitFor(() => {
         expect(screen.getByText('Views:')).toBeInTheDocument()
-        expect(screen.getByText('42')).toBeInTheDocument()
+        // The hit counter is incremented on load (42 → 43). The component
+        // updates the displayed count using the POST /hit response.
+        expect(screen.getByText('43')).toBeInTheDocument()
       })
     })
   })

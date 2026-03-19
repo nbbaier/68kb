@@ -58,8 +58,6 @@ export function SearchResultsPage() {
   const [results, setResults] = useState<SearchResultsData | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
 
-  const perPage = results?.limit ?? 10
-
   useEffect(() => {
     if (!hash) {
       navigate('/search/no-results')
@@ -81,8 +79,9 @@ export function SearchResultsPage() {
 
     setLoading(true)
     try {
+      // Do not pass limit — let the server use site_max_search from settings
       const res = await fetch(
-        `/api/search/results/${hash}?page=${page}&limit=${perPage}`,
+        `/api/search/results/${hash}?page=${page}`,
         { credentials: 'include' },
       )
 
@@ -101,7 +100,7 @@ export function SearchResultsPage() {
     }
   }
 
-  const totalPages = results ? Math.ceil(results.total / (results.limit || 10)) : 0
+  const totalPages = results && results.limit ? Math.ceil(results.total / results.limit) : 0
 
   if (loading) {
     return (

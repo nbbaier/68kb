@@ -54,13 +54,14 @@ export function AdminGlossaryFormPage() {
   useEffect(() => {
     if (!isEdit || !id) return
 
-    const numId = parseInt(id, 10)
-    if (isNaN(numId)) {
-      // Invalid ID → redirect to grid
+    // Strictly validate: ID must be all digits (reject e.g. "1abc", "abc", "1.5")
+    if (!/^\d+$/.test(id)) {
       toast.error('Invalid glossary term ID')
       navigate('/admin/kb/glossary', { replace: true })
       return
     }
+
+    const numId = parseInt(id, 10)
 
     fetch(`/api/admin/glossary/${numId}`, { credentials: 'include' })
       .then((res) => {

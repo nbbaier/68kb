@@ -143,21 +143,25 @@ export function createPublicCategoryRoutes(db: DrizzleDB) {
 
     // Build breadcrumbs: traverse catParent chain from root → current.
     // The returned array includes all ancestors PLUS the current category as last item.
-    // Hidden ancestors (cat_display != 'yes') are skipped to keep breadcrumbs clean.
+    // Hidden ancestors (cat_display != 'yes') are skipped in the breadcrumb trail
+    // but traversal continues upward so visible grandparents are still included.
     const breadcrumbs: Array<{ catName: string; catUri: string }> = []
     let curr = category
     const visited = new Set<number>()
     while (curr.catParent !== 0) {
       if (visited.has(curr.catParent)) break // guard against circular refs
       visited.add(curr.catParent)
-      // Only include visible parent categories in breadcrumbs
+      // Fetch parent regardless of visibility so we can continue traversal
       const parent = db
         .select()
         .from(categories)
-        .where(and(eq(categories.catId, curr.catParent), eq(categories.catDisplay, 'yes')))
+        .where(eq(categories.catId, curr.catParent))
         .get()
       if (!parent) break
-      breadcrumbs.unshift({ catName: parent.catName, catUri: parent.catUri })
+      // Only include visible parent categories in the breadcrumb trail
+      if (parent.catDisplay === 'yes') {
+        breadcrumbs.unshift({ catName: parent.catName, catUri: parent.catUri })
+      }
       curr = parent
     }
     breadcrumbs.push({ catName: category.catName, catUri: category.catUri })

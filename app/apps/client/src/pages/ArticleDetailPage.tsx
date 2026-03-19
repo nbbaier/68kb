@@ -220,10 +220,17 @@ export function ArticleDetailPage() {
 
   const incrementHit = useCallback(async (articleId: number) => {
     try {
-      await fetch(`/api/articles/${articleId}/hit`, {
+      const res = await fetch(`/api/articles/${articleId}/hit`, {
         method: 'POST',
         credentials: 'include',
       })
+      if (res.ok) {
+        const json = await res.json() as { data?: { hits: number } }
+        const newHits = json.data?.hits
+        if (typeof newHits === 'number') {
+          setArticle((prev) => prev ? { ...prev, articleHits: newHits } : prev)
+        }
+      }
     } catch {
       // Non-critical — silently ignore
     }

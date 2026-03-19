@@ -202,13 +202,13 @@ export function PublicLayout() {
               {user ? (
                 <>
                   <Link
-                    to={`/users/profile/${user.username}`}
+                    to="/admin"
                     className="text-muted-foreground hover:text-foreground transition-colors hidden sm:inline truncate max-w-[120px]"
                   >
                     Welcome, {user.username}
                   </Link>
                   <Link
-                    to="/users/account"
+                    to="/admin"
                     className="text-muted-foreground hover:text-foreground transition-colors text-xs sm:text-sm"
                   >
                     My Account
@@ -217,13 +217,13 @@ export function PublicLayout() {
               ) : (
                 <>
                   <Link
-                    to="/users/login"
+                    to="/login"
                     className="text-muted-foreground hover:text-foreground transition-colors text-xs sm:text-sm"
                   >
                     Login
                   </Link>
                   <Link
-                    to="/users/register"
+                    to="/register"
                     className="text-muted-foreground hover:text-foreground transition-colors text-xs sm:text-sm"
                   >
                     Register

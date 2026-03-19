@@ -136,19 +136,19 @@ describe('PublicLayout — User Navigation', () => {
     expect(screen.queryByRole('link', { name: /^register$/i })).not.toBeInTheDocument()
   })
 
-  it('My Account link points to /users/account', () => {
+  it('My Account link points to /admin', () => {
     renderPublicLayout(adminUser)
-    expect(screen.getByRole('link', { name: /my account/i })).toHaveAttribute('href', '/users/account')
+    expect(screen.getByRole('link', { name: /my account/i })).toHaveAttribute('href', '/admin')
   })
 
-  it('Login link points to /users/login', () => {
+  it('Login link points to /login', () => {
     renderPublicLayout(null)
-    expect(screen.getByRole('link', { name: /login/i })).toHaveAttribute('href', '/users/login')
+    expect(screen.getByRole('link', { name: /login/i })).toHaveAttribute('href', '/login')
   })
 
-  it('Register link points to /users/register', () => {
+  it('Register link points to /register', () => {
     renderPublicLayout(null)
-    expect(screen.getByRole('link', { name: /register/i })).toHaveAttribute('href', '/users/register')
+    expect(screen.getByRole('link', { name: /register/i })).toHaveAttribute('href', '/register')
   })
 })
 

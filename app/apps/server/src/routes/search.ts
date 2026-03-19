@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { eq, like, or, and, lt, inArray, count } from 'drizzle-orm'
+import { eq, or, and, lt, inArray, count, sql } from 'drizzle-orm'
 import { articles, categories, article2cat, searchCache, searchLog, settings } from '../db/schema'
 import type { AppVariables, DrizzleDB } from '../types'
 import { randomBytes } from 'crypto'
@@ -79,19 +79,31 @@ function getMaxSearchPerPage(db: DrizzleDB): number {
 }
 
 /**
+ * Escape SQLite LIKE wildcard characters (%, _) and the escape character (\)
+ * so that user-supplied keywords are treated as literal characters, not wildcards.
+ */
+function escapeLikeWildcards(str: string): string {
+  return str
+    .replace(/\\/g, '\\\\') // escape the escape char first
+    .replace(/%/g, '\\%')   // escape %
+    .replace(/_/g, '\\_')   // escape _
+}
+
+/**
  * Build a per-word keyword condition (AND-ed together, each word OR-ed across fields).
  * Matches the original PHP search: each word must appear in at least one of the three fields.
+ * Uses ESCAPE '\\' to properly handle literal % and _ characters in keywords.
  */
 function buildKeywordCondition(keywords: string) {
   const words = keywords.trim().split(/\s+/).filter(Boolean)
   if (words.length === 0) return undefined
 
   const wordConditions = words.map((word) => {
-    const kw = `%${word}%`
+    const kw = `%${escapeLikeWildcards(word)}%`
     return or(
-      like(articles.articleTitle, kw),
-      like(articles.articleShortDesc, kw),
-      like(articles.articleDescription, kw),
+      sql`${articles.articleTitle} LIKE ${kw} ESCAPE '\\'`,
+      sql`${articles.articleShortDesc} LIKE ${kw} ESCAPE '\\'`,
+      sql`${articles.articleDescription} LIKE ${kw} ESCAPE '\\'`,
     )
   })
 
