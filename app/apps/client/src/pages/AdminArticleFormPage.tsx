@@ -148,12 +148,14 @@ function RichTextEditor({
     editorProps: {
       attributes: {
         class: [
-          'min-h-[' + minHeight + '] w-full rounded-b-md border-x border-b border-input bg-transparent px-3 py-2 text-sm outline-none',
+          'w-full rounded-b-md border-x border-b border-input bg-transparent px-3 py-2 text-sm outline-none',
           'focus:outline-none',
           ariaInvalid ? 'border-destructive' : '',
         ]
           .filter(Boolean)
           .join(' '),
+        // Use inline style for dynamic min-height so Tailwind doesn't need to generate min-h-[...] at build time
+        style: `min-height: ${minHeight}`,
         ...(ariaLabel ? { 'aria-label': ariaLabel } : {}),
         ...(ariaDescribedBy ? { 'aria-describedby': ariaDescribedBy } : {}),
         ...(ariaInvalid !== undefined ? { 'aria-invalid': String(ariaInvalid) } : {}),

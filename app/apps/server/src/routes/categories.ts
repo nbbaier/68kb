@@ -530,10 +530,10 @@ export function createCategoryRoutes(db: DrizzleDB) {
     let orderValue: number | undefined
     if (order !== undefined && order !== null && order !== '') {
       const parsed = Number(order)
-      if (isNaN(parsed) || !Number.isFinite(parsed)) {
-        return c.json({ error: 'Order must be a numeric value' }, 400)
+      if (isNaN(parsed) || !Number.isFinite(parsed) || !Number.isInteger(parsed)) {
+        return c.json({ error: 'Order must be an integer value' }, 400)
       }
-      orderValue = Math.trunc(parsed)
+      orderValue = parsed
     }
 
     // Validate parent if provided

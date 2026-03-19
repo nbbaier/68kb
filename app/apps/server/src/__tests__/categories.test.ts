@@ -632,7 +632,19 @@ describe('PUT /api/admin/categories/:id', () => {
     })
     expect(res.status).toBe(400)
     const json = await res.json() as { error: string }
-    expect(json.error).toContain('numeric')
+    expect(json.error).toContain('integer')
+  })
+
+  it('returns 400 for decimal order value (regression — must not silently truncate)', async () => {
+    const cookie = await loginAsAdmin()
+    const res = await app.request(`/api/admin/categories/${testCatId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
+      body: JSON.stringify({ order: 3.5 }),
+    })
+    expect(res.status).toBe(400)
+    const json = await res.json() as { error: string }
+    expect(json.error).toContain('integer')
   })
 
   it('updates URI correctly', async () => {

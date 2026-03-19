@@ -71,7 +71,8 @@ function syncTags(db: DrizzleDB, articleId: number, keywords: string): void {
   // Remove all existing tag links for this article
   db.delete(articleTags).where(eq(articleTags.tagsArticleId, articleId)).run()
 
-  const tagNames = parseKeywords(keywords)
+  // Deduplicate tag names to avoid composite PK collisions on article_tags
+  const tagNames = [...new Set(parseKeywords(keywords))]
   if (tagNames.length === 0) return
 
   for (const tagName of tagNames) {

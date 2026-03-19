@@ -613,6 +613,33 @@ describe('POST /api/admin/articles', () => {
     testDb.delete(schema.article2cat).run()
     testDb.delete(schema.articles).run()
   })
+
+  it('does not 500 when keywords contain duplicate entries (regression)', async () => {
+    const cookie = await loginAsAdmin()
+    // Duplicate keywords like "php, php, testing" must not cause a composite PK collision
+    const res = await app.request('/api/admin/articles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
+      body: JSON.stringify({ title: 'Duplicate Keywords Article', keywords: 'php, php, testing' }),
+    })
+    expect(res.status).toBe(201)
+    const json = await res.json()
+    const articleId = json.data.articleId
+
+    // Should have exactly 2 unique tag links (php + testing), not 3
+    const tagLinks = testDb.select().from(schema.articleTags)
+      .where(eq(schema.articleTags.tagsArticleId, articleId)).all()
+    expect(tagLinks.length).toBe(2)
+
+    // Only one tag row for 'php' should exist
+    const phpTags = testDb.select().from(schema.tags)
+      .where(eq(schema.tags.tag, 'php')).all()
+    expect(phpTags.length).toBe(1)
+
+    testDb.delete(schema.articleTags).run()
+    testDb.delete(schema.tags).run()
+    testDb.delete(schema.articles).run()
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -760,6 +787,33 @@ describe('PUT /api/admin/articles/:id', () => {
     })
     expect(res.status).toBe(400)
 
+    testDb.delete(schema.articles).run()
+  })
+
+  it('does not 500 when keywords contain duplicate entries on update (regression)', async () => {
+    const [art] = testDb.insert(schema.articles).values({
+      articleTitle: 'Dup Keywords Update',
+      articleUri: 'dup-keywords-update',
+      articleDate: 0,
+      articleModified: 0,
+    }).returning().all()
+
+    const cookie = await loginAsAdmin()
+    // Updating with duplicate keywords must not cause a composite PK collision
+    const res = await app.request(`/api/admin/articles/${art.articleId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
+      body: JSON.stringify({ keywords: 'javascript, javascript, react' }),
+    })
+    expect(res.status).toBe(200)
+
+    // Should have exactly 2 unique tag links (javascript + react), not 3
+    const tagLinks = testDb.select().from(schema.articleTags)
+      .where(eq(schema.articleTags.tagsArticleId, art.articleId)).all()
+    expect(tagLinks.length).toBe(2)
+
+    testDb.delete(schema.articleTags).run()
+    testDb.delete(schema.tags).run()
     testDb.delete(schema.articles).run()
   })
 })
