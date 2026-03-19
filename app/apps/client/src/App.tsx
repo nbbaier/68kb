@@ -9,6 +9,7 @@ import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { LogoutPage } from '@/pages/LogoutPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { AdminDashboardPage } from '@/pages/AdminDashboardPage'
+import { AdminArticlesPage } from '@/pages/AdminArticlesPage'
 import { HomePage } from '@/pages/HomePage'
 
 function App() {
@@ -69,10 +70,7 @@ function App() {
             <Route index element={<AdminDashboardPage />} />
 
             {/* Placeholder sub-routes for future features */}
-            <Route
-              path="articles"
-              element={<div className="p-4 text-muted-foreground">Articles — coming soon</div>}
-            />
+            <Route path="articles" element={<AdminArticlesPage />} />
             <Route
               path="users"
               element={<div className="p-4 text-muted-foreground">Users — coming soon</div>}
