@@ -49,6 +49,11 @@ app/
 └── uploads/                  # User uploads
 ```
 
+## UI Conventions
+
+- **shadcn component installation**: After `bunx shadcn@latest add <component>`, verify files land in `src/components/ui/` (not a literal `@/` directory). If components.json alias resolution fails, move files manually.
+- **Forms with react-hook-form + zod**: Always add `noValidate` to `<form>` elements to prevent HTML5 native validation from interfering with react-hook-form's validation.
+
 ## Testing Patterns
 
 - **Session cookies in tests**: hono-sessions CookieStore sets the cookie TWICE per request (empty + persisted). Use `response.headers.getSetCookie()` (returns array) and take the last element. See `auth.test.ts` `loginAsAdmin()` helper.
