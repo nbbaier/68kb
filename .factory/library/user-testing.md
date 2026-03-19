@@ -49,7 +49,15 @@ Testing surface, tools, and resource cost classification for validators.
 ## Public-Site Fixture Learnings (2026-03-19)
 
 - Do **not** run glossary public and glossary admin assertion groups concurrently; glossary admin CRUD mutates glossary rows and can race glossary list/count assertions.
-- `VAL-DETAIL-008` needs a fixture article body containing at least one glossary term; current seeded data may have zero glossary-term matches in article descriptions.
-- `VAL-HOME-004` and `VAL-HOME-005` require isolated empty-data fixtures (or disposable DB copy) because they depend on globally empty categories/articles states.
-- `VAL-SEARCH-004` pagination requires visible matches strictly greater than `site_max_search` (default observed: 20); current seed data can be below threshold.
-- `VAL-SEARCH-008` requires an expired search hash fixture (older than 1 hour) to validate cleanup/expiration behavior without waiting in real time.
+- `VAL-DETAIL-008` needs a fixture article body containing at least one glossary term; the seed script now includes "Introduction to Algorithms and Data Structures" which contains the terms "algorithm", "variable", and "array" in its body. Use this article for glossary tooltip validation.
+- `VAL-HOME-004` and `VAL-HOME-005` require specific DB state manipulation during testing (empty categories/articles states). These cannot be validated with the standard seeded database because the seed creates categories and articles. To test these: (1) use a fresh database snapshot before seeding, or (2) temporarily delete/hide all categories and articles for the test, then restore. A separate test DB instance is recommended.
+- `VAL-SEARCH-004` pagination requires visible matches strictly greater than `site_max_search` (default: 20). The seed script now creates 26 articles with the keyword "tutorial" and "programming" — searching for "tutorial" should return >20 results and trigger pagination.
+- `VAL-SEARCH-008` requires an expired search hash fixture (older than 1 hour). This cannot be reliably created during real-time testing. To test: (1) manually insert a `search` table row with `search_date` set to `(current_unix_timestamp - 3700)`, then access `/search/results/{that_hash}` to verify it redirects to no-results. This requires direct DB manipulation during the test session.
+
+## Seed Data Summary (updated 2026-03-19)
+
+The seed script now creates:
+- **Categories**: 8 categories in a 3-level hierarchy (PHP → PHP OOP → Design Patterns; PHP → PHP Basics; JavaScript → JS Frameworks → React; Python). All visible — validates search dropdown includes grandchild categories (VAL-SEARCH-001).
+- **Glossary**: 10 terms (algorithm, API, cache, database, function, variable, loop, array, object, class).
+- **Articles**: 26 articles total. The "Introduction to Algorithms and Data Structures" article contains glossary terms in its body for VAL-DETAIL-008 tooltip testing. The remaining 25 articles all have "tutorial" keyword for search pagination testing (VAL-SEARCH-004).
+- **Tags**: Articles share "tutorial" and category-specific tags, enabling related articles (VAL-TAG-003).

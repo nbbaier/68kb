@@ -716,3 +716,143 @@ describe('GET /api/categories/:uri', () => {
     expect(json.data.subCategories).toEqual([])
   })
 })
+
+// ---------------------------------------------------------------------------
+// GET /api/articles/:slug/related (VAL-TAG-003)
+// ---------------------------------------------------------------------------
+describe('GET /api/articles/:slug/related', () => {
+  // Use a dedicated fresh DB for related articles tests
+  const sqlite = new Database(':memory:')
+  sqlite.exec('PRAGMA foreign_keys = ON')
+  const relDb = drizzle({ client: sqlite, schema })
+  migrate(relDb, { migrationsFolder: MIGRATIONS_FOLDER })
+
+  relDb.insert(schema.userGroups).values({
+    groupId: 1,
+    groupName: 'Admins',
+    groupDescription: '',
+    canViewSite: 'y',
+    canAccessAdmin: 'y',
+  }).run()
+  relDb.insert(schema.settings).values({
+    optionName: 'site_name',
+    optionValue: 'Test KB',
+    optionGroup: 'site',
+  }).run()
+
+  const relApp = createApp(relDb as typeof relDb)
+  const now = Math.floor(Date.now() / 1000)
+
+  // Insert a tag
+  const phpTag = relDb.insert(schema.tags).values({ tag: 'php' })
+    .returning({ id: schema.tags.id }).get()!
+  const jsTag = relDb.insert(schema.tags).values({ tag: 'javascript' })
+    .returning({ id: schema.tags.id }).get()!
+
+  // Insert articles
+  const mainArticle = relDb.insert(schema.articles).values({
+    articleUri: 'main-article',
+    articleTitle: 'Main Article',
+    articleDisplay: 'y',
+    articleHits: 10,
+    articleDate: now,
+  }).returning({ articleId: schema.articles.articleId }).get()!
+
+  const relatedArticle1 = relDb.insert(schema.articles).values({
+    articleUri: 'related-one',
+    articleTitle: 'Related One',
+    articleDisplay: 'y',
+    articleHits: 20,
+    articleDate: now - 100,
+  }).returning({ articleId: schema.articles.articleId }).get()!
+
+  const relatedArticle2 = relDb.insert(schema.articles).values({
+    articleUri: 'related-two',
+    articleTitle: 'Related Two',
+    articleDisplay: 'y',
+    articleHits: 5,
+    articleDate: now - 200,
+  }).returning({ articleId: schema.articles.articleId }).get()!
+
+  const unrelatedArticle = relDb.insert(schema.articles).values({
+    articleUri: 'unrelated',
+    articleTitle: 'Unrelated Article',
+    articleDisplay: 'y',
+    articleHits: 50,
+    articleDate: now - 300,
+  }).returning({ articleId: schema.articles.articleId }).get()!
+
+  const hiddenArticle = relDb.insert(schema.articles).values({
+    articleUri: 'hidden-related',
+    articleTitle: 'Hidden Related',
+    articleDisplay: 'n',
+    articleHits: 100,
+    articleDate: now - 400,
+  }).returning({ articleId: schema.articles.articleId }).get()!
+
+  // Link main article and related articles to php tag
+  relDb.insert(schema.articleTags).values({ tagsTagId: phpTag.id, tagsArticleId: mainArticle.articleId }).run()
+  relDb.insert(schema.articleTags).values({ tagsTagId: phpTag.id, tagsArticleId: relatedArticle1.articleId }).run()
+  relDb.insert(schema.articleTags).values({ tagsTagId: phpTag.id, tagsArticleId: relatedArticle2.articleId }).run()
+  relDb.insert(schema.articleTags).values({ tagsTagId: phpTag.id, tagsArticleId: hiddenArticle.articleId }).run()
+
+  // Link unrelated article to js tag only
+  relDb.insert(schema.articleTags).values({ tagsTagId: jsTag.id, tagsArticleId: unrelatedArticle.articleId }).run()
+
+  it('returns related articles sharing tags with the given article', async () => {
+    const res = await relApp.request('/api/articles/main-article/related')
+    expect(res.status).toBe(200)
+    const json = await res.json()
+    const data = json.data as Array<{ articleUri: string; articleTitle: string }>
+
+    expect(data.length).toBe(2)
+    const uris = data.map((a) => a.articleUri)
+    expect(uris).toContain('related-one')
+    expect(uris).toContain('related-two')
+  })
+
+  it('excludes the current article from related results', async () => {
+    const res = await relApp.request('/api/articles/main-article/related')
+    const json = await res.json()
+    const data = json.data as Array<{ articleUri: string }>
+    expect(data.some((a) => a.articleUri === 'main-article')).toBe(false)
+  })
+
+  it('excludes hidden articles from related results', async () => {
+    const res = await relApp.request('/api/articles/main-article/related')
+    const json = await res.json()
+    const data = json.data as Array<{ articleUri: string }>
+    expect(data.some((a) => a.articleUri === 'hidden-related')).toBe(false)
+  })
+
+  it('excludes unrelated articles (no shared tags)', async () => {
+    const res = await relApp.request('/api/articles/main-article/related')
+    const json = await res.json()
+    const data = json.data as Array<{ articleUri: string }>
+    expect(data.some((a) => a.articleUri === 'unrelated')).toBe(false)
+  })
+
+  it('returns empty array for nonexistent article slug', async () => {
+    const res = await relApp.request('/api/articles/does-not-exist/related')
+    expect(res.status).toBe(200)
+    const json = await res.json()
+    expect(json.data).toEqual([])
+  })
+
+  it('returns empty array for article with no tags', async () => {
+    // Insert article with no tags
+    const noTagsArticle = relDb.insert(schema.articles).values({
+      articleUri: 'no-tags',
+      articleTitle: 'No Tags Article',
+      articleDisplay: 'y',
+      articleHits: 0,
+      articleDate: now,
+    }).returning({ articleId: schema.articles.articleId }).get()!
+
+    const res = await relApp.request(`/api/articles/no-tags/related`)
+    expect(res.status).toBe(200)
+    const json = await res.json()
+    expect(json.data).toEqual([])
+    expect(noTagsArticle.articleId).toBeGreaterThan(0)
+  })
+})

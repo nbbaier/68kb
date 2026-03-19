@@ -51,9 +51,29 @@ const mockArticleNoAttachments = {
 // fetch mock
 // ---------------------------------------------------------------------------
 
+const mockRelatedArticles = [
+  {
+    articleId: 10,
+    articleUri: 'related-article-one',
+    articleTitle: 'Related Article One',
+    articleShortDesc: 'A related article',
+    articleDate: 900000,
+    articleHits: 20,
+  },
+  {
+    articleId: 11,
+    articleUri: 'related-article-two',
+    articleTitle: 'Related Article Two',
+    articleShortDesc: 'Another related article',
+    articleDate: 800000,
+    articleHits: 10,
+  },
+]
+
 function setupFetchMock(
   articleData: typeof mockArticle | null,
   status = 200,
+  relatedArticles: typeof mockRelatedArticles | null = null,
 ) {
   vi.stubGlobal(
     'fetch',
@@ -68,6 +88,14 @@ function setupFetchMock(
           ok: true,
           status: 200,
           json: () => Promise.resolve({ data: { hits: (articleData?.articleHits ?? 0) + 1 } }),
+        })
+      }
+      // Related articles
+      if (typeof url === 'string' && url.includes('/related')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({ data: relatedArticles ?? [] }),
         })
       }
       // Article detail
@@ -248,6 +276,51 @@ describe('ArticleDetailPage', () => {
           opts?.method === 'POST',
       )
       expect(hitCalls.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe('Related Articles (VAL-TAG-003)', () => {
+    it('renders related articles section when related articles exist', async () => {
+      setupFetchMock(mockArticle, 200, mockRelatedArticles)
+      renderArticleDetailPage('hello-world')
+
+      await waitFor(() => {
+        expect(screen.getByText('Related Articles')).toBeInTheDocument()
+      })
+
+      const relatedLink1 = screen.getByRole('link', { name: 'Related Article One' })
+      expect(relatedLink1).toBeInTheDocument()
+      expect(relatedLink1).toHaveAttribute('href', '/article/related-article-one')
+
+      const relatedLink2 = screen.getByRole('link', { name: 'Related Article Two' })
+      expect(relatedLink2).toBeInTheDocument()
+      expect(relatedLink2).toHaveAttribute('href', '/article/related-article-two')
+    })
+
+    it('does NOT render related articles section when there are no related articles', async () => {
+      setupFetchMock(mockArticle, 200, [])
+      renderArticleDetailPage('hello-world')
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Hello World')
+      })
+
+      expect(screen.queryByText('Related Articles')).not.toBeInTheDocument()
+    })
+
+    it('fetches related articles from the /related endpoint', async () => {
+      setupFetchMock(mockArticle, 200, mockRelatedArticles)
+      renderArticleDetailPage('hello-world')
+
+      await waitFor(() => {
+        expect(screen.getByText('Related Articles')).toBeInTheDocument()
+      })
+
+      const fetchMock = vi.mocked(fetch)
+      const relatedCalls = fetchMock.mock.calls.filter(
+        ([url]) => typeof url === 'string' && url.includes('/related'),
+      )
+      expect(relatedCalls.length).toBeGreaterThan(0)
     })
   })
 })

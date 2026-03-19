@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
-import { eq, desc, asc, and, count, inArray } from 'drizzle-orm'
-import { categories, articles, article2cat, settings, attachments, glossary } from '../db/schema'
+import { eq, desc, asc, and, count, inArray, ne } from 'drizzle-orm'
+import { categories, articles, article2cat, settings, attachments, glossary, articleTags } from '../db/schema'
 import type { AppVariables, DrizzleDB } from '../types'
 
 // ---------------------------------------------------------------------------
@@ -312,6 +312,62 @@ export function createPublicArticleRoutes(db: DrizzleDB) {
       .all()
 
     return c.json({ data: rows })
+  })
+
+  // GET /:slug/related → /api/articles/:slug/related
+  // Returns articles sharing tags with the given article (excluding the article itself).
+  // Returns an empty array if the article has no tags or doesn't exist.
+  router.get('/:slug/related', (c) => {
+    const slug = c.req.param('slug')
+
+    // Find the article (must be visible)
+    const article = db
+      .select({ articleId: articles.articleId })
+      .from(articles)
+      .where(and(eq(articles.articleUri, slug), eq(articles.articleDisplay, 'y')))
+      .get()
+
+    if (!article) {
+      return c.json({ data: [] })
+    }
+
+    // Get tags for this article
+    const articleTagRows = db
+      .select({ tagsTagId: articleTags.tagsTagId })
+      .from(articleTags)
+      .where(eq(articleTags.tagsArticleId, article.articleId))
+      .all()
+
+    const tagIds = articleTagRows.map((r) => r.tagsTagId)
+
+    if (tagIds.length === 0) {
+      return c.json({ data: [] })
+    }
+
+    // Find other visible articles sharing any of these tags, excluding current article
+    const related = db
+      .selectDistinct({
+        articleId: articles.articleId,
+        articleUri: articles.articleUri,
+        articleTitle: articles.articleTitle,
+        articleShortDesc: articles.articleShortDesc,
+        articleDate: articles.articleDate,
+        articleHits: articles.articleHits,
+      })
+      .from(articles)
+      .innerJoin(articleTags, eq(articleTags.tagsArticleId, articles.articleId))
+      .where(
+        and(
+          eq(articles.articleDisplay, 'y'),
+          ne(articles.articleId, article.articleId),
+          inArray(articleTags.tagsTagId, tagIds),
+        ),
+      )
+      .orderBy(desc(articles.articleHits))
+      .limit(5)
+      .all()
+
+    return c.json({ data: related })
   })
 
   // GET /:slug → /api/articles/:slug

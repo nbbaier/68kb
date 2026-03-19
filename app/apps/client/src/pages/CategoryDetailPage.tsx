@@ -193,9 +193,13 @@ export function CategoryDetailPage() {
           ))}
           <li className="flex items-center gap-1">
             <span aria-hidden="true">›</span>
-            <span className="text-foreground font-medium" aria-current="page">
+            <Link
+              to={`/categories/${category.catUri}`}
+              className="text-foreground font-medium hover:text-primary transition-colors"
+              aria-current="page"
+            >
               {category.catName}
-            </span>
+            </Link>
           </li>
         </ol>
       </nav>

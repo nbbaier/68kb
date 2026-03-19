@@ -41,6 +41,15 @@ type ArticleDetail = {
   glossaryTerms: GlossaryTerm[]
 }
 
+type RelatedArticle = {
+  articleId: number
+  articleUri: string
+  articleTitle: string
+  articleShortDesc: string
+  articleDate: number
+  articleHits: number
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -214,6 +223,7 @@ export function ArticleDetailPage() {
   const [article, setArticle] = useState<ArticleDetail | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [relatedArticles, setRelatedArticles] = useState<RelatedArticle[]>([])
 
   // Track whether hit has been counted for current article to avoid double-counting
   const hitCountedRef = useRef<string | null>(null)
@@ -246,6 +256,7 @@ export function ArticleDetailPage() {
     setLoading(true)
     setNotFound(false)
     setArticle(null)
+    setRelatedArticles([])
 
     fetch(`/api/articles/${encodeURIComponent(slug)}`, { credentials: 'include' })
       .then(async (res) => {
@@ -278,6 +289,16 @@ export function ArticleDetailPage() {
           hitCountedRef.current = slug
           incrementHit(data.articleId)
         }
+
+        // Fetch related articles (non-critical — silently ignore errors)
+        fetch(`/api/articles/${encodeURIComponent(slug)}/related`, { credentials: 'include' })
+          .then(async (relRes) => {
+            if (relRes.ok) {
+              const relJson = await relRes.json()
+              setRelatedArticles((relJson.data as RelatedArticle[]) ?? [])
+            }
+          })
+          .catch(() => {})
       })
       .catch(() => {
         setNotFound(true)
@@ -387,6 +408,32 @@ export function ArticleDetailPage() {
             ))}
           </ul>
         </fieldset>
+      )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Related Articles — only rendered when there are related articles */}
+      {/* ------------------------------------------------------------------ */}
+      {relatedArticles.length > 0 && (
+        <section aria-labelledby="related-articles-heading" className="border-t pt-4">
+          <h2
+            id="related-articles-heading"
+            className="text-lg font-semibold text-foreground mb-3"
+          >
+            Related Articles
+          </h2>
+          <ul className="space-y-2">
+            {relatedArticles.map((rel) => (
+              <li key={rel.articleId}>
+                <Link
+                  to={`/article/${rel.articleUri}`}
+                  className="text-primary hover:underline text-sm font-medium"
+                >
+                  {rel.articleTitle}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </article>
   )

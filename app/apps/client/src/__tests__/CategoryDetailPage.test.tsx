@@ -202,10 +202,26 @@ describe('CategoryDetailPage', () => {
       await waitFor(() => {
         // "Categories" link present
         expect(screen.getByRole('link', { name: 'Categories' })).toBeInTheDocument()
-        // Current category shown as non-link with aria-current="page"
+        // Current category shown as a link with aria-current="page" (VAL-BROWSE-004)
         const currentCrumb = document.querySelector('[aria-current="page"]')
         expect(currentCrumb).toBeTruthy()
         expect(currentCrumb?.textContent).toBe('PHP')
+        // Verify it is a link (anchor element)
+        expect(currentCrumb?.tagName).toBe('A')
+        expect((currentCrumb as HTMLAnchorElement)?.getAttribute('href')).toBe('/categories/php')
+      })
+    })
+
+    it('current category breadcrumb is a clickable link (VAL-BROWSE-004)', async () => {
+      setupFetchForSlug('php', mockPageData)
+      renderCategoryPage('php')
+
+      await waitFor(() => {
+        // The last breadcrumb segment (current category) must be a Link, not a plain span
+        const phpBreadcrumbLink = screen.getByRole('link', { name: 'PHP' })
+        expect(phpBreadcrumbLink).toBeInTheDocument()
+        expect(phpBreadcrumbLink).toHaveAttribute('href', '/categories/php')
+        expect(phpBreadcrumbLink).toHaveAttribute('aria-current', 'page')
       })
     })
 
@@ -222,9 +238,11 @@ describe('CategoryDetailPage', () => {
         const phpLink = screen.getByRole('link', { name: 'PHP' })
         expect(phpLink).toHaveAttribute('href', '/categories/php')
 
-        // Current category shown as non-link with aria-current="page"
+        // Current category shown as a link with aria-current="page" (VAL-BROWSE-004)
         const currentCrumb = document.querySelector('[aria-current="page"]')
         expect(currentCrumb?.textContent).toBe('PHP OOP')
+        expect(currentCrumb?.tagName).toBe('A')
+        expect((currentCrumb as HTMLAnchorElement)?.getAttribute('href')).toBe('/categories/php/oop')
       })
     })
   })
