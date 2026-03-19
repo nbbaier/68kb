@@ -1,9 +1,9 @@
-import { Navigate, useLocation } from 'react-router'
+import { Navigate, useLocation, useSearchParams } from 'react-router'
 import { useAuth } from '@/contexts/AuthContext'
 
 type AuthGuardProps = {
   children: React.ReactNode
-  /** If true, redirects authenticated users away (for auth pages) */
+  /** If provided, redirects authenticated users away (for auth pages like /login, /register) */
   redirectIfAuthenticated?: string
 }
 
@@ -12,10 +12,13 @@ type AuthGuardProps = {
  *
  * - If user is not authenticated, redirects to /login with ?redirect= storing the intended URL.
  * - If redirectIfAuthenticated is provided and user IS authenticated, redirects to that path.
+ *   On auth pages that have a ?redirect= query param (e.g. /login?redirect=/admin/settings),
+ *   the authenticated redirect uses the ?redirect= value so post-login deep-links work correctly.
  */
 export function AuthGuard({ children, redirectIfAuthenticated }: AuthGuardProps) {
   const { user, isLoading } = useAuth()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
 
   if (isLoading) {
     // Show nothing (or a spinner) while checking session
@@ -27,8 +30,11 @@ export function AuthGuard({ children, redirectIfAuthenticated }: AuthGuardProps)
   }
 
   // Auth page guard: redirect authenticated users away from /login, /register, etc.
+  // Respect the ?redirect= param so navigating to /login?redirect=/admin/settings while
+  // already authenticated takes you directly to /admin/settings.
   if (redirectIfAuthenticated && user) {
-    return <Navigate to={redirectIfAuthenticated} replace />
+    const target = searchParams.get('redirect') ?? redirectIfAuthenticated
+    return <Navigate to={target} replace />
   }
 
   // Protected route guard: redirect unauthenticated users to /login

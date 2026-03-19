@@ -4,6 +4,7 @@ import { logger } from 'hono/logger'
 import { sessionMiddleware, CookieStore } from 'hono-sessions'
 import { db } from './db'
 import { createAuthRoutes } from './routes/auth'
+import { createAdminRoutes } from './routes/admin'
 import type { AppVariables } from './types'
 
 export function createApp(database: typeof db) {
@@ -47,6 +48,9 @@ export function createApp(database: typeof db) {
 
   // Auth routes
   app.route('/api/auth', createAuthRoutes(database))
+
+  // Admin routes
+  app.route('/api/admin', createAdminRoutes(database))
 
   return app
 }

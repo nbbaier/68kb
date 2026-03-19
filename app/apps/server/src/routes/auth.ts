@@ -3,6 +3,21 @@ import { eq } from 'drizzle-orm'
 import { users, failedLogins, userGroups } from '../db/schema'
 import type { AppVariables, DrizzleDB } from '../types'
 
+// Permission keys returned in /api/auth/me
+const PERMISSION_KEYS = [
+  'canAccessAdmin',
+  'canManageArticles',
+  'canDeleteArticles',
+  'canManageUsers',
+  'canManageCategories',
+  'canDeleteCategories',
+  'canManageSettings',
+  'canManageUtilities',
+  'canManageThemes',
+  'canManageModules',
+  'canSearch',
+] as const
+
 const INVALID_CREDENTIALS_MSG = 'Invalid username or password'
 
 export function createAuthRoutes(db: DrizzleDB) {
@@ -290,7 +305,7 @@ export function createAuthRoutes(db: DrizzleDB) {
 
   // ---------------------------------------------------------------------------
   // GET /api/auth/me
-  // Return current user from session
+  // Return current user from session (with group permissions)
   // ---------------------------------------------------------------------------
   auth.get('/me', (c) => {
     const session = c.get('session')
@@ -300,7 +315,7 @@ export function createAuthRoutes(db: DrizzleDB) {
       return c.json({ error: 'Unauthorized' }, 401)
     }
 
-    const user = db
+    const result = db
       .select({
         userId: users.userId,
         userEmail: users.userEmail,
@@ -309,16 +324,50 @@ export function createAuthRoutes(db: DrizzleDB) {
         userJoinDate: users.userJoinDate,
         userLastLogin: users.userLastLogin,
         userApiKey: users.userApiKey,
+        canAccessAdmin: userGroups.canAccessAdmin,
+        canManageArticles: userGroups.canManageArticles,
+        canDeleteArticles: userGroups.canDeleteArticles,
+        canManageUsers: userGroups.canManageUsers,
+        canManageCategories: userGroups.canManageCategories,
+        canDeleteCategories: userGroups.canDeleteCategories,
+        canManageSettings: userGroups.canManageSettings,
+        canManageUtilities: userGroups.canManageUtilities,
+        canManageThemes: userGroups.canManageThemes,
+        canManageModules: userGroups.canManageModules,
+        canSearch: userGroups.canSearch,
       })
       .from(users)
+      .innerJoin(userGroups, eq(users.userGroup, userGroups.groupId))
       .where(eq(users.userId, userId))
       .get()
 
-    if (!user) {
+    if (!result) {
       return c.json({ error: 'User not found' }, 404)
     }
 
-    return c.json({ data: user })
+    // Flatten permissions into a nested object for clarity
+    const { canAccessAdmin, canManageArticles, canDeleteArticles, canManageUsers,
+            canManageCategories, canDeleteCategories, canManageSettings, canManageUtilities,
+            canManageThemes, canManageModules, canSearch, ...user } = result
+
+    return c.json({
+      data: {
+        ...user,
+        permissions: {
+          canAccessAdmin: canAccessAdmin === 'y',
+          canManageArticles: canManageArticles === 'y',
+          canDeleteArticles: canDeleteArticles === 'y',
+          canManageUsers: canManageUsers === 'y',
+          canManageCategories: canManageCategories === 'y',
+          canDeleteCategories: canDeleteCategories === 'y',
+          canManageSettings: canManageSettings === 'y',
+          canManageUtilities: canManageUtilities === 'y',
+          canManageThemes: canManageThemes === 'y',
+          canManageModules: canManageModules === 'y',
+          canSearch: canSearch === 'y',
+        },
+      },
+    })
   })
 
   return auth

@@ -1,11 +1,26 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import type { ReactNode } from 'react'
 
+export type AuthPermissions = {
+  canAccessAdmin: boolean
+  canManageArticles: boolean
+  canDeleteArticles: boolean
+  canManageUsers: boolean
+  canManageCategories: boolean
+  canDeleteCategories: boolean
+  canManageSettings: boolean
+  canManageUtilities: boolean
+  canManageThemes: boolean
+  canManageModules: boolean
+  canSearch: boolean
+}
+
 export type AuthUser = {
   userId: number
   username: string
   userGroup: number
   userEmail: string
+  permissions: AuthPermissions
 }
 
 type AuthContextValue = {
@@ -53,7 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!res.ok) {
       throw new Error(json.error ?? 'Login failed')
     }
-    setUser(json.data)
+    // Refetch full user data (including permissions) from /api/auth/me
+    await fetchMe()
   }
 
   const logout = async () => {
@@ -83,7 +99,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       throw new Error(json.error ?? 'Registration failed')
     }
-    setUser(json.data)
+    // Refetch full user data (including permissions) from /api/auth/me
+    await fetchMe()
   }
 
   const forgotPassword = async (email: string): Promise<string> => {

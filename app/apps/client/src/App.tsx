@@ -1,19 +1,28 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router'
+import { BrowserRouter, Routes, Route } from 'react-router'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { AuthGuard } from '@/components/AuthGuard'
+import { AdminLayout } from '@/components/AdminLayout'
 import { LoginPage } from '@/pages/LoginPage'
 import { RegisterPage } from '@/pages/RegisterPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { AdminDashboardPage } from '@/pages/AdminDashboardPage'
+import { HomePage } from '@/pages/HomePage'
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* Public auth pages — redirect to /admin if already logged in */}
+          {/* ---------------------------------------------------------------- */}
+          {/* Public site */}
+          {/* ---------------------------------------------------------------- */}
+          <Route path="/" element={<HomePage />} />
+
+          {/* ---------------------------------------------------------------- */}
+          {/* Auth pages — redirect to /admin if already logged in */}
+          {/* ---------------------------------------------------------------- */}
           <Route
             path="/login"
             element={
@@ -39,20 +48,46 @@ function App() {
             }
           />
 
-          {/* Protected admin routes */}
+          {/* ---------------------------------------------------------------- */}
+          {/* Protected admin routes — all wrapped in AdminLayout */}
+          {/* ---------------------------------------------------------------- */}
           <Route
             path="/admin"
             element={
               <AuthGuard>
-                <AdminDashboardPage />
+                <AdminLayout />
               </AuthGuard>
             }
-          />
+          >
+            {/* Default admin page: /admin → Dashboard */}
+            <Route index element={<AdminDashboardPage />} />
 
-          {/* Root redirect */}
-          <Route path="/" element={<Navigate to="/admin" replace />} />
+            {/* Placeholder sub-routes for future features */}
+            <Route
+              path="articles"
+              element={<div className="p-4 text-muted-foreground">Articles — coming soon</div>}
+            />
+            <Route
+              path="users"
+              element={<div className="p-4 text-muted-foreground">Users — coming soon</div>}
+            />
+            <Route
+              path="modules"
+              element={<div className="p-4 text-muted-foreground">Modules — coming soon</div>}
+            />
+            <Route
+              path="settings"
+              element={<div className="p-4 text-muted-foreground">Settings — coming soon</div>}
+            />
+            <Route
+              path="account"
+              element={<div className="p-4 text-muted-foreground">Account settings — coming soon</div>}
+            />
+          </Route>
 
+          {/* ---------------------------------------------------------------- */}
           {/* 404 catch-all */}
+          {/* ---------------------------------------------------------------- */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <Toaster />
