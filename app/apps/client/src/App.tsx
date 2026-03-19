@@ -19,6 +19,7 @@ import { AdminCategoryDuplicatePage } from '@/pages/AdminCategoryDuplicatePage'
 import { HomePage } from '@/pages/HomePage'
 import { ArticleDetailPage } from '@/pages/ArticleDetailPage'
 import { CategoriesIndexPage } from '@/pages/CategoriesIndexPage'
+import { CategoryDetailPage } from '@/pages/CategoryDetailPage'
 import { GlossaryPage } from '@/pages/GlossaryPage'
 import { SearchPage } from '@/pages/SearchPage'
 
@@ -34,7 +35,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/article/:slug" element={<ArticleDetailPage />} />
             <Route path="/categories" element={<CategoriesIndexPage />} />
-            <Route path="/categories/:slug" element={<CategoriesIndexPage />} />
+            <Route path="/categories/*" element={<CategoryDetailPage />} />
             <Route path="/glossary" element={<GlossaryPage />} />
             <Route path="/glossary/term/:letter" element={<GlossaryPage />} />
             <Route path="/search" element={<SearchPage />} />

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'bun:test'
+import { describe, it, expect, beforeAll, beforeEach } from 'bun:test'
 import { Database } from 'bun:sqlite'
 import { drizzle } from 'drizzle-orm/bun-sqlite'
 import { migrate } from 'drizzle-orm/bun-sqlite/migrator'
@@ -502,5 +502,217 @@ describe('GET /api/settings/public', () => {
     expect(res.status).toBe(200)
     const json = await res.json()
     expect(json.data.siteName).toBe('68kb')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// GET /api/categories/:uri — Category Detail
+// ---------------------------------------------------------------------------
+describe('GET /api/categories/:uri', () => {
+  // Isolated DB for these tests
+  const sqlite = new Database(':memory:')
+  sqlite.exec('PRAGMA foreign_keys = ON')
+  const db = drizzle({ client: sqlite, schema })
+  migrate(db, { migrationsFolder: MIGRATIONS_FOLDER })
+  db.insert(schema.userGroups)
+    .values({
+      groupId: 1,
+      groupName: 'Admins',
+      groupDescription: '',
+      canViewSite: 'y',
+      canAccessAdmin: 'y',
+    })
+    .run()
+  db.insert(schema.settings)
+    .values({ optionName: 'site_name', optionValue: 'Test KB', optionGroup: 'site' })
+    .run()
+
+  process.env.SESSION_SECRET = 'test-session-secret-key-minimum-32-chars!!'
+  const catApp = createApp(db as typeof db)
+
+  // Seed: root → child → grandchild
+  const rootCat = db
+    .insert(schema.categories)
+    .values({ catName: 'Root Cat', catUri: 'root-cat', catDisplay: 'yes', catOrder: 1, catDescription: 'Root description' })
+    .returning({ catId: schema.categories.catId })
+    .get()!
+
+  const childCat = db
+    .insert(schema.categories)
+    .values({ catName: 'Child Cat', catUri: 'root-cat/child-cat', catDisplay: 'yes', catParent: rootCat.catId, catOrder: 1, catDescription: 'Child description' })
+    .returning({ catId: schema.categories.catId })
+    .get()!
+
+  const grandchildCat = db
+    .insert(schema.categories)
+    .values({ catName: 'Grandchild', catUri: 'root-cat/child-cat/grandchild', catDisplay: 'yes', catParent: childCat.catId, catOrder: 1, catDescription: '' })
+    .returning({ catId: schema.categories.catId })
+    .get()!
+
+  // Hidden sibling — should not appear
+  const hiddenSibling = db
+    .insert(schema.categories)
+    .values({ catName: 'Hidden Child', catUri: 'root-cat/hidden-child', catDisplay: 'no', catParent: rootCat.catId, catOrder: 2 })
+    .returning({ catId: schema.categories.catId })
+    .get()!
+
+  // A hidden category — should return 404
+  const hiddenCat = db
+    .insert(schema.categories)
+    .values({ catName: 'Hidden Root', catUri: 'hidden-root', catDisplay: 'no', catOrder: 2 })
+    .returning({ catId: schema.categories.catId })
+    .get()!
+
+  const now = Math.floor(Date.now() / 1000)
+
+  // Seed visible articles in rootCat
+  const art1 = db
+    .insert(schema.articles)
+    .values({ articleTitle: 'Article 1', articleUri: 'article-1', articleDisplay: 'y', articleDate: now - 2000, articleHits: 10, articleModified: now - 2000 })
+    .returning({ articleId: schema.articles.articleId })
+    .get()!
+
+  const art2 = db
+    .insert(schema.articles)
+    .values({ articleTitle: 'Article 2', articleUri: 'article-2', articleDisplay: 'y', articleDate: now - 1000, articleHits: 5, articleModified: now - 1000 })
+    .returning({ articleId: schema.articles.articleId })
+    .get()!
+
+  // Hidden article — should not appear in counts or list
+  const hiddenArt = db
+    .insert(schema.articles)
+    .values({ articleTitle: 'Hidden Art', articleUri: 'hidden-art', articleDisplay: 'n', articleDate: now, articleHits: 0, articleModified: now })
+    .returning({ articleId: schema.articles.articleId })
+    .get()!
+
+  db.insert(schema.article2cat).values({ articleIdRel: art1.articleId, categoryIdRel: rootCat.catId }).run()
+  db.insert(schema.article2cat).values({ articleIdRel: art2.articleId, categoryIdRel: rootCat.catId }).run()
+  db.insert(schema.article2cat).values({ articleIdRel: hiddenArt.articleId, categoryIdRel: rootCat.catId }).run()
+
+  // Article in childCat for sub-category article count
+  const artInChild = db
+    .insert(schema.articles)
+    .values({ articleTitle: 'Child Article', articleUri: 'child-article', articleDisplay: 'y', articleDate: now, articleHits: 1, articleModified: now })
+    .returning({ articleId: schema.articles.articleId })
+    .get()!
+
+  db.insert(schema.article2cat).values({ articleIdRel: artInChild.articleId, categoryIdRel: childCat.catId }).run()
+
+  it('returns 200 with category data for a valid visible URI', async () => {
+    const res = await catApp.request('/api/categories/root-cat')
+    expect(res.status).toBe(200)
+    const json = await res.json()
+    expect(json.data).toBeDefined()
+    expect(json.data.category.catName).toBe('Root Cat')
+    expect(json.data.category.catUri).toBe('root-cat')
+    expect(json.data.category.catDescription).toBe('Root description')
+  })
+
+  it('returns 404 for nonexistent URI', async () => {
+    const res = await catApp.request('/api/categories/does-not-exist')
+    expect(res.status).toBe(404)
+    const json = await res.json()
+    expect(json.error).toBeDefined()
+  })
+
+  it('returns 404 for hidden category', async () => {
+    const res = await catApp.request('/api/categories/hidden-root')
+    expect(res.status).toBe(404)
+    expect(hiddenCat.catId).toBeGreaterThan(0)
+  })
+
+  it('returns direct visible sub-categories with article counts', async () => {
+    const res = await catApp.request('/api/categories/root-cat')
+    const json = await res.json()
+    const subs = json.data.subCategories as Array<{ catName: string; catUri: string; articleCount: number }>
+
+    // Only visible direct children
+    expect(subs.length).toBe(1)
+    expect(subs[0].catName).toBe('Child Cat')
+    expect(subs[0].catUri).toBe('root-cat/child-cat')
+    expect(subs[0].articleCount).toBe(1)
+    expect(subs.some((s) => s.catName === 'Hidden Child')).toBe(false)
+  })
+
+  it('returns paginated articles (excludes hidden articles)', async () => {
+    const res = await catApp.request('/api/categories/root-cat?page=1&limit=10')
+    const json = await res.json()
+    const arts = json.data.articles.data as Array<{ articleTitle: string }>
+
+    expect(json.data.articles.total).toBe(2)
+    expect(arts.length).toBe(2)
+    expect(arts.some((a) => a.articleTitle === 'Hidden Art')).toBe(false)
+  })
+
+  it('paginates articles correctly', async () => {
+    const res = await catApp.request('/api/categories/root-cat?page=1&limit=1')
+    const json = await res.json()
+    expect(json.data.articles.total).toBe(2)
+    expect(json.data.articles.data.length).toBe(1)
+    expect(json.data.articles.page).toBe(1)
+    expect(json.data.articles.limit).toBe(1)
+  })
+
+  it('returns page 2 with different articles', async () => {
+    const p1 = await catApp.request('/api/categories/root-cat?page=1&limit=1')
+    const p2 = await catApp.request('/api/categories/root-cat?page=2&limit=1')
+    const j1 = await p1.json()
+    const j2 = await p2.json()
+    const ids1 = j1.data.articles.data.map((a: { articleId: number }) => a.articleId)
+    const ids2 = j2.data.articles.data.map((a: { articleId: number }) => a.articleId)
+    expect(ids1[0]).not.toBe(ids2[0])
+  })
+
+  it('returns empty articles array for category with no visible articles', async () => {
+    const res = await catApp.request('/api/categories/root-cat/child-cat/grandchild')
+    const json = await res.json()
+    expect(json.data.articles.total).toBe(0)
+    expect(json.data.articles.data).toEqual([])
+    expect(grandchildCat.catId).toBeGreaterThan(0)
+  })
+
+  it('returns breadcrumbs for root category (only itself)', async () => {
+    const res = await catApp.request('/api/categories/root-cat')
+    const json = await res.json()
+    const crumbs = json.data.breadcrumbs as Array<{ catName: string; catUri: string }>
+    // Root category: only itself in breadcrumbs
+    expect(crumbs.length).toBe(1)
+    expect(crumbs[0].catName).toBe('Root Cat')
+    expect(crumbs[0].catUri).toBe('root-cat')
+  })
+
+  it('returns breadcrumbs for nested category (root → child)', async () => {
+    const res = await catApp.request('/api/categories/root-cat/child-cat')
+    const json = await res.json()
+    const crumbs = json.data.breadcrumbs as Array<{ catName: string; catUri: string }>
+    // Should be: [Root Cat, Child Cat]
+    expect(crumbs.length).toBe(2)
+    expect(crumbs[0].catName).toBe('Root Cat')
+    expect(crumbs[0].catUri).toBe('root-cat')
+    expect(crumbs[1].catName).toBe('Child Cat')
+    expect(crumbs[1].catUri).toBe('root-cat/child-cat')
+  })
+
+  it('returns breadcrumbs for deeply nested category (root → child → grandchild)', async () => {
+    const res = await catApp.request('/api/categories/root-cat/child-cat/grandchild')
+    const json = await res.json()
+    const crumbs = json.data.breadcrumbs as Array<{ catName: string; catUri: string }>
+    expect(crumbs.length).toBe(3)
+    expect(crumbs[0].catUri).toBe('root-cat')
+    expect(crumbs[1].catUri).toBe('root-cat/child-cat')
+    expect(crumbs[2].catUri).toBe('root-cat/child-cat/grandchild')
+  })
+
+  it('handles multi-segment URI (nested category lookup)', async () => {
+    const res = await catApp.request('/api/categories/root-cat/child-cat')
+    expect(res.status).toBe(200)
+    const json = await res.json()
+    expect(json.data.category.catName).toBe('Child Cat')
+  })
+
+  it('returns empty sub-categories for leaf category', async () => {
+    const res = await catApp.request('/api/categories/root-cat/child-cat/grandchild')
+    const json = await res.json()
+    expect(json.data.subCategories).toEqual([])
   })
 })

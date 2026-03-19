@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { eq, desc, asc, and, count, sql } from 'drizzle-orm'
+import { eq, desc, asc, and, count, inArray } from 'drizzle-orm'
 import { categories, articles, article2cat, settings, attachments, glossary } from '../db/schema'
 import type { AppVariables, DrizzleDB } from '../types'
 
@@ -117,6 +117,145 @@ export function createPublicCategoryRoutes(db: DrizzleDB) {
     const tree = buildPublicCategoryTree(allCategories, countMap)
 
     return c.json({ data: tree })
+  })
+
+  // GET /:uri{.+} → /api/categories/{uri}
+  // Returns a single category by its full URI (supports nested URIs with slashes,
+  // e.g., "php", "php/oop", "php/oop/basics").
+  // 404 when the category doesn't exist or is hidden (cat_display != 'yes').
+  router.get('/:uri{.+}', (c) => {
+    const uri = c.req.param('uri') ?? ''
+
+    if (!uri) {
+      return c.json({ error: 'Category not found' }, 404)
+    }
+
+    // Lookup by full URI — only visible categories
+    const category = db
+      .select()
+      .from(categories)
+      .where(and(eq(categories.catUri, uri), eq(categories.catDisplay, 'yes')))
+      .get()
+
+    if (!category) {
+      return c.json({ error: 'Category not found' }, 404)
+    }
+
+    // Build breadcrumbs: traverse catParent chain from root → current.
+    // The returned array includes all ancestors PLUS the current category as last item.
+    const breadcrumbs: Array<{ catName: string; catUri: string }> = []
+    let curr = category
+    const visited = new Set<number>()
+    while (curr.catParent !== 0) {
+      if (visited.has(curr.catParent)) break // guard against circular refs
+      visited.add(curr.catParent)
+      const parent = db
+        .select()
+        .from(categories)
+        .where(eq(categories.catId, curr.catParent))
+        .get()
+      if (!parent) break
+      breadcrumbs.unshift({ catName: parent.catName, catUri: parent.catUri })
+      curr = parent
+    }
+    breadcrumbs.push({ catName: category.catName, catUri: category.catUri })
+
+    // Get direct sub-categories (visible only), ordered by catOrder then name
+    const children = db
+      .select()
+      .from(categories)
+      .where(and(eq(categories.catParent, category.catId), eq(categories.catDisplay, 'yes')))
+      .orderBy(asc(categories.catOrder), asc(categories.catName))
+      .all()
+
+    // Get article counts for each sub-category
+    let childCountMap = new Map<number, number>()
+    if (children.length > 0) {
+      const childIds = children.map((c) => c.catId)
+      const childCounts = db
+        .select({
+          categoryIdRel: article2cat.categoryIdRel,
+          cnt: count(),
+        })
+        .from(article2cat)
+        .innerJoin(
+          articles,
+          and(eq(article2cat.articleIdRel, articles.articleId), eq(articles.articleDisplay, 'y')),
+        )
+        .where(inArray(article2cat.categoryIdRel, childIds))
+        .groupBy(article2cat.categoryIdRel)
+        .all()
+      childCountMap = new Map(childCounts.map((r) => [r.categoryIdRel, r.cnt]))
+    }
+
+    // Pagination
+    const page = parseInt(c.req.query('page') ?? '1', 10)
+    const limit = parseInt(c.req.query('limit') ?? '10', 10)
+    const safePage = isNaN(page) || page < 1 ? 1 : page
+    const safeLimit = isNaN(limit) || limit < 1 ? 10 : Math.min(limit, 100)
+    const offset = (safePage - 1) * safeLimit
+
+    // Total visible articles in this category
+    const totalResult = db
+      .select({ cnt: count() })
+      .from(article2cat)
+      .innerJoin(
+        articles,
+        and(eq(article2cat.articleIdRel, articles.articleId), eq(articles.articleDisplay, 'y')),
+      )
+      .where(eq(article2cat.categoryIdRel, category.catId))
+      .get()
+
+    const total = totalResult?.cnt ?? 0
+
+    // Paginated articles
+    const articleList = db
+      .select({
+        articleId: articles.articleId,
+        articleUri: articles.articleUri,
+        articleTitle: articles.articleTitle,
+        articleShortDesc: articles.articleShortDesc,
+        articleDate: articles.articleDate,
+        articleHits: articles.articleHits,
+      })
+      .from(article2cat)
+      .innerJoin(
+        articles,
+        and(eq(article2cat.articleIdRel, articles.articleId), eq(articles.articleDisplay, 'y')),
+      )
+      .where(eq(article2cat.categoryIdRel, category.catId))
+      .orderBy(desc(articles.articleDate), desc(articles.articleId))
+      .limit(safeLimit)
+      .offset(offset)
+      .all()
+
+    return c.json({
+      data: {
+        category: {
+          catId: category.catId,
+          catName: category.catName,
+          catUri: category.catUri,
+          catDescription: category.catDescription,
+          catParent: category.catParent,
+          catImage: category.catImage,
+          catKeywords: category.catKeywords,
+        },
+        breadcrumbs,
+        subCategories: children.map((ch) => ({
+          catId: ch.catId,
+          catName: ch.catName,
+          catUri: ch.catUri,
+          catDescription: ch.catDescription,
+          articleCount: childCountMap.get(ch.catId) ?? 0,
+        })),
+        articles: {
+          data: articleList,
+          total,
+          page: safePage,
+          limit: safeLimit,
+        },
+      },
+    })
   })
 
   return router
