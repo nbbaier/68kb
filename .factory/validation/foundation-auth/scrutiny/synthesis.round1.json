@@ -1,0 +1,88 @@
+{
+  "milestone": "foundation-auth",
+  "round": 1,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "cd /Users/nbbaier/68kb/app && bun run --filter @68kb/server test && bun run --filter @68kb/client test",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "cd /Users/nbbaier/68kb/app && bunx tsc --noEmit -p apps/server/tsconfig.json && bunx tsc --noEmit -p apps/client/tsconfig.json",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "N/A (no lint command is currently defined in /Users/nbbaier/68kb/.factory/services.yaml)",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 5,
+    "passed": 4,
+    "failed": 1,
+    "failedFeatures": [
+      "auth-api-session-middleware"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "auth-api-session-middleware",
+      "severity": "blocking",
+      "description": "SESSION_SECRET falls back to a hardcoded default in app/apps/server/src/app.ts:24, violating the requirement to read session secret from environment only (VAL-SEC-003)."
+    },
+    {
+      "featureId": "auth-api-session-middleware",
+      "severity": "blocking",
+      "description": "Login code path for non-existent user avoids Bun.password.verify in app/apps/server/src/routes/auth.ts:50, producing timing differences versus wrong-password path and violating timing consistency expectation (VAL-SEC-002)."
+    }
+  ],
+  "appliedUpdates": [
+    {
+      "target": "library",
+      "description": "Added SQLite WAL testing caveat for in-memory databases to .factory/library/architecture.md.",
+      "sourceFeature": "database-schema-migrations-seed"
+    },
+    {
+      "target": "library",
+      "description": "Clarified admin-route protection naming to match createRequireAdmin(sessionStore) implementation in .factory/library/architecture.md.",
+      "sourceFeature": "admin-layout-dashboard"
+    },
+    {
+      "target": "library",
+      "description": "Added Bun typing guidance (use bun-types instead of @types/bun) to .factory/library/environment.md.",
+      "sourceFeature": "project-scaffolding"
+    }
+  ],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Align the repo-wide test command guidance with the current monorepo commands/services manifest (use app workspace test command instead of root-level bun test wording).",
+      "evidence": "project-scaffolding review observed AGENTS command drift against .factory/services.yaml test command.",
+      "isSystemic": true
+    },
+    {
+      "target": "skills",
+      "suggestion": "Update fullstack-worker procedure to include explicit API-only/DB-only execution paths and clearer expectations for truthful followedProcedure reporting when tests-first/agent-browser steps are not applicable.",
+      "evidence": "Similar mismatch observations were reported in database-schema-migrations-seed, auth-api-session-middleware, and admin-layout-dashboard reviews.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Fullstack-worker API-only mismatch observation from auth-api-session-middleware review.",
+      "reason": "duplicate (covered by systemic skills recommendation)"
+    },
+    {
+      "observation": "Fullstack-worker tests-first mismatch observation from admin-layout-dashboard review.",
+      "reason": "duplicate (covered by systemic skills recommendation)"
+    },
+    {
+      "observation": "Update .factory/research/BUN_SHADCN_REFERENCE.md directly for bun-types guidance.",
+      "reason": "out of triage scope for apply-now targets; captured as factual library guidance instead"
+    }
+  ],
+  "previousRound": null
+}
