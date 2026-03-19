@@ -2,6 +2,8 @@ import { Hono } from 'hono'
 import { eq, count } from 'drizzle-orm'
 import { settings, users } from '../db/schema'
 import { createRequireAdmin } from '../middleware/auth'
+import { createArticleRoutes } from './articles'
+import { createUserRoutes } from './users'
 import type { AppVariables, DrizzleDB } from '../types'
 
 export function createAdminRoutes(db: DrizzleDB) {
@@ -40,6 +42,12 @@ export function createAdminRoutes(db: DrizzleDB) {
       },
     })
   })
+
+  // Mount articles CRUD routes
+  admin.route('/articles', createArticleRoutes(db))
+
+  // Mount user routes (includes /search)
+  admin.route('/users', createUserRoutes(db))
 
   return admin
 }
