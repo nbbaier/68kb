@@ -20,6 +20,26 @@ export function createApp(database: typeof db) {
     }),
   )
 
+  // ---------------------------------------------------------------------------
+  // Strip Set-Cookie headers from 401 responses.
+  // hono-sessions CookieStore emits a Set-Cookie header on every response
+  // regardless of deleteSession(). This middleware is registered BEFORE
+  // sessionMiddleware so that, in Hono's onion model, it runs AFTER the
+  // session middleware on the way out — thereby removing any cookie the session
+  // middleware may have set on a failed-auth (401) response.
+  //
+  // IMPORTANT: We directly mutate c.res.headers (which is mutable in Bun's
+  // runtime) rather than replacing c.res. Replacing c.res via the setter
+  // triggers Hono's header-merging logic which would re-add the old Set-Cookie
+  // headers we just stripped.
+  // ---------------------------------------------------------------------------
+  app.use('*', async (c, next) => {
+    await next()
+    if (c.res.status === 401) {
+      c.res.headers.delete('set-cookie')
+    }
+  })
+
   // Session middleware — requires SESSION_SECRET from environment (min 32 chars)
   const sessionSecret = process.env.SESSION_SECRET
   if (!sessionSecret) {

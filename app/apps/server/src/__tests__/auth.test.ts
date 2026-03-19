@@ -196,6 +196,30 @@ describe('POST /api/auth/login', () => {
     expect(resNoUser.status).toBe(400)
   })
 
+  it('returns NO Set-Cookie header on failed login — wrong password (VAL-AUTH-003)', async () => {
+    const res = await app.request('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'admin', password: 'wrongpassword' }),
+    })
+    expect(res.status).toBe(401)
+    // The 401 response must NOT set a session cookie
+    const cookies = (res.headers as unknown as { getSetCookie(): string[] }).getSetCookie()
+    expect(cookies).toHaveLength(0)
+  })
+
+  it('returns NO Set-Cookie header on failed login — non-existent user (VAL-AUTH-004)', async () => {
+    const res = await app.request('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'ghostuser', password: 'anything' }),
+    })
+    expect(res.status).toBe(401)
+    // The 401 response must NOT set a session cookie
+    const cookies = (res.headers as unknown as { getSetCookie(): string[] }).getSetCookie()
+    expect(cookies).toHaveLength(0)
+  })
+
   it('failed login does not create an authenticated session (VAL-AUTH-003/004)', async () => {
     // Attempt login with wrong password — no prior session
     const res = await app.request('/api/auth/login', {
@@ -216,7 +240,7 @@ describe('POST /api/auth/login', () => {
     expect(meRes.status).toBe(401)
   })
 
-  it('failed login clears an existing authenticated session (VAL-AUTH-003/004)', async () => {
+  it('failed login with existing session: no Set-Cookie emitted, original session preserved (VAL-AUTH-003/004)', async () => {
     // First login successfully
     const sessionCookie = await loginAsAdmin()
 
@@ -226,7 +250,7 @@ describe('POST /api/auth/login', () => {
     })
     expect(meBeforeRes.status).toBe(200)
 
-    // Attempt login with wrong password, sending existing session cookie
+    // Attempt login with wrong password while carrying an existing valid session
     const failRes = await app.request('/api/auth/login', {
       method: 'POST',
       headers: {
@@ -237,16 +261,17 @@ describe('POST /api/auth/login', () => {
     })
     expect(failRes.status).toBe(401)
 
-    // The 401 response cookies should not maintain an authenticated session
+    // The 401 response must emit NO Set-Cookie header — the strip middleware guarantees this
     const failCookies = (failRes.headers as unknown as { getSetCookie(): string[] }).getSetCookie()
-    const newCookieHeader = failCookies.length > 0
-      ? failCookies[failCookies.length - 1].split(';')[0]
-      : sessionCookie
+    expect(failCookies).toHaveLength(0)
 
+    // The original session cookie is NOT affected by the failed login attempt.
+    // Since the 401 response carries no new cookie, the client retains the original session.
+    // This is correct: a failed login should not destroy a pre-existing authenticated session.
     const meAfterRes = await app.request('/api/auth/me', {
-      headers: { Cookie: newCookieHeader },
+      headers: { Cookie: sessionCookie },
     })
-    expect(meAfterRes.status).toBe(401)
+    expect(meAfterRes.status).toBe(200)
   })
 })
 
