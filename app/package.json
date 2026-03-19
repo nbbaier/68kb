@@ -1,0 +1,22 @@
+{
+  "name": "68kb",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev": "concurrently \"bun run dev:server\" \"bun run dev:client\"",
+    "dev:server": "bun run --filter @68kb/server dev",
+    "dev:client": "bun run --filter @68kb/client dev",
+    "build": "bun run --filter @68kb/client build && bun run --filter @68kb/server build",
+    "test": "bun run --filter @68kb/server test && bun run --filter @68kb/client test",
+    "typecheck": "bunx tsc --noEmit -p apps/server/tsconfig.json && bunx tsc --noEmit -p apps/client/tsconfig.json",
+    "db:generate": "bun run --filter @68kb/server db:generate",
+    "db:migrate": "bun run --filter @68kb/server db:migrate",
+    "db:seed": "bun run --filter @68kb/server db:seed",
+    "db:push": "bun run --filter @68kb/server db:push",
+    "db:studio": "bun run --filter @68kb/server db:studio"
+  },
+  "devDependencies": {
+    "concurrently": "^9",
+    "typescript": "^5.7"
+  }
+}
