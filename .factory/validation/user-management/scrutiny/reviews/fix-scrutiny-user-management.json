@@ -1,15 +1,63 @@
 {
   "featureId": "fix-scrutiny-user-management",
-  "reviewedAt": "2026-03-20T16:41:02Z",
-  "commitId": "f738e4d",
+  "reviewedAt": "2026-03-20T17:42:36Z",
+  "commitId": "8876cd2",
   "transcriptSkeletonReviewed": true,
   "diffReviewed": true,
-  "status": "pass",
+  "status": "fail",
   "codeReview": {
-    "summary": "Reviewed commit f738e4d against prior user-crud-admin blockers. Admin user create/update now validate userGroup existence before writes and return controlled 400 responses for invalid groups; admin delete now enforces last-admin protection. Added regression coverage in users.test.ts for non-existent group create/update and last-admin delete prevention.",
-    "issues": []
+    "summary": "This fix resolves major parts of the four failed features (banned/can_view_site login rejection, /users/account route, /api/users/:username alias, updated throttle thresholds, and user CRUD group/last-admin invariants), but it does not fully close all prior blocking findings. Blocking gaps remain in public-profile behavior and failed-login delay contract adherence.",
+    "issues": [
+      {
+        "file": "app/apps/client/src/pages/PublicUserProfilePage.tsx",
+        "line": 29,
+        "severity": "blocking",
+        "description": "VAL-USER-051 requires `/users/profile` (empty username) to redirect to home, but this page handles missing `username` by setting an error (`User not found`) and rendering an error state. App routing now maps `/users/profile` to this page (`app/apps/client/src/App.tsx:62`), so the required redirect behavior is still not implemented."
+      },
+      {
+        "file": "app/apps/server/src/routes/profiles.ts",
+        "line": 24,
+        "severity": "blocking",
+        "description": "The prior blocking VAL-USER-052 gap remains: profile responses still expose only fixed core fields (id/username/group/joined/last login) and do not retrieve/render extra profile fields with date formatting. UI rendering remains limited to those fixed fields (`app/apps/client/src/pages/PublicUserProfilePage.tsx:78-87`)."
+      },
+      {
+        "file": "app/apps/server/src/routes/auth.ts",
+        "line": 130,
+        "severity": "blocking",
+        "description": "Failed-login throttling still returns immediate 429 responses with `retryAfterSeconds` and does not apply a server-side wait before responding. Contract checks VAL-USER-071/072/073 require observed ~1s/~2s/~5s response timing delays, not only retry metadata."
+      },
+      {
+        "file": "app/apps/server/src/__tests__/milestone4.test.ts",
+        "line": 348,
+        "severity": "blocking",
+        "description": "Updated throttle tests validate only `retryAfterSeconds` values (1/2/5) and do not assert elapsed response time, so contract-level delay behavior remains unverified and can pass despite missing server-side delay implementation."
+      },
+      {
+        "file": "app/apps/client/src/components/AdminLayout.tsx",
+        "line": 120,
+        "severity": "non_blocking",
+        "description": "Top nav is permission-filtered, but sub-nav is still selected directly from `SUB_NAV[section]` without permission filtering, so restricted section links can still render when users navigate to those sections by URL."
+      },
+      {
+        "file": "app/apps/server/src/middleware/auth.ts",
+        "line": 71,
+        "severity": "non_blocking",
+        "description": "`createRequireRole` still has no explicit super-admin bypass branch; behavior depends entirely on group-1 permission rows remaining fully permissive in data."
+      }
+    ]
   },
-  "sharedStateObservations": [],
-  "addressesFailureFrom": "/Users/nbbaier/68kb/.factory/validation/user-management/scrutiny/reviews/user-crud-admin.json",
-  "summary": "Pass: fix-scrutiny-user-management resolves the two blocking Milestone 4 scrutiny defects in user-crud-admin with matching regression tests and no new blocking defects observed."
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "Library route guidance is now stale for account/profile aliases introduced by this fix sequence.",
+      "evidence": "`.factory/library/architecture.md:56` still states account edit route is `/admin/account` and warns against `/users/*` links, while app routing now includes `/users/account` and `/users/profile` in `app/apps/client/src/App.tsx:62,110`."
+    },
+    {
+      "area": "skills",
+      "observation": "The `fullstack-worker` skill procedure appears stricter than actual worker behavior and handoff scoring for fix tasks.",
+      "evidence": "`SKILL.md` requires red-phase tests and manual `agent-browser` verification (`.factory/skills/fullstack-worker/SKILL.md:29,54`), but this transcript skeleton shows direct `Edit` steps before new tests and no `agent-browser` invocation for session `394a3bda-47f8-4488-80c8-384f05e5c5a9`, while `handoff.skillFeedback.followedProcedure` is `true`."
+    }
+  ],
+  "addressesFailureFrom": "/Users/nbbaier/68kb/.factory/validation/user-management/scrutiny/synthesis.json",
+  "summary": "FAIL — the fix partially addresses round-3 blockers (RBAC login gating, key route aliases, and user CRUD invariants) but still leaves blocking contract gaps: empty-username profile redirect, extra profile field handling, and true timed login-throttle delays."
 }

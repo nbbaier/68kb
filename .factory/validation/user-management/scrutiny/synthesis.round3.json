@@ -1,0 +1,117 @@
+{
+  "milestone": "user-management",
+  "round": 3,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "cd /Users/nbbaier/68kb/app && bun run --filter @68kb/server test && bun run --filter @68kb/client test",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "cd /Users/nbbaier/68kb/app && bunx tsc --noEmit -p apps/server/tsconfig.json && bunx tsc --noEmit -p apps/client/tsconfig.json",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "N/A (no lint command is currently defined in /Users/nbbaier/68kb/.factory/services.yaml)",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 6,
+    "passed": 2,
+    "failed": 4,
+    "failedFeatures": [
+      "rbac-enforcement",
+      "public-profile-account",
+      "failed-login-tracking",
+      "user-crud-admin"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "rbac-enforcement",
+      "severity": "blocking",
+      "description": "Login creates sessions without enforcing banned-user rejection and can_view_site gating, so required RBAC auth constraints are not fully implemented."
+    },
+    {
+      "featureId": "public-profile-account",
+      "severity": "blocking",
+      "description": "`/users/profile` (empty username case) is not implemented to redirect as required and currently falls to 404."
+    },
+    {
+      "featureId": "public-profile-account",
+      "severity": "blocking",
+      "description": "Required account route `/users/account` is missing; implementation uses `/account`, creating contract mismatch."
+    },
+    {
+      "featureId": "public-profile-account",
+      "severity": "blocking",
+      "description": "Required API endpoint `GET /api/users/:username` is missing; implementation uses `GET /api/users/profile/:username`."
+    },
+    {
+      "featureId": "public-profile-account",
+      "severity": "blocking",
+      "description": "VAL-USER-052 behavior (extra profile fields/date formatting path) is not implemented in current profile API/UI."
+    },
+    {
+      "featureId": "failed-login-tracking",
+      "severity": "blocking",
+      "description": "Throttle policy is implemented as 3→30s, 5→60s, 10→lockout instead of required 3→1s, 10→2s, 20→5s within 24h."
+    },
+    {
+      "featureId": "failed-login-tracking",
+      "severity": "blocking",
+      "description": "Throttled requests return immediate 429 responses rather than applying timed delays expected by VAL-USER-071/072/073 timing checks."
+    },
+    {
+      "featureId": "failed-login-tracking",
+      "severity": "blocking",
+      "description": "Milestone tests currently assert the wrong throttle policy, so coverage is misaligned with the feature contract."
+    },
+    {
+      "featureId": "user-crud-admin",
+      "severity": "blocking",
+      "description": "Create/update writes do not validate referenced `userGroup` existence before DB write, allowing FK-driven server errors instead of controlled validation responses."
+    },
+    {
+      "featureId": "user-crud-admin",
+      "severity": "blocking",
+      "description": "DELETE allows removal of the last admin account and does not enforce the last-admin invariant already used in update demotion logic."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Require completed features to include traceable worker linkage (`workerSessionIds` and `completedWorkerSessionId`) before scrutiny runs.",
+      "evidence": "Multiple completed user-management features (`rbac-enforcement`, `public-profile-account`, `failed-login-tracking`) had no linked worker session or handoff, reducing auditability.",
+      "isSystemic": true
+    },
+    {
+      "target": ".factory/library/architecture.md",
+      "suggestion": "Align documented account/profile route conventions with active mission contracts (e.g., `/users/account` and `/api/users/:username`) to prevent implementation drift.",
+      "evidence": "Shared docs and mission contract currently disagree with implementation route shapes, which contributed to scrutiny-detected contract mismatches.",
+      "isSystemic": true
+    },
+    {
+      "target": ".factory/skills/fullstack-worker/SKILL.md",
+      "suggestion": "Clarify how strict red/green test-first and mandatory UI-test expectations should adapt for refinement-only sessions while still requiring validator coverage and rationale.",
+      "evidence": "Two passing review reports (`user-notes`, `user-groups-crud`) flagged procedure rigidity as mismatched with accepted polish/fix workflows.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Milestone tests do not cover banned-user and can_view_site RBAC auth paths.",
+      "reason": "Captured as feature-specific blocking issue in this round; not promoted as shared-state change."
+    },
+    {
+      "observation": "Shared docs should explicitly state the last-admin preservation invariant.",
+      "reason": "Potentially useful but overlaps existing feature-level defects and would need orchestrator policy decision on canonical location."
+    }
+  ],
+  "previousRound": "/Users/nbbaier/68kb/.factory/validation/user-management/scrutiny/synthesis.round2.json"
+}
