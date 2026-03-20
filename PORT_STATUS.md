@@ -77,7 +77,7 @@ What was built:
 - Responsive layout (mobile hamburger menu), XSS protection, hidden category filtering
 - Related articles by shared tags on article detail
 
-### Milestone 4: User Management -- IMPLEMENTATION COMPLETE (VALIDATION PENDING)
+### Milestone 4: User Management -- SCRUTINY COMPLETE (USER TESTING PENDING)
 
 **Assertions: 49/49 implemented | Features: 6 completed, 0 remaining**
 
@@ -132,7 +132,7 @@ Completed features:
 
 ### Immediate
 
-1. Run **Milestone 4 scrutiny validation** (code review) and **Milestone 4 user testing** (49 assertions), then seal milestone 4.
+1. Run **Milestone 4 user testing** (49 assertions), then seal milestone 4.
 
 2. Run Milestone 5 scrutiny + user testing (156 assertions), then seal milestone 5.
 
@@ -197,7 +197,7 @@ Completed features:
 ## Notes
 
 - The original PHP app has ~35 routes across public and admin. All public routes and most admin routes are now ported.
-- Validation synthesis artifacts currently exist for milestones 1-3 under `.factory/validation/*`; milestone 4 and 5 validation artifacts are still pending.
+- Validation synthesis artifacts now exist for milestones 1-4 under `.factory/validation/*`; milestone 4 user-testing artifacts and milestone 5 validation artifacts are still pending.
 - All 3 sealed milestones went through multiple validation rounds each, with fix features created and re-validated for each round of failures.
 - No failing tests in the current codebase (370 server + 259 client = 629 total).
 - Build and typecheck gates are currently passing (`bun run build`, `bun run typecheck`).

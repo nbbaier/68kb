@@ -1,0 +1,34 @@
+{
+  "featureId": "user-crud-admin",
+  "reviewedAt": "2026-03-20T16:31:29Z",
+  "commitId": "c55d206",
+  "transcriptSkeletonReviewed": false,
+  "diffReviewed": false,
+  "status": "fail",
+  "codeReview": {
+    "summary": "Core user list/add/edit/delete behavior is implemented and broadly covered, but two blocking integrity issues remain in admin user CRUD: invalid group IDs surface as unhandled 500s, and deleting the last admin account is currently allowed.",
+    "issues": [
+      {
+        "file": "app/apps/server/src/routes/users.ts",
+        "line": 312,
+        "severity": "blocking",
+        "description": "Create/update validation only checks that `userGroup` is numeric and does not verify the group exists before write. Requests like `POST /api/admin/users` or `PUT /api/admin/users/:id` with `userGroup: 999` hit foreign-key errors at insert/update (lines 349-374 and 489-502) and return 500 Internal Server Error instead of a controlled 4xx validation response."
+      },
+      {
+        "file": "app/apps/server/src/routes/users.ts",
+        "line": 523,
+        "severity": "blocking",
+        "description": "`DELETE /api/admin/users/:id` deletes any existing user without protecting the last admin account. The code has a last-admin demotion guard in PUT, but DELETE lacks the same invariant check, so removing the only group-1 user succeeds and can strand the system without any admin principal."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "tests",
+      "observation": "Current user-route tests cover last-admin demotion protection but do not include regression tests for last-admin deletion or invalid-group 500 behavior.",
+      "evidence": "`app/apps/server/src/__tests__/users.test.ts` has `prevents demoting the last admin` and happy-path delete tests, but no case for deleting the only admin account or for create/update with non-existent `userGroup`."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "FAIL: user-crud-admin contains two blocking integrity defects (invalid-group 500s and last-admin deletion) that must be fixed before Milestone 4 can pass scrutiny."
+}

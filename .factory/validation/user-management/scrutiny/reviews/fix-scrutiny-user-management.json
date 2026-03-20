@@ -1,0 +1,15 @@
+{
+  "featureId": "fix-scrutiny-user-management",
+  "reviewedAt": "2026-03-20T16:41:02Z",
+  "commitId": "f738e4d",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Reviewed commit f738e4d against prior user-crud-admin blockers. Admin user create/update now validate userGroup existence before writes and return controlled 400 responses for invalid groups; admin delete now enforces last-admin protection. Added regression coverage in users.test.ts for non-existent group create/update and last-admin delete prevention.",
+    "issues": []
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": "/Users/nbbaier/68kb/.factory/validation/user-management/scrutiny/reviews/user-crud-admin.json",
+  "summary": "Pass: fix-scrutiny-user-management resolves the two blocking Milestone 4 scrutiny defects in user-crud-admin with matching regression tests and no new blocking defects observed."
+}

@@ -1,0 +1,22 @@
+{
+  "featureId": "failed-login-tracking",
+  "reviewedAt": "2026-03-20T16:31:29Z",
+  "commitId": "c55d206",
+  "transcriptSkeletonReviewed": false,
+  "diffReviewed": false,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Failed-login recording, progressive delay/lockout, and admin IP summary endpoint are implemented and covered by milestone integration tests. One reporting accuracy limitation exists but is non-blocking for milestone gate criteria.",
+    "issues": [
+      {
+        "file": "app/apps/server/src/routes/users.ts",
+        "line": 76,
+        "severity": "non_blocking",
+        "description": "`GET /api/admin/users/failed-logins` applies `limit` to raw failed-login rows before grouping by IP. On noisy single-IP traffic, this can underrepresent other IPs in the summarized output and skew attempts/status visibility for operators."
+      }
+    ]
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": null,
+  "summary": "PASS with one non-blocking observation: failed-login aggregation limit is row-first, which can bias admin summary visibility under high-volume conditions."
+}

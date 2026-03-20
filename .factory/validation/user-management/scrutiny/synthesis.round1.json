@@ -1,0 +1,53 @@
+{
+  "milestone": "user-management",
+  "round": 1,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "cd /Users/nbbaier/68kb/app && bun run --filter @68kb/server test && bun run --filter @68kb/client test",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "cd /Users/nbbaier/68kb/app && bunx tsc --noEmit -p apps/server/tsconfig.json && bunx tsc --noEmit -p apps/client/tsconfig.json",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "N/A (no lint command is currently defined in /Users/nbbaier/68kb/.factory/services.yaml)",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 6,
+    "passed": 5,
+    "failed": 1,
+    "failedFeatures": [
+      "user-crud-admin"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "user-crud-admin",
+      "severity": "blocking",
+      "description": "Admin user create/update does not validate that `userGroup` exists before write, so invalid IDs trigger unhandled foreign-key exceptions and 500 responses instead of controlled validation errors."
+    },
+    {
+      "featureId": "user-crud-admin",
+      "severity": "blocking",
+      "description": "Admin user delete allows removing the last group-1 admin account, breaking the same admin-presence invariant already enforced in user update demotion logic."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "app/apps/server/src/__tests__/users.test.ts",
+      "suggestion": "Add regression tests for invalid non-existent `userGroup` values on create/update and for last-admin deletion protection to prevent recurrence of these integrity defects.",
+      "evidence": "Current suite includes last-admin demotion coverage but no coverage for delete-last-admin or invalid-group 500 paths.",
+      "isSystemic": false
+    }
+  ],
+  "rejectedObservations": [],
+  "previousRound": null
+}
