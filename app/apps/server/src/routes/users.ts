@@ -113,19 +113,18 @@ export function createUserRoutes(db: DrizzleDB) {
 
     const data = Array.from(byIp.values())
       .map((entry) => {
-        const secondsSinceLast = Math.max(0, now - entry.lastFailedDate)
-        let status: 'none' | 'delay30' | 'delay60' | 'lockout' = 'none'
+        let status: 'none' | 'delay1s' | 'delay2s' | 'delay5s' = 'none'
         let retryAfterSeconds = 0
 
-        if (entry.attempts >= 10) {
-          status = 'lockout'
-          retryAfterSeconds = Math.max(0, (24 * 3600) - secondsSinceLast)
-        } else if (entry.attempts >= 5) {
-          status = 'delay60'
-          retryAfterSeconds = Math.max(0, 60 - secondsSinceLast)
+        if (entry.attempts >= 20) {
+          status = 'delay5s'
+          retryAfterSeconds = 5
+        } else if (entry.attempts >= 10) {
+          status = 'delay2s'
+          retryAfterSeconds = 2
         } else if (entry.attempts >= 3) {
-          status = 'delay30'
-          retryAfterSeconds = Math.max(0, 30 - secondsSinceLast)
+          status = 'delay1s'
+          retryAfterSeconds = 1
         }
 
         return {

@@ -46,7 +46,7 @@ export function createApp(database: typeof db) {
   // ---------------------------------------------------------------------------
   app.use('*', async (c, next) => {
     await next()
-    if (c.res.status === 401) {
+    if (c.res.status === 401 || c.res.status === 403) {
       c.res.headers.delete('set-cookie')
     }
   })

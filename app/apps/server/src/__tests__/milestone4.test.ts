@@ -342,10 +342,10 @@ describe('Milestone 4 — Failed login tracking', () => {
     const json = await res.json() as { data: Array<{ failedIp: string; attempts: number; status: string }> }
     expect(json.data[0]?.failedIp).toBe('10.0.0.1')
     expect(json.data[0]?.attempts).toBeGreaterThanOrEqual(3)
-    expect(json.data[0]?.status).toBe('delay30')
+    expect(json.data[0]?.status).toBe('delay1s')
   })
 
-  it('applies 30-second progressive throttle after 3 failed attempts', async () => {
+  it('applies 1s progressive delay after 3 failed attempts', async () => {
     const now = Math.floor(Date.now() / 1000)
     testDb
       .insert(schema.failedLogins)
@@ -364,11 +364,10 @@ describe('Milestone 4 — Failed login tracking', () => {
 
     expect(res.status).toBe(429)
     const json = await res.json() as { retryAfterSeconds: number }
-    expect(json.retryAfterSeconds).toBeGreaterThan(0)
-    expect(json.retryAfterSeconds).toBeLessThanOrEqual(30)
+    expect(json.retryAfterSeconds).toBe(1)
   })
 
-  it('applies lockout after 10 failed attempts in the last 24h', async () => {
+  it('applies 2s delay after 10 failed attempts (no hard lockout)', async () => {
     const now = Math.floor(Date.now() / 1000)
     const rows = Array.from({ length: 10 }).map((_, idx) => ({
       failedUsername: 'admin',
@@ -385,13 +384,28 @@ describe('Milestone 4 — Failed login tracking', () => {
 
     expect(res.status).toBe(429)
     const json = await res.json() as { retryAfterSeconds: number }
-    expect(json.retryAfterSeconds).toBeGreaterThan(60)
+    // 2s delay (not locked out indefinitely)
+    expect(json.retryAfterSeconds).toBe(2)
+  })
 
-    const stillRecent = testDb
-      .select()
-      .from(schema.failedLogins)
-      .where(and(eq(schema.failedLogins.failedIp, '30.0.0.1'), gte(schema.failedLogins.failedDate, now - 86400)))
-      .all()
-    expect(stillRecent.length).toBeGreaterThanOrEqual(10)
+  it('applies 5s delay after 20 failed attempts (no hard lockout)', async () => {
+    const now = Math.floor(Date.now() / 1000)
+    const rows = Array.from({ length: 20 }).map((_, idx) => ({
+      failedUsername: 'admin',
+      failedIp: '40.0.0.1',
+      failedDate: now - idx,
+    }))
+    testDb.insert(schema.failedLogins).values(rows).run()
+
+    const res = await app.request('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-real-ip': '40.0.0.1' },
+      body: JSON.stringify({ username: 'admin', password: 'wrong' }),
+    })
+
+    expect(res.status).toBe(429)
+    const json = await res.json() as { retryAfterSeconds: number }
+    // 5s delay (no indefinite lockout)
+    expect(json.retryAfterSeconds).toBe(5)
   })
 })

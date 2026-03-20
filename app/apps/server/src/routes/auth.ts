@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { and, desc, eq, gte, ne } from 'drizzle-orm'
+import { and, count, desc, eq, gte, ne } from 'drizzle-orm'
 import { users, failedLogins, userGroups } from '../db/schema'
 import type { AppVariables, DrizzleDB } from '../types'
 
@@ -31,14 +31,15 @@ const PERMISSION_KEYS = [
 const INVALID_CREDENTIALS_MSG = 'Invalid username or password'
 const LOGIN_THROTTLE_WINDOW_SECONDS = 24 * 60 * 60
 const LOGIN_THROTTLE_DELAY_1_ATTEMPTS = 3
-const LOGIN_THROTTLE_DELAY_1_SECONDS = 30
-const LOGIN_THROTTLE_DELAY_2_ATTEMPTS = 5
-const LOGIN_THROTTLE_DELAY_2_SECONDS = 60
-const LOGIN_LOCKOUT_ATTEMPTS = 10
+const LOGIN_THROTTLE_DELAY_1_SECONDS = 1
+const LOGIN_THROTTLE_DELAY_2_ATTEMPTS = 10
+const LOGIN_THROTTLE_DELAY_2_SECONDS = 2
+const LOGIN_THROTTLE_DELAY_3_ATTEMPTS = 20
+const LOGIN_THROTTLE_DELAY_3_SECONDS = 5
 
 type LoginThrottleState = {
   blocked: boolean
-  stage: 'none' | 'delay30' | 'delay60' | 'lockout'
+  stage: 'none' | 'delay1s' | 'delay2s' | 'delay5s'
   retryAfterSeconds: number
 }
 
@@ -66,38 +67,35 @@ function recordFailedLogin(db: DrizzleDB, username: string, ip: string, date: nu
 function getLoginThrottleState(db: DrizzleDB, ip: string, now: number): LoginThrottleState {
   const cutoff = now - LOGIN_THROTTLE_WINDOW_SECONDS
 
-  const recentAttempts = db
-    .select({ failedDate: failedLogins.failedDate })
+  const countResult = db
+    .select({ value: count() })
     .from(failedLogins)
     .where(and(eq(failedLogins.failedIp, ip), gte(failedLogins.failedDate, cutoff)))
-    .orderBy(desc(failedLogins.failedDate))
-    .all()
+    .get()
 
-  const attempts = recentAttempts.length
-  const lastFailedAt = recentAttempts[0]?.failedDate ?? 0
-  const sinceLastFail = Math.max(0, now - lastFailedAt)
+  const attempts = countResult?.value ?? 0
 
-  if (attempts >= LOGIN_LOCKOUT_ATTEMPTS) {
+  if (attempts >= LOGIN_THROTTLE_DELAY_3_ATTEMPTS) {
     return {
       blocked: true,
-      stage: 'lockout',
-      retryAfterSeconds: Math.max(0, LOGIN_THROTTLE_WINDOW_SECONDS - sinceLastFail),
+      stage: 'delay5s',
+      retryAfterSeconds: LOGIN_THROTTLE_DELAY_3_SECONDS,
     }
   }
 
-  if (attempts >= LOGIN_THROTTLE_DELAY_2_ATTEMPTS && sinceLastFail < LOGIN_THROTTLE_DELAY_2_SECONDS) {
+  if (attempts >= LOGIN_THROTTLE_DELAY_2_ATTEMPTS) {
     return {
       blocked: true,
-      stage: 'delay60',
-      retryAfterSeconds: LOGIN_THROTTLE_DELAY_2_SECONDS - sinceLastFail,
+      stage: 'delay2s',
+      retryAfterSeconds: LOGIN_THROTTLE_DELAY_2_SECONDS,
     }
   }
 
-  if (attempts >= LOGIN_THROTTLE_DELAY_1_ATTEMPTS && sinceLastFail < LOGIN_THROTTLE_DELAY_1_SECONDS) {
+  if (attempts >= LOGIN_THROTTLE_DELAY_1_ATTEMPTS) {
     return {
       blocked: true,
-      stage: 'delay30',
-      retryAfterSeconds: LOGIN_THROTTLE_DELAY_1_SECONDS - sinceLastFail,
+      stage: 'delay1s',
+      retryAfterSeconds: LOGIN_THROTTLE_DELAY_1_SECONDS,
     }
   }
 
@@ -136,14 +134,9 @@ export function createAuthRoutes(db: DrizzleDB) {
       const session = c.get('session')
       session.deleteSession()
 
-      const error =
-        throttle.stage === 'lockout'
-          ? 'Too many failed login attempts. This IP is temporarily locked.'
-          : 'Too many failed login attempts. Please wait before trying again.'
-
       return c.json(
         {
-          error,
+          error: 'Too many failed login attempts. Please wait before trying again.',
           retryAfterSeconds: throttle.retryAfterSeconds,
         },
         429,
@@ -175,6 +168,27 @@ export function createAuthRoutes(db: DrizzleDB) {
       const session = c.get('session')
       session.deleteSession()
       return c.json({ error: INVALID_CREDENTIALS_MSG }, 401)
+    }
+
+    // Check if user's group allows site access (ban / can_view_site enforcement)
+    const group = db
+      .select({ canViewSite: userGroups.canViewSite, groupId: userGroups.groupId })
+      .from(userGroups)
+      .where(eq(userGroups.groupId, user.userGroup))
+      .get()
+
+    if (!group || group.canViewSite === 'n') {
+      const session = c.get('session')
+      session.deleteSession()
+      const isBanned = group?.groupId === 4
+      return c.json(
+        {
+          error: isBanned
+            ? 'Your account has been banned.'
+            : 'Your account does not have permission to access this site.',
+        },
+        403,
+      )
     }
 
     // Successful login resets recent failed attempts for this IP.

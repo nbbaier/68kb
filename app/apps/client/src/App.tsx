@@ -59,6 +59,7 @@ function App() {
             <Route path="/search/results/:hash" element={<SearchResultsPage />} />
             <Route path="/search/no-results" element={<SearchNoResultsPage />} />
             <Route path="/users/profile/:username" element={<PublicUserProfilePage />} />
+            <Route path="/users/profile" element={<PublicUserProfilePage />} />
           </Route>
 
           {/* ---------------------------------------------------------------- */}
@@ -99,6 +100,14 @@ function App() {
           {/* ---------------------------------------------------------------- */}
           <Route
             path="/account"
+            element={
+              <AuthGuard>
+                <AccountSettingsPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/users/account"
             element={
               <AuthGuard>
                 <AccountSettingsPage />
