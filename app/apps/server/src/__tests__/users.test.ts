@@ -440,6 +440,24 @@ describe('POST /api/admin/users', () => {
     expect(json.error).toContain('group')
   })
 
+  it('rejects non-existent group', async () => {
+    const cookie = await loginAsAdmin()
+    const res = await app.request('/api/admin/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
+      body: JSON.stringify({
+        userUsername: 'validusernonexistentgroup',
+        userEmail: 'valid-nonexistent-group@example.com',
+        userGroup: 99999,
+        userPassword: 'pass123',
+        confirmPassword: 'pass123',
+      }),
+    })
+    expect(res.status).toBe(400)
+    const json = await res.json() as { error: string }
+    expect(json.error).toContain('does not exist')
+  })
+
   it('rejects missing password', async () => {
     const cookie = await loginAsAdmin()
     const res = await app.request('/api/admin/users', {
@@ -656,6 +674,27 @@ describe('PUT /api/admin/users/:id', () => {
     const json = await res.json() as { error: string }
     expect(json.error).toContain('last admin')
   })
+
+  it('rejects assigning a non-existent group', async () => {
+    const cookie = await loginAsAdmin()
+    const listRes = await app.request('/api/admin/users', { headers: { Cookie: cookie } })
+    const listJson = await listRes.json() as { data: Array<{ userId: number; userUsername: string }> }
+    const johndoe = listJson.data.find((u) => u.userUsername === 'johndoe')
+    expect(johndoe).toBeDefined()
+
+    const res = await app.request(`/api/admin/users/${johndoe!.userId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
+      body: JSON.stringify({
+        userUsername: 'johndoe',
+        userEmail: 'john.updated@example.com',
+        userGroup: 99999,
+      }),
+    })
+    expect(res.status).toBe(400)
+    const json = await res.json() as { error: string }
+    expect(json.error).toContain('does not exist')
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -706,6 +745,22 @@ describe('DELETE /api/admin/users/:id', () => {
       headers: { Cookie: cookie },
     })
     expect(res.status).toBe(404)
+  })
+
+  it('prevents deleting the last admin user', async () => {
+    const cookie = await loginAsAdmin()
+    const listRes = await app.request('/api/admin/users', { headers: { Cookie: cookie } })
+    const listJson = await listRes.json() as { data: Array<{ userId: number; userUsername: string }> }
+    const adminUser = listJson.data.find((u) => u.userUsername === 'admin')
+    expect(adminUser).toBeDefined()
+
+    const res = await app.request(`/api/admin/users/${adminUser!.userId}`, {
+      method: 'DELETE',
+      headers: { Cookie: cookie },
+    })
+    expect(res.status).toBe(400)
+    const json = await res.json() as { error: string }
+    expect(json.error).toContain('last admin')
   })
 })
 

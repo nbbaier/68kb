@@ -312,6 +312,15 @@ export function createUserRoutes(db: DrizzleDB) {
     if (group === undefined || group === null || isNaN(Number(group))) {
       return c.json({ error: 'User group is required' }, 400)
     }
+    const groupId = Number(group)
+    const groupRow = db
+      .select({ groupId: userGroups.groupId })
+      .from(userGroups)
+      .where(eq(userGroups.groupId, groupId))
+      .get()
+    if (!groupRow) {
+      return c.json({ error: 'User group does not exist' }, 400)
+    }
 
     // Validate password
     if (!password) {
@@ -351,7 +360,7 @@ export function createUserRoutes(db: DrizzleDB) {
       .values({
         userUsername: username,
         userEmail: email,
-        userGroup: Number(group),
+        userGroup: groupId,
         userPassword: hashedPassword,
         userApiKey: apiKey,
         userJoinDate: now,
@@ -434,6 +443,15 @@ export function createUserRoutes(db: DrizzleDB) {
     if (group === undefined || group === null || isNaN(Number(group))) {
       return c.json({ error: 'User group is required' }, 400)
     }
+    const groupId = Number(group)
+    const targetGroup = db
+      .select({ groupId: userGroups.groupId })
+      .from(userGroups)
+      .where(eq(userGroups.groupId, groupId))
+      .get()
+    if (!targetGroup) {
+      return c.json({ error: 'User group does not exist' }, 400)
+    }
 
     // Validate password if provided
     if (password) {
@@ -463,7 +481,7 @@ export function createUserRoutes(db: DrizzleDB) {
     }
 
     // Prevent demoting the last admin (group 1)
-    if (existing.userGroup === 1 && Number(group) !== 1) {
+    if (existing.userGroup === 1 && groupId !== 1) {
       const adminCount = db
         .select({ value: count() })
         .from(users)
@@ -478,7 +496,7 @@ export function createUserRoutes(db: DrizzleDB) {
     const updateData: Partial<typeof users.$inferInsert> = {
       userUsername: username,
       userEmail: email,
-      userGroup: Number(group),
+      userGroup: groupId,
     }
 
     // Only update password if provided
@@ -526,9 +544,25 @@ export function createUserRoutes(db: DrizzleDB) {
       return c.json({ error: 'Invalid user ID' }, 400)
     }
 
-    const existing = db.select({ userId: users.userId }).from(users).where(eq(users.userId, id)).get()
+    const existing = db
+      .select({ userId: users.userId, userGroup: users.userGroup })
+      .from(users)
+      .where(eq(users.userId, id))
+      .get()
     if (!existing) {
       return c.json({ error: 'User not found' }, 404)
+    }
+
+    // Prevent deleting the last remaining admin account.
+    if (existing.userGroup === 1) {
+      const adminCount = db
+        .select({ value: count() })
+        .from(users)
+        .where(eq(users.userGroup, 1))
+        .get()
+      if ((adminCount?.value ?? 0) <= 1) {
+        return c.json({ error: 'Cannot delete the last admin user' }, 400)
+      }
     }
 
     db.delete(users).where(eq(users.userId, id)).run()
