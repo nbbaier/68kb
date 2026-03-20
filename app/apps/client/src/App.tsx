@@ -35,6 +35,7 @@ import { AdminUserGroupFormPage } from '@/pages/AdminUserGroupFormPage'
 import { AdminFailedLoginsPage } from '@/pages/AdminFailedLoginsPage'
 import { AdminSettingsPage } from '@/pages/AdminSettingsPage'
 import { AdminThemesPage } from '@/pages/AdminThemesPage'
+import { AdminModulesPage } from '@/pages/AdminModulesPage'
 
 function App() {
   return (
@@ -142,7 +143,7 @@ function App() {
             <Route path="usergroups/:id/edit" element={<AdminUserGroupFormPage />} />
             <Route
               path="modules"
-              element={<div className="p-4 text-muted-foreground">Modules — coming soon</div>}
+              element={<AdminModulesPage />}
             />
             <Route
               path="themes"

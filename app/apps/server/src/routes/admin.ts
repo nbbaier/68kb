@@ -9,6 +9,7 @@ import { createAdminGlossaryRoutes } from './glossary'
 import { createUserGroupRoutes } from './usergroups'
 import { createSettingsRoutes } from './settings'
 import { createThemeRoutes } from './themes'
+import { createModuleRoutes } from './modules'
 import type { AppVariables, DrizzleDB } from '../types'
 
 export function createAdminRoutes(db: DrizzleDB) {
@@ -68,6 +69,9 @@ export function createAdminRoutes(db: DrizzleDB) {
 
   // Mount theme routes
   admin.route('/themes', createThemeRoutes(db))
+
+  // Mount addon/module routes
+  admin.route('/modules', createModuleRoutes(db))
 
   return admin
 }
