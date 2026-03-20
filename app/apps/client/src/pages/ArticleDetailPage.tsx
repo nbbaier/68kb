@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo, type FormEvent } from 'react'
 import { useParams, Link } from 'react-router'
+import { useAuth } from '@/contexts/AuthContext'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -49,6 +50,13 @@ type RelatedArticle = {
   articleShortDesc: string
   articleDate: number
   articleHits: number
+}
+
+type ArticleComment = {
+  commentId: number
+  commentAuthor: string
+  commentDate: number
+  commentContent: string
 }
 
 // ---------------------------------------------------------------------------
@@ -236,11 +244,18 @@ function ArticleNotFound() {
 // ---------------------------------------------------------------------------
 
 export function ArticleDetailPage() {
+  const { user } = useAuth()
   const { slug } = useParams<{ slug: string }>()
   const [article, setArticle] = useState<ArticleDetail | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [loading, setLoading] = useState(true)
   const [relatedArticles, setRelatedArticles] = useState<RelatedArticle[]>([])
+  const [comments, setComments] = useState<ArticleComment[]>([])
+  const [commentAuthor, setCommentAuthor] = useState('')
+  const [commentEmail, setCommentEmail] = useState('')
+  const [commentContent, setCommentContent] = useState('')
+  const [submittingComment, setSubmittingComment] = useState(false)
+  const [commentFeedback, setCommentFeedback] = useState<string | null>(null)
 
   // Track whether hit has been counted for current article to avoid double-counting
   const hitCountedRef = useRef<string | null>(null)
@@ -264,6 +279,13 @@ export function ArticleDetailPage() {
   }, [])
 
   useEffect(() => {
+    if (user) {
+      setCommentAuthor((prev) => prev || user.username)
+      setCommentEmail((prev) => prev || user.userEmail)
+    }
+  }, [user])
+
+  useEffect(() => {
     if (!slug) {
       setNotFound(true)
       setLoading(false)
@@ -274,6 +296,8 @@ export function ArticleDetailPage() {
     setNotFound(false)
     setArticle(null)
     setRelatedArticles([])
+    setComments([])
+    setCommentFeedback(null)
 
     fetch(`/api/articles/${encodeURIComponent(slug)}`, { credentials: 'include' })
       .then(async (res) => {
@@ -316,6 +340,18 @@ export function ArticleDetailPage() {
             }
           })
           .catch(() => {})
+
+        // Fetch approved comments for this article (non-critical)
+        fetch(`/api/comments/article/${data.articleId}`, { credentials: 'include' })
+          .then(async (commentRes) => {
+            if (commentRes.ok) {
+              const commentJson = await commentRes.json().catch(() => null) as {
+                data?: ArticleComment[]
+              } | null
+              setComments(commentJson?.data ?? [])
+            }
+          })
+          .catch(() => {})
       })
       .catch(() => {
         setNotFound(true)
@@ -348,6 +384,63 @@ export function ArticleDetailPage() {
   }
 
   if (!article) return null
+
+  async function handleCommentSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!article) return
+
+    const author = commentAuthor.trim()
+    const email = commentEmail.trim()
+    const content = commentContent.trim()
+
+    if (!author || !email || !content) {
+      setCommentFeedback('Please complete name, email, and comment.')
+      return
+    }
+
+    setSubmittingComment(true)
+    setCommentFeedback(null)
+
+    try {
+      const res = await fetch(`/api/comments/article/${article.articleId}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ author, email, content }),
+      })
+
+      const json = await res.json().catch(() => null) as {
+        data?: { status?: string; commentId?: number; message?: string }
+        error?: string
+      } | null
+
+      if (!res.ok) {
+        throw new Error(json?.error ?? 'Failed to submit comment')
+      }
+
+      const status = json?.data?.status
+      if (status === '1') {
+        const createdComment: ArticleComment = {
+          commentId: json?.data?.commentId ?? Math.floor(Date.now() / 1000),
+          commentAuthor: author,
+          commentDate: Math.floor(Date.now() / 1000),
+          commentContent: content,
+        }
+        setComments((prev) => [...prev, createdComment])
+        setCommentFeedback('Comment posted successfully.')
+      } else if (status === 'spam') {
+        setCommentFeedback('Comment was flagged as spam.')
+      } else {
+        setCommentFeedback('Comment submitted for moderation.')
+      }
+
+      setCommentContent('')
+    } catch (err) {
+      setCommentFeedback(err instanceof Error ? err.message : 'Failed to submit comment')
+    } finally {
+      setSubmittingComment(false)
+    }
+  }
 
   return (
     <article className="space-y-6">
@@ -463,6 +556,83 @@ export function ArticleDetailPage() {
           </ul>
         </section>
       )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Comments */}
+      {/* ------------------------------------------------------------------ */}
+      <section aria-labelledby="comments-heading" className="border-t pt-4 space-y-4">
+        <h2 id="comments-heading" className="text-lg font-semibold text-foreground">
+          Comments ({comments.length})
+        </h2>
+
+        {comments.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No approved comments yet.
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {comments.map((entry) => (
+              <li key={entry.commentId} className="rounded border p-3">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">{entry.commentAuthor}</span>
+                  <span>•</span>
+                  <span>{formatDate(entry.commentDate)}</span>
+                </div>
+                <p className="mt-2 whitespace-pre-wrap text-sm">{entry.commentContent}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <form onSubmit={handleCommentSubmit} className="space-y-3 rounded border p-4">
+          <h3 className="text-sm font-semibold">Leave a Comment</h3>
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="space-y-1 text-sm">
+              <span className="text-muted-foreground">Name</span>
+              <input
+                type="text"
+                value={commentAuthor}
+                onChange={(e) => setCommentAuthor(e.target.value)}
+                className="h-9 w-full rounded border bg-background px-2"
+                maxLength={120}
+                required
+              />
+            </label>
+            <label className="space-y-1 text-sm">
+              <span className="text-muted-foreground">Email</span>
+              <input
+                type="email"
+                value={commentEmail}
+                onChange={(e) => setCommentEmail(e.target.value)}
+                className="h-9 w-full rounded border bg-background px-2"
+                maxLength={255}
+                required
+              />
+            </label>
+          </div>
+          <label className="space-y-1 text-sm block">
+            <span className="text-muted-foreground">Comment</span>
+            <textarea
+              value={commentContent}
+              onChange={(e) => setCommentContent(e.target.value)}
+              className="min-h-28 w-full rounded border bg-background p-2"
+              required
+            />
+          </label>
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={submittingComment}
+              className="rounded bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
+            >
+              {submittingComment ? 'Submitting…' : 'Submit Comment'}
+            </button>
+            {commentFeedback && (
+              <span className="text-sm text-muted-foreground">{commentFeedback}</span>
+            )}
+          </div>
+        </form>
+      </section>
     </article>
   )
 }

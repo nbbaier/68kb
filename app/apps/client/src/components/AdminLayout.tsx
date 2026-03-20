@@ -55,22 +55,38 @@ const SUB_NAV: Record<string, SubNavItem[]> = {
   ],
   users: [
     { label: 'Users', path: '/admin/users' },
+    { label: 'Comments', path: '/admin/comments' },
+    { label: 'User Groups', path: '/admin/usergroups' },
+    { label: 'Failed Logins', path: '/admin/users/failed-logins' },
+  ],
+  comments: [
+    { label: 'Users', path: '/admin/users' },
+    { label: 'Comments', path: '/admin/comments' },
     { label: 'User Groups', path: '/admin/usergroups' },
     { label: 'Failed Logins', path: '/admin/users/failed-logins' },
   ],
   modules: [{ label: 'Modules', path: '/admin/modules' }],
   settings: [
     { label: 'Settings', path: '/admin/settings' },
+    { label: 'Images', path: '/admin/images' },
+    { label: 'Themes', path: '/admin/themes' },
+    { label: 'Utilities', path: '/admin/utilities' },
+  ],
+  images: [
+    { label: 'Settings', path: '/admin/settings' },
+    { label: 'Images', path: '/admin/images' },
     { label: 'Themes', path: '/admin/themes' },
     { label: 'Utilities', path: '/admin/utilities' },
   ],
   themes: [
     { label: 'Settings', path: '/admin/settings' },
+    { label: 'Images', path: '/admin/images' },
     { label: 'Themes', path: '/admin/themes' },
     { label: 'Utilities', path: '/admin/utilities' },
   ],
   utilities: [
     { label: 'Settings', path: '/admin/settings' },
+    { label: 'Images', path: '/admin/images' },
     { label: 'Themes', path: '/admin/themes' },
     { label: 'Utilities', path: '/admin/utilities' },
   ],
@@ -130,10 +146,10 @@ export function AdminLayout() {
                     : item.key === 'articles'
                       ? section === 'articles' || section === 'categories' || section === 'kb'
                       : item.key === 'users'
-                        ? section === 'users' || section === 'usergroups'
+                        ? section === 'users' || section === 'usergroups' || section === 'comments'
                         : item.key === 'settings'
-                          ? section === 'settings' || section === 'themes' || section === 'utilities'
-                        : section === item.key
+                          ? section === 'settings' || section === 'themes' || section === 'utilities' || section === 'images'
+                          : section === item.key
                 return (
                   <li key={item.label}>
                     <Link

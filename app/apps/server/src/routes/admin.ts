@@ -11,6 +11,8 @@ import { createSettingsRoutes } from './settings'
 import { createThemeRoutes } from './themes'
 import { createModuleRoutes } from './modules'
 import { createUtilitiesRoutes } from './utilities'
+import { createImageRoutes } from './images'
+import { createAdminCommentRoutes } from './comments'
 import type { AppVariables, DrizzleDB } from '../types'
 
 export function createAdminRoutes(db: DrizzleDB) {
@@ -76,6 +78,12 @@ export function createAdminRoutes(db: DrizzleDB) {
 
   // Mount utility routes (backup/optimize/repair/cache)
   admin.route('/utilities', createUtilitiesRoutes(db))
+
+  // Mount image manager routes
+  admin.route('/images', createImageRoutes(db))
+
+  // Mount comments moderation routes
+  admin.route('/comments', createAdminCommentRoutes(db))
 
   return admin
 }

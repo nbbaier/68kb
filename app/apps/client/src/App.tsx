@@ -37,6 +37,8 @@ import { AdminSettingsPage } from '@/pages/AdminSettingsPage'
 import { AdminThemesPage } from '@/pages/AdminThemesPage'
 import { AdminModulesPage } from '@/pages/AdminModulesPage'
 import { AdminUtilitiesPage } from '@/pages/AdminUtilitiesPage'
+import { AdminCommentsPage } from '@/pages/AdminCommentsPage'
+import { AdminImagesPage } from '@/pages/AdminImagesPage'
 
 function App() {
   return (
@@ -139,6 +141,7 @@ function App() {
             <Route path="users/new" element={<AdminUserFormPage />} />
             <Route path="users/:id/edit" element={<AdminUserFormPage />} />
             <Route path="users/failed-logins" element={<AdminFailedLoginsPage />} />
+            <Route path="comments" element={<AdminCommentsPage />} />
             <Route path="usergroups" element={<AdminUserGroupsPage />} />
             <Route path="usergroups/new" element={<AdminUserGroupFormPage />} />
             <Route path="usergroups/:id/edit" element={<AdminUserGroupFormPage />} />
@@ -157,6 +160,10 @@ function App() {
             <Route
               path="utilities"
               element={<AdminUtilitiesPage />}
+            />
+            <Route
+              path="images"
+              element={<AdminImagesPage />}
             />
             <Route
               path="account"

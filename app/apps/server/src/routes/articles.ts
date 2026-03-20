@@ -3,7 +3,7 @@ import { eq, like, sql, desc, asc, and, or, inArray } from 'drizzle-orm'
 import { resolve, dirname, extname, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { mkdir, unlink, rm } from 'node:fs/promises'
-import { articles, article2cat, tags, articleTags, attachments, categories, users } from '../db/schema'
+import { articles, article2cat, tags, articleTags, attachments, categories, comments, users } from '../db/schema'
 import { createRequireRole } from '../middleware/auth'
 import type { AppVariables, DrizzleDB } from '../types'
 
@@ -564,6 +564,7 @@ export function createArticleRoutes(db: DrizzleDB) {
     db.delete(articleTags).where(eq(articleTags.tagsArticleId, id)).run()
     db.delete(article2cat).where(eq(article2cat.articleIdRel, id)).run()
     db.delete(attachments).where(eq(attachments.articleId, id)).run()
+    db.delete(comments).where(eq(comments.commentArticleId, id)).run()
     db.delete(articles).where(eq(articles.articleId, id)).run()
 
     // Delete attachment files from disk
