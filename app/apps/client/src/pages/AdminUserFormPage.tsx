@@ -91,8 +91,8 @@ const editUserSchema = z
       .regex(/^[a-zA-Z0-9]+$/, 'Username must be alphanumeric (letters and digits only)'),
     userEmail: z.string().min(1, 'Email address is required').email('Please enter a valid email address'),
     userGroup: z.string().min(1, 'User group is required'),
-    userPassword: z.string().optional().default(''),
-    confirmPassword: z.string().optional().default(''),
+    userPassword: z.string(),
+    confirmPassword: z.string(),
   })
   .refine(
     (data) => {

@@ -23,7 +23,7 @@ const app = createApp(testDb as typeof testDb)
 
 const tmpImageDir = mkdtempSync(join(tmpdir(), 'kb-images-'))
 
-function buildTestPng(width: number, height: number, totalSize = 64): Uint8Array {
+function buildTestPng(width: number, height: number, totalSize = 64): ArrayBuffer {
   const size = Math.max(24, totalSize)
   const bytes = new Uint8Array(size)
   // PNG signature
@@ -37,7 +37,7 @@ function buildTestPng(width: number, height: number, totalSize = 64): Uint8Array
   bytes[21] = (height >>> 16) & 0xff
   bytes[22] = (height >>> 8) & 0xff
   bytes[23] = height & 0xff
-  return bytes
+  return bytes.buffer
 }
 
 function clearDirectoryContents(dir: string): void {
@@ -191,7 +191,7 @@ describe('Admin image manager API', () => {
   it('rejects unsupported file type uploads', async () => {
     const cookie = await login('admin', 'admin123')
     const form = new FormData()
-    form.set('image', new File([new Uint8Array([1, 2, 3])], 'bad.txt', { type: 'text/plain' }))
+    form.set('image', new File([new Uint8Array([1, 2, 3]).buffer], 'bad.txt', { type: 'text/plain' }))
 
     const res = await app.request('/api/admin/images/upload', {
       method: 'POST',

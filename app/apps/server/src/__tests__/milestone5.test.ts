@@ -39,7 +39,7 @@ function uniqueUsername(prefix: string): string {
   return `${prefix}${Date.now()}${uniqueCounter}`
 }
 
-function buildTestPng(width: number, height: number, totalSize = 64): Uint8Array {
+function buildTestPng(width: number, height: number, totalSize = 64): ArrayBuffer {
   const size = Math.max(24, totalSize)
   const bytes = new Uint8Array(size)
   bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0)
@@ -51,7 +51,7 @@ function buildTestPng(width: number, height: number, totalSize = 64): Uint8Array
   bytes[21] = (height >>> 16) & 0xff
   bytes[22] = (height >>> 8) & 0xff
   bytes[23] = height & 0xff
-  return bytes
+  return bytes.buffer
 }
 
 function getSessionCookie(res: Response): string {

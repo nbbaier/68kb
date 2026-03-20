@@ -10,22 +10,24 @@ The port is organized into 5 milestones with 341 behavioral validation assertion
 
 ## Progress Summary
 
-| Metric | Value |
-|---|---|
-| **Overall completion** | **91%** (309/341 assertions implemented) |
-| **Milestones complete** | 5 of 5 implemented (3 of 5 sealed) |
-| **Features complete** | 45 of 45 |
-| **Features remaining** | 0 |
-| **Git commits** | 89 |
-| **Server code** | ~7,608 lines across 25 TypeScript source files |
-| **Client code** | ~11,594 lines across 58 TypeScript/TSX source files |
-| **Server tests** | 370 passing |
-| **Client tests** | 259 passing |
-| **Total tests** | 629 passing, 0 failing |
-| **Schema tables** | 19 (original PHP app's 17 + 2 new) |
-| **API route files** | 17 |
-| **Client pages** | 35 |
-| **UI components** | 18 (shadcn/ui based) |
+| Metric                  | Value                                               |
+| ----------------------- | --------------------------------------------------- |
+| **Overall completion**  | **91%** (309/341 assertions implemented)            |
+| **Milestones complete** | 5 of 5 implemented (3 of 5 sealed)                  |
+| **Features complete**   | 45 of 45                                            |
+| **Features remaining**  | 0                                                   |
+| **Git commits**         | 90                                                  |
+| **Server code**         | ~7,608 lines across 25 TypeScript source files      |
+| **Client code**         | ~11,594 lines across 58 TypeScript/TSX source files |
+| **Server tests**        | 370 passing                                         |
+| **Client tests**        | 259 passing                                         |
+| **Total tests**         | 629 passing, 0 failing                              |
+| **Typecheck**           | Passing (`bun run typecheck`)                       |
+| **Build**               | Passing (`bun run build`)                           |
+| **Schema tables**       | 19 (original PHP app's 17 + 2 new)                  |
+| **API route files**     | 17                                                  |
+| **Client pages**        | 35                                                  |
+| **UI components**       | 18 total (15 in `components/ui` + 3 shared layout/auth) |
 
 ---
 
@@ -36,6 +38,7 @@ The port is organized into 5 milestones with 341 behavioral validation assertion
 **Assertions: 62/62 passed | Validation rounds: 3**
 
 What was built:
+
 - Bun workspaces monorepo (`apps/server` + `apps/client`)
 - Hono API server on port 3100, Vite dev server on port 3101
 - 19-table Drizzle ORM schema with programmatic migrations and seed data
@@ -51,6 +54,7 @@ What was built:
 **Assertions: 68/69 passed (1 deferred to M3) | Validation rounds: 3**
 
 What was built:
+
 - Articles CRUD API (7 endpoints: list, get, create, update, delete, attachments, user search)
 - Articles admin UI: DataTable grid with search/sort/pagination, add/edit form with Tiptap WYSIWYG editor
 - Category management: hierarchical categories with nested URIs, image upload, tree display
@@ -63,6 +67,7 @@ What was built:
 **Assertions: 55/55 passed | Validation rounds: 3**
 
 What was built:
+
 - Public layout with responsive nav, sidebar with category tree + search, footer
 - Homepage with category grid, popular articles, recent articles
 - Article detail page with HTML rendering, view counter, attachments, glossary tooltips (DOM TreeWalker)
@@ -77,6 +82,7 @@ What was built:
 **Assertions: 49/49 implemented | Features: 6 completed, 0 remaining**
 
 Completed features:
+
 - **user-crud-admin**: Admin user list/add/edit with group assignment, password management
 - **user-notes**: Admin notes system for user accounts
 - **user-groups-crud**: Group management API + admin UI (CRUD, 11 permission fields, member counts, system group protection)
@@ -90,35 +96,35 @@ Completed features:
 
 Completed features:
 
-| Feature | Assertions | What it covers |
-|---|---|---|
-| `site-settings` | 10 | Admin settings page (site name, email, max search results, registration toggle, etc.) |
-| `theme-management` | 7 | Theme listing, activation, validation (layout.php check) |
-| `addon-management` | 13 | Module/addon system (activate/deactivate/uninstall, dependency checking, hook system) |
-| `db-utilities` | 5 | Database optimize, repair, backup (.gz download), cache clearing |
-| `rss-feeds` | 6 | RSS 2.0 XML feeds (global + per-category), proper XML escaping |
-| `image-manager` | 11 | Image upload with type/size/dimension validation, thumbnail generation, browse/delete |
-| `comments-system` | 15 | Article comments (spam detection, auto-approve returning users, admin moderation, display) |
-| `cross-area-flows` | 8 | End-to-end integration flows spanning all features (article lifecycle, user registration through profile, admin workflow, search indexing, theme/addon interaction, settings propagation, guest-to-user, data integrity) |
+| Feature            | Assertions | What it covers                                                                                                                                                                                                           |
+| ------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `site-settings`    | 10         | Admin settings page (site name, email, max search results, registration toggle, etc.)                                                                                                                                    |
+| `theme-management` | 7          | Theme listing, activation, validation (layout.php check)                                                                                                                                                                 |
+| `addon-management` | 13         | Module/addon system (activate/deactivate/uninstall, dependency checking, hook system)                                                                                                                                    |
+| `db-utilities`     | 5          | Database optimize, repair, backup (.gz download), cache clearing                                                                                                                                                         |
+| `rss-feeds`        | 6          | RSS 2.0 XML feeds (global + per-category), proper XML escaping                                                                                                                                                           |
+| `image-manager`    | 11         | Image upload with type/size/dimension validation, thumbnail generation, browse/delete                                                                                                                                    |
+| `comments-system`  | 15         | Article comments (spam detection, auto-approve returning users, admin moderation, display)                                                                                                                               |
+| `cross-area-flows` | 8          | End-to-end integration flows spanning all features (article lifecycle, user registration through profile, admin workflow, search indexing, theme/addon interaction, settings propagation, guest-to-user, data integrity) |
 
 ---
 
 ## Technology Stack
 
-| Layer | Technology |
-|---|---|
-| Runtime | Bun |
-| API Framework | Hono |
-| Database | SQLite (bun:sqlite) |
-| ORM | Drizzle ORM |
-| Frontend | React 19 + Vite |
-| Routing | React Router |
-| UI Components | shadcn/ui + Tailwind CSS v4 |
-| Forms | react-hook-form + zod |
-| Rich Text | Tiptap |
-| Data Tables | @tanstack/react-table |
-| Auth | hono-sessions (session-based) |
-| Testing | Bun test (server) + Vitest (client) |
+| Layer         | Technology                          |
+| ------------- | ----------------------------------- |
+| Runtime       | Bun                                 |
+| API Framework | Hono                                |
+| Database      | SQLite (bun:sqlite)                 |
+| ORM           | Drizzle ORM                         |
+| Frontend      | React 19 + Vite                     |
+| Routing       | React Router                        |
+| UI Components | shadcn/ui + Tailwind CSS v4         |
+| Forms         | react-hook-form + zod               |
+| Rich Text     | Tiptap                              |
+| Data Tables   | @tanstack/react-table               |
+| Auth          | hono-sessions (session-based)       |
+| Testing       | Bun test (server) + Vitest (client) |
 
 ---
 
@@ -174,7 +180,7 @@ Completed features:
       client/                   # React + Vite frontend
         src/
           pages/                # 35 page components
-          components/           # 18 shared components (shadcn/ui)
+          components/           # 18 shared components (15 ui + 3 layout/auth)
           contexts/             # AuthContext
           lib/                  # Utilities
   upload/                       # Original PHP application
@@ -194,3 +200,4 @@ Completed features:
 - Validation synthesis artifacts currently exist for milestones 1-3 under `.factory/validation/*`; milestone 4 and 5 validation artifacts are still pending.
 - All 3 sealed milestones went through multiple validation rounds each, with fix features created and re-validated for each round of failures.
 - No failing tests in the current codebase (370 server + 259 client = 629 total).
+- Build and typecheck gates are currently passing (`bun run build`, `bun run typecheck`).

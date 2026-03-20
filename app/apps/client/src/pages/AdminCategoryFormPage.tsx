@@ -67,18 +67,14 @@ const categorySchema = z.object({
     .regex(
       /^[a-zA-Z0-9_-]*$/,
       'URI may only contain letters, numbers, hyphens, and underscores',
-    )
-    .or(z.literal(''))
-    .optional()
-    .default(''),
-  description: z.string().default(''),
-  display: z.enum(['yes', 'no']).default('yes'),
-  allowAds: z.enum(['yes', 'no']).default('yes'),
-  parent: z.string().default('0'),
-  keywords: z.string().default(''),
+    ),
+  description: z.string(),
+  display: z.enum(['yes', 'no']),
+  allowAds: z.enum(['yes', 'no']),
+  parent: z.string(),
+  keywords: z.string(),
   order: z
     .string()
-    .default('0')
     .refine(
       (v) => v === '' || !isNaN(Number(v)),
       'Order must be a numeric value',
@@ -331,7 +327,8 @@ export function AdminCategoryFormPage() {
         const cat = json.data
 
         // Derive the last URI segment for the form input
-        const uriSegment = cat.catUri ? cat.catUri.split('/').at(-1) ?? cat.catUri : ''
+        const uriParts = cat.catUri.split('/')
+        const uriSegment = cat.catUri ? uriParts[uriParts.length - 1] ?? cat.catUri : ''
 
         form.reset({
           name: cat.catName,

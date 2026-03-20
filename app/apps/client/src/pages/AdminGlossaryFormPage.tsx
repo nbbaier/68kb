@@ -23,7 +23,7 @@ import {
 
 const glossarySchema = z.object({
   gTerm: z.string().min(1, 'Term is required'),
-  gDefinition: z.string().default(''),
+  gDefinition: z.string(),
 })
 
 type GlossaryFormValues = z.infer<typeof glossarySchema>

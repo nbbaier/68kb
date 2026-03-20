@@ -90,22 +90,18 @@ const articleSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   uri: z
     .string()
-    .regex(/^[a-zA-Z0-9_-]*$/, 'URI may only contain letters, numbers, hyphens, and underscores')
-    .optional()
-    .or(z.literal('')),
-  shortDesc: z.string().optional().default(''),
-  description: z.string().optional().default(''),
-  display: z.enum(['y', 'n']).default('n'),
-  keywords: z.string().optional().default(''),
+    .regex(/^[a-zA-Z0-9_-]*$/, 'URI may only contain letters, numbers, hyphens, and underscores'),
+  shortDesc: z.string(),
+  description: z.string(),
+  display: z.enum(['y', 'n']),
+  keywords: z.string(),
   order: z
     .string()
-    .optional()
     .refine(
-      (v) => v === '' || v === undefined || !isNaN(Number(v)),
+      (v) => v === '' || !isNaN(Number(v)),
       'Order must be a numeric value',
-    )
-    .default('0'),
-  categories: z.array(z.number()).default([]),
+    ),
+  categories: z.array(z.number()),
 })
 
 type ArticleFormValues = z.infer<typeof articleSchema>
@@ -169,7 +165,7 @@ function RichTextEditor({
   // Sync value when form is reset (e.g. after article data loads)
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value, false)
+      editor.commands.setContent(value, { emitUpdate: false })
     }
   }, [value, editor])
 
