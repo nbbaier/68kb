@@ -58,6 +58,40 @@ testDb
       canManageModules: 'n',
       canSearch: 'y',
     },
+    {
+      groupId: 4,
+      groupName: 'Banned',
+      groupDescription: 'Banned Users',
+      canViewSite: 'n',
+      canAccessAdmin: 'n',
+      canManageArticles: 'n',
+      canDeleteArticles: 'n',
+      canManageUsers: 'n',
+      canManageCategories: 'n',
+      canDeleteCategories: 'n',
+      canManageSettings: 'n',
+      canManageUtilities: 'n',
+      canManageThemes: 'n',
+      canManageModules: 'n',
+      canSearch: 'n',
+    },
+    {
+      groupId: 3,
+      groupName: 'Pending',
+      groupDescription: 'Pending Users (no site access)',
+      canViewSite: 'n',
+      canAccessAdmin: 'n',
+      canManageArticles: 'n',
+      canDeleteArticles: 'n',
+      canManageUsers: 'n',
+      canManageCategories: 'n',
+      canDeleteCategories: 'n',
+      canManageSettings: 'n',
+      canManageUtilities: 'n',
+      canManageThemes: 'n',
+      canManageModules: 'n',
+      canSearch: 'n',
+    },
   ])
   .run()
 
@@ -65,23 +99,55 @@ testDb
 let adminPasswordHash: string
 beforeAll(async () => {
   adminPasswordHash = await Bun.password.hash('admin123', { algorithm: 'bcrypt', cost: 12 })
+  const bannedHash = await Bun.password.hash('banned123', { algorithm: 'bcrypt', cost: 12 })
+  const pendingHash = await Bun.password.hash('pending123', { algorithm: 'bcrypt', cost: 12 })
   const now = Math.floor(Date.now() / 1000)
   testDb
     .insert(schema.users)
-    .values({
-      userIp: '127.0.0.1',
-      userEmail: 'admin@example.com',
-      userUsername: 'admin',
-      userPassword: adminPasswordHash,
-      userGroup: 1,
-      userJoinDate: now,
-      userLastLogin: 0,
-      lastActivity: 0,
-      userCookie: '',
-      userSession: '',
-      userApiKey: 'testadminapikey123456789012345678',
-      userVerify: '',
-    })
+    .values([
+      {
+        userIp: '127.0.0.1',
+        userEmail: 'admin@example.com',
+        userUsername: 'admin',
+        userPassword: adminPasswordHash,
+        userGroup: 1,
+        userJoinDate: now,
+        userLastLogin: 0,
+        lastActivity: 0,
+        userCookie: '',
+        userSession: '',
+        userApiKey: 'test-admin-key',
+        userVerify: '',
+      },
+      {
+        userIp: '127.0.0.1',
+        userEmail: 'banned@example.com',
+        userUsername: 'banneduser',
+        userPassword: bannedHash,
+        userGroup: 4,
+        userJoinDate: now,
+        userLastLogin: 0,
+        lastActivity: 0,
+        userCookie: '',
+        userSession: '',
+        userApiKey: 'test-banned-key',
+        userVerify: '',
+      },
+      {
+        userIp: '127.0.0.1',
+        userEmail: 'pending@example.com',
+        userUsername: 'pendinguser',
+        userPassword: pendingHash,
+        userGroup: 3,
+        userJoinDate: now,
+        userLastLogin: 0,
+        lastActivity: 0,
+        userCookie: '',
+        userSession: '',
+        userApiKey: 'test-pending-key',
+        userVerify: '',
+      },
+    ])
     .run()
 })
 
@@ -243,6 +309,34 @@ describe('POST /api/auth/login', () => {
       headers: cookieHeader ? { Cookie: cookieHeader } : {},
     })
     expect(meRes.status).toBe(401)
+  })
+
+  it('returns 403 for banned user login attempt (VAL-RBAC-013)', async () => {
+    const res = await app.request('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'banneduser', password: 'banned123' }),
+    })
+    expect(res.status).toBe(403)
+    const json = await res.json()
+    expect(json.error).toContain('banned')
+    // Must NOT set a session cookie
+    const cookies = (res.headers as unknown as { getSetCookie(): string[] }).getSetCookie()
+    expect(cookies).toHaveLength(0)
+  })
+
+  it('returns 403 for user whose group has can_view_site=n (VAL-RBAC-012)', async () => {
+    const res = await app.request('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'pendinguser', password: 'pending123' }),
+    })
+    expect(res.status).toBe(403)
+    const json = await res.json()
+    expect(json.error).toBeDefined()
+    // Must NOT set a session cookie
+    const cookies = (res.headers as unknown as { getSetCookie(): string[] }).getSetCookie()
+    expect(cookies).toHaveLength(0)
   })
 
   it('failed login with existing session: no Set-Cookie emitted, original session preserved (VAL-AUTH-003/004)', async () => {
