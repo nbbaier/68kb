@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { eq, desc, asc, and, count, inArray, ne } from 'drizzle-orm'
-import { categories, articles, article2cat, settings, attachments, glossary, articleTags } from '../db/schema'
+import { categories, articles, article2cat, settings, attachments, glossary, articleTags, users } from '../db/schema'
 import type { AppVariables, DrizzleDB } from '../types'
 
 // ---------------------------------------------------------------------------
@@ -417,6 +417,16 @@ export function createPublicArticleRoutes(db: DrizzleDB) {
       .from(glossary)
       .all()
 
+    let articleAuthorUsername: string | null = null
+    if (article.articleAuthor > 0) {
+      const author = db
+        .select({ userUsername: users.userUsername })
+        .from(users)
+        .where(eq(users.userId, article.articleAuthor))
+        .get()
+      articleAuthorUsername = author?.userUsername ?? null
+    }
+
     return c.json({
       data: {
         articleId: article.articleId,
@@ -430,6 +440,7 @@ export function createPublicArticleRoutes(db: DrizzleDB) {
         articleDisplay: article.articleDisplay,
         articleHits: article.articleHits,
         articleAuthor: article.articleAuthor,
+        articleAuthorUsername,
         categories: articleCategories,
         attachments: attachmentList,
         glossaryTerms,

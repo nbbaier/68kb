@@ -36,6 +36,7 @@ type ArticleDetail = {
   articleDisplay: string
   articleHits: number
   articleAuthor: number
+  articleAuthorUsername: string | null
   categories: ArticleCategory[]
   attachments: ArticleAttachment[]
   glossaryTerms: GlossaryTerm[]
@@ -369,6 +370,17 @@ export function ArticleDetailPage() {
           <span className="font-medium">Views:</span>{' '}
           {article.articleHits}
         </span>
+        {article.articleAuthorUsername && (
+          <span>
+            <span className="font-medium">Author:</span>{' '}
+            <Link
+              to={`/users/profile/${encodeURIComponent(article.articleAuthorUsername)}`}
+              className="text-primary hover:underline"
+            >
+              {article.articleAuthorUsername}
+            </Link>
+          </span>
+        )}
       </div>
 
       {/* ------------------------------------------------------------------ */}

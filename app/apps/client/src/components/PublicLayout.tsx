@@ -145,6 +145,7 @@ export function PublicLayout() {
   }, [location.pathname])
 
   const currentYear = new Date().getFullYear()
+  const accountPath = user?.permissions.canAccessAdmin ? '/admin' : '/account'
 
   // Determine active nav item
   const getIsActive = useCallback((path: string) => {
@@ -202,13 +203,13 @@ export function PublicLayout() {
               {user ? (
                 <>
                   <Link
-                    to="/admin"
+                    to={accountPath}
                     className="text-muted-foreground hover:text-foreground transition-colors hidden sm:inline truncate max-w-[120px]"
                   >
                     Welcome, {user.username}
                   </Link>
                   <Link
-                    to="/admin"
+                    to={accountPath}
                     className="text-muted-foreground hover:text-foreground transition-colors text-xs sm:text-sm"
                   >
                     My Account

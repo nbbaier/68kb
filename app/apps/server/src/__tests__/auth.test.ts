@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterEach } from 'bun:test'
+import { describe, it, expect, beforeAll, beforeEach, afterEach } from 'bun:test'
 import { Database } from 'bun:sqlite'
 import { drizzle } from 'drizzle-orm/bun-sqlite'
 import { migrate } from 'drizzle-orm/bun-sqlite/migrator'
@@ -114,6 +114,11 @@ async function loginAsAdmin(): Promise<string> {
 // POST /api/auth/login
 // ---------------------------------------------------------------------------
 describe('POST /api/auth/login', () => {
+  beforeEach(() => {
+    // Keep throttle-related state isolated per test.
+    testDb.delete(schema.failedLogins).run()
+  })
+
   it('returns 200 and sets session cookie with valid credentials', async () => {
     const res = await app.request('/api/auth/login', {
       method: 'POST',

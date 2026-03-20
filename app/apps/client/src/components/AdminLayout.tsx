@@ -48,9 +48,25 @@ const SUB_NAV: Record<string, SubNavItem[]> = {
     { label: 'Categories', path: '/admin/categories' },
     { label: 'Glossary', path: '/admin/kb/glossary' },
   ],
-  users: [{ label: 'Users', path: '/admin/users' }],
+  usergroups: [
+    { label: 'Users', path: '/admin/users' },
+    { label: 'User Groups', path: '/admin/usergroups' },
+    { label: 'Failed Logins', path: '/admin/users/failed-logins' },
+  ],
+  users: [
+    { label: 'Users', path: '/admin/users' },
+    { label: 'User Groups', path: '/admin/usergroups' },
+    { label: 'Failed Logins', path: '/admin/users/failed-logins' },
+  ],
   modules: [{ label: 'Modules', path: '/admin/modules' }],
-  settings: [{ label: 'Settings', path: '/admin/settings' }],
+  settings: [
+    { label: 'Settings', path: '/admin/settings' },
+    { label: 'Themes', path: '/admin/themes' },
+  ],
+  themes: [
+    { label: 'Settings', path: '/admin/settings' },
+    { label: 'Themes', path: '/admin/themes' },
+  ],
 }
 
 /**
@@ -106,7 +122,11 @@ export function AdminLayout() {
                     ? section === ''
                     : item.key === 'articles'
                       ? section === 'articles' || section === 'categories' || section === 'kb'
-                      : section === item.key
+                      : item.key === 'users'
+                        ? section === 'users' || section === 'usergroups'
+                        : item.key === 'settings'
+                          ? section === 'settings' || section === 'themes'
+                        : section === item.key
                 return (
                   <li key={item.label}>
                     <Link

@@ -191,6 +191,9 @@ export function createCategoryRoutes(db: DrizzleDB) {
   const requireManageCategories = createRequireRole(db)('canManageCategories')
   const requireDeleteCategories = createRequireRole(db)('canDeleteCategories')
 
+  // All category admin routes require category-management permission
+  router.use('*', requireManageCategories)
+
   // -------------------------------------------------------------------------
   // GET /api/admin/categories
   // Return all categories in tree order with depth
@@ -292,7 +295,7 @@ export function createCategoryRoutes(db: DrizzleDB) {
   // Requires: can_manage_categories
   // Accepts multipart form data (for image upload) or JSON
   // -------------------------------------------------------------------------
-  router.post('/', requireManageCategories, async (c) => {
+  router.post('/', async (c) => {
     let body: Record<string, unknown>
     let imageFile: File | null = null
 
@@ -446,7 +449,7 @@ export function createCategoryRoutes(db: DrizzleDB) {
   // Update a category
   // Requires: can_manage_categories
   // -------------------------------------------------------------------------
-  router.put('/:id', requireManageCategories, async (c) => {
+  router.put('/:id', async (c) => {
     const id = parseInt(c.req.param('id'), 10)
     if (isNaN(id) || id <= 0) {
       return c.json({ error: 'Invalid category ID' }, 400)
@@ -624,7 +627,7 @@ export function createCategoryRoutes(db: DrizzleDB) {
   // Delete the image for a category
   // Requires: can_manage_categories
   // -------------------------------------------------------------------------
-  router.delete('/:id/image', requireManageCategories, async (c) => {
+  router.delete('/:id/image', async (c) => {
     const id = parseInt(c.req.param('id'), 10)
     if (isNaN(id) || id <= 0) {
       return c.json({ error: 'Invalid category ID' }, 400)

@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { eq, inArray, sql } from 'drizzle-orm'
 import { glossary } from '../db/schema'
+import { createRequireRole } from '../middleware/auth'
 import type { AppVariables, DrizzleDB } from '../types'
 
 // ---------------------------------------------------------------------------
@@ -78,6 +79,10 @@ export function createPublicGlossaryRoutes(db: DrizzleDB) {
 
 export function createAdminGlossaryRoutes(db: DrizzleDB) {
   const router = new Hono<{ Variables: AppVariables }>()
+  const requireManageArticles = createRequireRole(db)('canManageArticles')
+
+  // Glossary administration is part of article-management permissions
+  router.use('*', requireManageArticles)
 
   // -------------------------------------------------------------------------
   // GET /api/admin/glossary

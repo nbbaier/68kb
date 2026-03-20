@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { eq } from 'drizzle-orm'
+import { and, desc, eq, gte, ne } from 'drizzle-orm'
 import { users, failedLogins, userGroups } from '../db/schema'
 import type { AppVariables, DrizzleDB } from '../types'
 
@@ -29,6 +29,80 @@ const PERMISSION_KEYS = [
 ] as const
 
 const INVALID_CREDENTIALS_MSG = 'Invalid username or password'
+const LOGIN_THROTTLE_WINDOW_SECONDS = 24 * 60 * 60
+const LOGIN_THROTTLE_DELAY_1_ATTEMPTS = 3
+const LOGIN_THROTTLE_DELAY_1_SECONDS = 30
+const LOGIN_THROTTLE_DELAY_2_ATTEMPTS = 5
+const LOGIN_THROTTLE_DELAY_2_SECONDS = 60
+const LOGIN_LOCKOUT_ATTEMPTS = 10
+
+type LoginThrottleState = {
+  blocked: boolean
+  stage: 'none' | 'delay30' | 'delay60' | 'lockout'
+  retryAfterSeconds: number
+}
+
+function getClientIpFromHeaders(c: { req: { header: (name: string) => string | undefined } }): string {
+  const raw = c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip') ?? '127.0.0.1'
+  return raw.split(',')[0]?.trim() || '127.0.0.1'
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+function isAlphanumeric(value: string): boolean {
+  return /^[a-zA-Z0-9]+$/.test(value)
+}
+
+function recordFailedLogin(db: DrizzleDB, username: string, ip: string, date: number): void {
+  db.insert(failedLogins).values({
+    failedUsername: username,
+    failedIp: ip,
+    failedDate: date,
+  }).run()
+}
+
+function getLoginThrottleState(db: DrizzleDB, ip: string, now: number): LoginThrottleState {
+  const cutoff = now - LOGIN_THROTTLE_WINDOW_SECONDS
+
+  const recentAttempts = db
+    .select({ failedDate: failedLogins.failedDate })
+    .from(failedLogins)
+    .where(and(eq(failedLogins.failedIp, ip), gte(failedLogins.failedDate, cutoff)))
+    .orderBy(desc(failedLogins.failedDate))
+    .all()
+
+  const attempts = recentAttempts.length
+  const lastFailedAt = recentAttempts[0]?.failedDate ?? 0
+  const sinceLastFail = Math.max(0, now - lastFailedAt)
+
+  if (attempts >= LOGIN_LOCKOUT_ATTEMPTS) {
+    return {
+      blocked: true,
+      stage: 'lockout',
+      retryAfterSeconds: Math.max(0, LOGIN_THROTTLE_WINDOW_SECONDS - sinceLastFail),
+    }
+  }
+
+  if (attempts >= LOGIN_THROTTLE_DELAY_2_ATTEMPTS && sinceLastFail < LOGIN_THROTTLE_DELAY_2_SECONDS) {
+    return {
+      blocked: true,
+      stage: 'delay60',
+      retryAfterSeconds: LOGIN_THROTTLE_DELAY_2_SECONDS - sinceLastFail,
+    }
+  }
+
+  if (attempts >= LOGIN_THROTTLE_DELAY_1_ATTEMPTS && sinceLastFail < LOGIN_THROTTLE_DELAY_1_SECONDS) {
+    return {
+      blocked: true,
+      stage: 'delay30',
+      retryAfterSeconds: LOGIN_THROTTLE_DELAY_1_SECONDS - sinceLastFail,
+    }
+  }
+
+  return { blocked: false, stage: 'none', retryAfterSeconds: 0 }
+}
 
 export function createAuthRoutes(db: DrizzleDB) {
   const auth = new Hono<{ Variables: AppVariables }>()
@@ -51,8 +125,30 @@ export function createAuthRoutes(db: DrizzleDB) {
       return c.json({ error: 'Username and password are required' }, 400)
     }
 
-    const ip = c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip') ?? '127.0.0.1'
+    const ip = getClientIpFromHeaders(c)
     const now = Math.floor(Date.now() / 1000)
+    const throttle = getLoginThrottleState(db, ip, now)
+
+    if (throttle.blocked) {
+      recordFailedLogin(db, username, ip, now)
+
+      // Delete session to ensure no session cookie is set/retained on blocked login responses
+      const session = c.get('session')
+      session.deleteSession()
+
+      const error =
+        throttle.stage === 'lockout'
+          ? 'Too many failed login attempts. This IP is temporarily locked.'
+          : 'Too many failed login attempts. Please wait before trying again.'
+
+      return c.json(
+        {
+          error,
+          retryAfterSeconds: throttle.retryAfterSeconds,
+        },
+        429,
+      )
+    }
 
     // Find user by username
     const user = db.select().from(users).where(eq(users.userUsername, username)).get()
@@ -62,11 +158,7 @@ export function createAuthRoutes(db: DrizzleDB) {
       // preventing timing-based username enumeration attacks.
       await Bun.password.verify(password, DUMMY_BCRYPT_HASH)
       // Track failed login — same response as wrong password (anti-enumeration)
-      db.insert(failedLogins).values({
-        failedUsername: username,
-        failedIp: ip,
-        failedDate: now,
-      }).run()
+      recordFailedLogin(db, username, ip, now)
       // Delete session to ensure no session cookie is set/retained on 401 responses
       const session = c.get('session')
       session.deleteSession()
@@ -78,16 +170,15 @@ export function createAuthRoutes(db: DrizzleDB) {
 
     if (!isValid) {
       // Track failed login
-      db.insert(failedLogins).values({
-        failedUsername: username,
-        failedIp: ip,
-        failedDate: now,
-      }).run()
+      recordFailedLogin(db, username, ip, now)
       // Delete session to ensure no session cookie is set/retained on 401 responses
       const session = c.get('session')
       session.deleteSession()
       return c.json({ error: INVALID_CREDENTIALS_MSG }, 401)
     }
+
+    // Successful login resets recent failed attempts for this IP.
+    db.delete(failedLogins).where(eq(failedLogins.failedIp, ip)).run()
 
     // Update last login timestamp
     db.update(users)
@@ -145,8 +236,7 @@ export function createAuthRoutes(db: DrizzleDB) {
     }
 
     // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email!)) {
+    if (!isValidEmail(email!)) {
       return c.json({ error: 'Validation failed', errors: { email: 'Invalid email format' } }, 400)
     }
 
@@ -184,7 +274,7 @@ export function createAuthRoutes(db: DrizzleDB) {
 
     const now = Math.floor(Date.now() / 1000)
     const apiKey = crypto.randomUUID().replace(/-/g, '')
-    const ip = c.req.header('x-forwarded-for') ?? c.req.header('x-real-ip') ?? '127.0.0.1'
+    const ip = getClientIpFromHeaders(c)
 
     // Create user in group 2 (Registered)
     const result = db
@@ -320,6 +410,150 @@ export function createAuthRoutes(db: DrizzleDB) {
         newPassword,
       },
     })
+  })
+
+  // ---------------------------------------------------------------------------
+  // GET /api/auth/account
+  // Return account details for the currently authenticated user
+  // ---------------------------------------------------------------------------
+  auth.get('/account', (c) => {
+    const session = c.get('session')
+    const userId = session.get('userId')
+
+    if (!userId) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const user = db
+      .select({
+        userId: users.userId,
+        userUsername: users.userUsername,
+        userEmail: users.userEmail,
+        userGroup: users.userGroup,
+        userJoinDate: users.userJoinDate,
+        userLastLogin: users.userLastLogin,
+      })
+      .from(users)
+      .where(eq(users.userId, userId))
+      .get()
+
+    if (!user) {
+      return c.json({ error: 'User not found' }, 404)
+    }
+
+    return c.json({ data: user })
+  })
+
+  // ---------------------------------------------------------------------------
+  // PUT /api/auth/account
+  // Update account settings (email required, username optional, password optional)
+  // ---------------------------------------------------------------------------
+  auth.put('/account', async (c) => {
+    const session = c.get('session')
+    const userId = session.get('userId')
+
+    if (!userId) {
+      return c.json({ error: 'Unauthorized' }, 401)
+    }
+
+    const existingUser = db
+      .select({
+        userId: users.userId,
+        userUsername: users.userUsername,
+        userEmail: users.userEmail,
+      })
+      .from(users)
+      .where(eq(users.userId, userId))
+      .get()
+
+    if (!existingUser) {
+      return c.json({ error: 'User not found' }, 404)
+    }
+
+    let body: {
+      userUsername?: string
+      userEmail?: string
+      userPassword?: string
+      confirmPassword?: string
+    }
+    try {
+      body = await c.req.json()
+    } catch {
+      return c.json({ error: 'Invalid request body' }, 400)
+    }
+
+    const email = (body.userEmail ?? '').trim()
+    const providedUsername = body.userUsername === undefined ? undefined : body.userUsername.trim()
+    const password = body.userPassword ?? ''
+    const confirmPassword = body.confirmPassword ?? ''
+
+    if (!email) {
+      return c.json({ error: 'Email is required' }, 400)
+    }
+    if (!isValidEmail(email)) {
+      return c.json({ error: 'Please enter a valid email address' }, 400)
+    }
+
+    const username = providedUsername ?? existingUser.userUsername
+
+    if (!username) {
+      return c.json({ error: 'Username is required' }, 400)
+    }
+    if (!isAlphanumeric(username)) {
+      return c.json({ error: 'Username must be alphanumeric (letters and digits only)' }, 400)
+    }
+
+    if (password && password !== confirmPassword) {
+      return c.json({ error: 'Passwords do not match' }, 400)
+    }
+
+    const existingEmail = db
+      .select({ userId: users.userId })
+      .from(users)
+      .where(and(eq(users.userEmail, email), ne(users.userId, userId)))
+      .get()
+    if (existingEmail) {
+      return c.json({ error: 'Email address is already in use' }, 400)
+    }
+
+    const existingUsername = db
+      .select({ userId: users.userId })
+      .from(users)
+      .where(and(eq(users.userUsername, username), ne(users.userId, userId)))
+      .get()
+    if (existingUsername) {
+      return c.json({ error: 'Username is already in use' }, 400)
+    }
+
+    const now = Math.floor(Date.now() / 1000)
+    const updateData: Partial<typeof users.$inferInsert> = {
+      userEmail: email,
+      userUsername: username,
+      lastActivity: now,
+    }
+
+    if (password) {
+      updateData.userPassword = await Bun.password.hash(password, { algorithm: 'bcrypt', cost: 12 })
+    }
+
+    const [updated] = db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.userId, userId))
+      .returning({
+        userId: users.userId,
+        userUsername: users.userUsername,
+        userEmail: users.userEmail,
+        userGroup: users.userGroup,
+        userJoinDate: users.userJoinDate,
+        userLastLogin: users.userLastLogin,
+      })
+      .all()
+
+    // Keep session username in sync if it changed.
+    session.set('username', updated.userUsername)
+
+    return c.json({ data: updated })
   })
 
   // ---------------------------------------------------------------------------

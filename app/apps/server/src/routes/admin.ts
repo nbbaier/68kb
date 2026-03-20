@@ -1,11 +1,14 @@
 import { Hono } from 'hono'
-import { eq, count, asc } from 'drizzle-orm'
-import { settings, users, userGroups } from '../db/schema'
+import { eq, count } from 'drizzle-orm'
+import { settings, users } from '../db/schema'
 import { createRequireAdmin } from '../middleware/auth'
 import { createArticleRoutes } from './articles'
 import { createCategoryRoutes } from './categories'
 import { createUserRoutes } from './users'
 import { createAdminGlossaryRoutes } from './glossary'
+import { createUserGroupRoutes } from './usergroups'
+import { createSettingsRoutes } from './settings'
+import { createThemeRoutes } from './themes'
 import type { AppVariables, DrizzleDB } from '../types'
 
 export function createAdminRoutes(db: DrizzleDB) {
@@ -45,27 +48,6 @@ export function createAdminRoutes(db: DrizzleDB) {
     })
   })
 
-  // ---------------------------------------------------------------------------
-  // GET /api/admin/usergroups
-  // Minimal listing of all user groups (used by user add/edit forms).
-  // Full CRUD is implemented by the user-groups-crud feature.
-  // ---------------------------------------------------------------------------
-  admin.get('/usergroups', (c) => {
-    const groups = db
-      .select({
-        groupId: userGroups.groupId,
-        groupName: userGroups.groupName,
-        groupDescription: userGroups.groupDescription,
-        canAccessAdmin: userGroups.canAccessAdmin,
-        canManageUsers: userGroups.canManageUsers,
-      })
-      .from(userGroups)
-      .orderBy(asc(userGroups.groupId))
-      .all()
-
-    return c.json({ data: groups })
-  })
-
   // Mount articles CRUD routes
   admin.route('/articles', createArticleRoutes(db))
 
@@ -75,8 +57,17 @@ export function createAdminRoutes(db: DrizzleDB) {
   // Mount user routes (includes /search)
   admin.route('/users', createUserRoutes(db))
 
+  // Mount user group routes
+  admin.route('/usergroups', createUserGroupRoutes(db))
+
   // Mount glossary admin routes
   admin.route('/glossary', createAdminGlossaryRoutes(db))
+
+  // Mount site settings routes
+  admin.route('/settings', createSettingsRoutes(db))
+
+  // Mount theme routes
+  admin.route('/themes', createThemeRoutes(db))
 
   return admin
 }

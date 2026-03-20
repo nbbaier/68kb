@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
-import { eq, like, or, and, ne, count, asc, desc } from 'drizzle-orm'
+import { eq, like, or, and, ne, count, asc, desc, gte } from 'drizzle-orm'
 import { createHash } from 'node:crypto'
-import { users, userGroups, userNotes } from '../db/schema'
+import { users, userGroups, userNotes, failedLogins } from '../db/schema'
 import { createRequireRole } from '../middleware/auth'
 import type { AppVariables, DrizzleDB } from '../types'
 
@@ -60,6 +60,92 @@ export function createUserRoutes(db: DrizzleDB) {
 
   const requireManageUsers = createRequireRole(db)('canManageUsers')
 
+  // All user admin routes require user-management permission
+  router.use('*', requireManageUsers)
+
+  // -------------------------------------------------------------------------
+  // GET /api/admin/users/failed-logins
+  // Aggregated failed login activity by IP (24h window by default)
+  // -------------------------------------------------------------------------
+  router.get('/failed-logins', async (c) => {
+    const limit = Math.min(500, Math.max(1, parseInt(c.req.query('limit') ?? '100', 10)))
+    const windowHours = Math.min(168, Math.max(1, parseInt(c.req.query('windowHours') ?? '24', 10)))
+    const now = Math.floor(Date.now() / 1000)
+    const cutoff = now - (windowHours * 3600)
+
+    const rows = db
+      .select({
+        failedId: failedLogins.failedId,
+        failedUsername: failedLogins.failedUsername,
+        failedIp: failedLogins.failedIp,
+        failedDate: failedLogins.failedDate,
+      })
+      .from(failedLogins)
+      .where(gte(failedLogins.failedDate, cutoff))
+      .orderBy(desc(failedLogins.failedDate))
+      .limit(limit)
+      .all()
+
+    const byIp = new Map<string, {
+      failedIp: string
+      attempts: number
+      lastFailedDate: number
+      usernames: Set<string>
+    }>()
+
+    for (const row of rows) {
+      const existing = byIp.get(row.failedIp)
+      if (existing) {
+        existing.attempts += 1
+        existing.lastFailedDate = Math.max(existing.lastFailedDate, row.failedDate)
+        if (row.failedUsername) {
+          existing.usernames.add(row.failedUsername)
+        }
+      } else {
+        byIp.set(row.failedIp, {
+          failedIp: row.failedIp,
+          attempts: 1,
+          lastFailedDate: row.failedDate,
+          usernames: new Set(row.failedUsername ? [row.failedUsername] : []),
+        })
+      }
+    }
+
+    const data = Array.from(byIp.values())
+      .map((entry) => {
+        const secondsSinceLast = Math.max(0, now - entry.lastFailedDate)
+        let status: 'none' | 'delay30' | 'delay60' | 'lockout' = 'none'
+        let retryAfterSeconds = 0
+
+        if (entry.attempts >= 10) {
+          status = 'lockout'
+          retryAfterSeconds = Math.max(0, (24 * 3600) - secondsSinceLast)
+        } else if (entry.attempts >= 5) {
+          status = 'delay60'
+          retryAfterSeconds = Math.max(0, 60 - secondsSinceLast)
+        } else if (entry.attempts >= 3) {
+          status = 'delay30'
+          retryAfterSeconds = Math.max(0, 30 - secondsSinceLast)
+        }
+
+        return {
+          failedIp: entry.failedIp,
+          attempts: entry.attempts,
+          lastFailedDate: entry.lastFailedDate,
+          usernames: Array.from(entry.usernames).sort(),
+          status,
+          retryAfterSeconds,
+        }
+      })
+      .sort((a, b) => b.attempts - a.attempts || b.lastFailedDate - a.lastFailedDate)
+
+    return c.json({
+      data,
+      windowHours,
+      totalIps: data.length,
+    })
+  })
+
   // -------------------------------------------------------------------------
   // GET /api/admin/users/search?q=term
   // Search users by username or email (for author field AJAX lookup)
@@ -95,7 +181,7 @@ export function createUserRoutes(db: DrizzleDB) {
   // GET /api/admin/users
   // Paginated, searchable, sortable list of users with group info
   // -------------------------------------------------------------------------
-  router.get('/', requireManageUsers, async (c) => {
+  router.get('/', async (c) => {
     const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10))
     const limit = Math.min(100, Math.max(1, parseInt(c.req.query('limit') ?? '20', 10)))
     const sortParam = (c.req.query('sort') ?? 'username') as SortField
@@ -153,7 +239,7 @@ export function createUserRoutes(db: DrizzleDB) {
   // GET /api/admin/users/:id
   // Single user with group info
   // -------------------------------------------------------------------------
-  router.get('/:id', requireManageUsers, async (c) => {
+  router.get('/:id', async (c) => {
     const id = parseInt(c.req.param('id'), 10)
     if (isNaN(id)) {
       return c.json({ error: 'Invalid user ID' }, 400)
@@ -191,7 +277,7 @@ export function createUserRoutes(db: DrizzleDB) {
   // POST /api/admin/users
   // Create a new user
   // -------------------------------------------------------------------------
-  router.post('/', requireManageUsers, async (c) => {
+  router.post('/', async (c) => {
     const body = await c.req.json() as {
       userUsername?: string
       userEmail?: string
@@ -302,7 +388,7 @@ export function createUserRoutes(db: DrizzleDB) {
   // PUT /api/admin/users/:id
   // Update user — uniqueness excludes self, password optional, prevent last admin demotion
   // -------------------------------------------------------------------------
-  router.put('/:id', requireManageUsers, async (c) => {
+  router.put('/:id', async (c) => {
     const id = parseInt(c.req.param('id'), 10)
     if (isNaN(id)) {
       return c.json({ error: 'Invalid user ID' }, 400)
@@ -434,7 +520,7 @@ export function createUserRoutes(db: DrizzleDB) {
   // DELETE /api/admin/users/:id
   // Delete a user
   // -------------------------------------------------------------------------
-  router.delete('/:id', requireManageUsers, async (c) => {
+  router.delete('/:id', async (c) => {
     const id = parseInt(c.req.param('id'), 10)
     if (isNaN(id)) {
       return c.json({ error: 'Invalid user ID' }, 400)
@@ -454,7 +540,7 @@ export function createUserRoutes(db: DrizzleDB) {
   // POST /api/admin/users/:id/reset-api-key
   // Generate and save a new API key for the user
   // -------------------------------------------------------------------------
-  router.post('/:id/reset-api-key', requireManageUsers, async (c) => {
+  router.post('/:id/reset-api-key', async (c) => {
     const id = parseInt(c.req.param('id'), 10)
     if (isNaN(id)) {
       return c.json({ error: 'Invalid user ID' }, 400)
@@ -475,7 +561,7 @@ export function createUserRoutes(db: DrizzleDB) {
   // GET /api/admin/users/:id/notes
   // List all notes for a user (important notes first, then by date desc)
   // -------------------------------------------------------------------------
-  router.get('/:id/notes', requireManageUsers, async (c) => {
+  router.get('/:id/notes', async (c) => {
     const id = parseInt(c.req.param('id'), 10)
     if (isNaN(id)) {
       return c.json({ error: 'Invalid user ID' }, 400)
@@ -502,7 +588,7 @@ export function createUserRoutes(db: DrizzleDB) {
   // Body: { note: string (required), noteImportant?: 'y' | 'n' }
   // Sets noteAddedBy from the current session user
   // -------------------------------------------------------------------------
-  router.post('/:id/notes', requireManageUsers, async (c) => {
+  router.post('/:id/notes', async (c) => {
     const id = parseInt(c.req.param('id'), 10)
     if (isNaN(id)) {
       return c.json({ error: 'Invalid user ID' }, 400)
@@ -548,7 +634,7 @@ export function createUserRoutes(db: DrizzleDB) {
   // Update a note
   // Body: { note: string (required), noteImportant?: 'y' | 'n' }
   // -------------------------------------------------------------------------
-  router.put('/:id/notes/:noteId', requireManageUsers, async (c) => {
+  router.put('/:id/notes/:noteId', async (c) => {
     const id = parseInt(c.req.param('id'), 10)
     const noteId = parseInt(c.req.param('noteId'), 10)
     if (isNaN(id) || isNaN(noteId)) {
@@ -590,7 +676,7 @@ export function createUserRoutes(db: DrizzleDB) {
   // DELETE /api/admin/users/:id/notes/:noteId
   // Delete a note
   // -------------------------------------------------------------------------
-  router.delete('/:id/notes/:noteId', requireManageUsers, async (c) => {
+  router.delete('/:id/notes/:noteId', async (c) => {
     const id = parseInt(c.req.param('id'), 10)
     const noteId = parseInt(c.req.param('noteId'), 10)
     if (isNaN(id) || isNaN(noteId)) {

@@ -28,6 +28,13 @@ import { AdminUserFormPage } from '@/pages/AdminUserFormPage'
 import { SearchPage } from '@/pages/SearchPage'
 import { SearchResultsPage } from '@/pages/SearchResultsPage'
 import { SearchNoResultsPage } from '@/pages/SearchNoResultsPage'
+import { PublicUserProfilePage } from '@/pages/PublicUserProfilePage'
+import { AccountSettingsPage } from '@/pages/AccountSettingsPage'
+import { AdminUserGroupsPage } from '@/pages/AdminUserGroupsPage'
+import { AdminUserGroupFormPage } from '@/pages/AdminUserGroupFormPage'
+import { AdminFailedLoginsPage } from '@/pages/AdminFailedLoginsPage'
+import { AdminSettingsPage } from '@/pages/AdminSettingsPage'
+import { AdminThemesPage } from '@/pages/AdminThemesPage'
 
 function App() {
   return (
@@ -47,6 +54,7 @@ function App() {
             <Route path="/search" element={<SearchPage />} />
             <Route path="/search/results/:hash" element={<SearchResultsPage />} />
             <Route path="/search/no-results" element={<SearchNoResultsPage />} />
+            <Route path="/users/profile/:username" element={<PublicUserProfilePage />} />
           </Route>
 
           {/* ---------------------------------------------------------------- */}
@@ -83,6 +91,18 @@ function App() {
           <Route path="/logout" element={<LogoutPage />} />
 
           {/* ---------------------------------------------------------------- */}
+          {/* Authenticated non-admin/shared account route */}
+          {/* ---------------------------------------------------------------- */}
+          <Route
+            path="/account"
+            element={
+              <AuthGuard>
+                <AccountSettingsPage />
+              </AuthGuard>
+            }
+          />
+
+          {/* ---------------------------------------------------------------- */}
           {/* Protected admin routes — all wrapped in AdminLayout */}
           {/* ---------------------------------------------------------------- */}
           <Route
@@ -116,17 +136,25 @@ function App() {
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="users/new" element={<AdminUserFormPage />} />
             <Route path="users/:id/edit" element={<AdminUserFormPage />} />
+            <Route path="users/failed-logins" element={<AdminFailedLoginsPage />} />
+            <Route path="usergroups" element={<AdminUserGroupsPage />} />
+            <Route path="usergroups/new" element={<AdminUserGroupFormPage />} />
+            <Route path="usergroups/:id/edit" element={<AdminUserGroupFormPage />} />
             <Route
               path="modules"
               element={<div className="p-4 text-muted-foreground">Modules — coming soon</div>}
             />
             <Route
+              path="themes"
+              element={<AdminThemesPage />}
+            />
+            <Route
               path="settings"
-              element={<div className="p-4 text-muted-foreground">Settings — coming soon</div>}
+              element={<AdminSettingsPage />}
             />
             <Route
               path="account"
-              element={<div className="p-4 text-muted-foreground">Account settings — coming soon</div>}
+              element={<AccountSettingsPage />}
             />
           </Route>
 

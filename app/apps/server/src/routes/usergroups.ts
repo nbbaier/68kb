@@ -24,6 +24,9 @@ export function createUserGroupRoutes(db: DrizzleDB) {
 
   const requireManageUsers = createRequireRole(db)('canManageUsers')
 
+  // All user-group admin routes require user-management permission
+  router.use('*', requireManageUsers)
+
   // -------------------------------------------------------------------------
   // GET /api/admin/usergroups
   // List all groups with member counts (ordered by group_id ASC)
@@ -107,7 +110,7 @@ export function createUserGroupRoutes(db: DrizzleDB) {
   // Create a new group (name + description required, 11 permissions)
   // Requires can_manage_users
   // -------------------------------------------------------------------------
-  router.post('/', requireManageUsers, async (c) => {
+  router.post('/', async (c) => {
     const body = await c.req.json() as {
       groupName?: string
       groupDescription?: string
@@ -164,7 +167,7 @@ export function createUserGroupRoutes(db: DrizzleDB) {
   // For all other groups: name, description, and all 11 permissions.
   // Requires can_manage_users
   // -------------------------------------------------------------------------
-  router.put('/:id', requireManageUsers, async (c) => {
+  router.put('/:id', async (c) => {
     const id = parseInt(c.req.param('id'), 10)
     if (isNaN(id)) {
       return c.json({ error: 'Invalid group ID' }, 400)
@@ -254,7 +257,7 @@ export function createUserGroupRoutes(db: DrizzleDB) {
   // Blocked if the group has members.
   // Requires can_manage_users
   // -------------------------------------------------------------------------
-  router.delete('/:id', requireManageUsers, async (c) => {
+  router.delete('/:id', async (c) => {
     const id = parseInt(c.req.param('id'), 10)
     if (isNaN(id)) {
       return c.json({ error: 'Invalid group ID' }, 400)

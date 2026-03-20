@@ -302,9 +302,17 @@ export function AdminUsersPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Users</h1>
-        <Button asChild>
-          <Link to="/admin/users/new">Add User</Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+            <Link to="/admin/users/failed-logins">Failed Logins</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link to="/admin/usergroups">User Groups</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/admin/users/new">Add User</Link>
+          </Button>
+        </div>
       </div>
 
       {/* Search bar */}

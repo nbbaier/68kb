@@ -4,6 +4,7 @@ import { resolve, dirname, extname, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { mkdir, unlink, rm } from 'node:fs/promises'
 import { articles, article2cat, tags, articleTags, attachments, categories, users } from '../db/schema'
+import { createRequireRole } from '../middleware/auth'
 import type { AppVariables, DrizzleDB } from '../types'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -111,6 +112,11 @@ function syncCategories(db: DrizzleDB, articleId: number, categoryIds: number[])
 
 export function createArticleRoutes(db: DrizzleDB) {
   const router = new Hono<{ Variables: AppVariables }>()
+  const requireManageArticles = createRequireRole(db)('canManageArticles')
+  const requireDeleteArticles = createRequireRole(db)('canDeleteArticles')
+
+  // All article admin routes require article-management permission
+  router.use('*', requireManageArticles)
 
   // -------------------------------------------------------------------------
   // GET /api/admin/articles
@@ -536,7 +542,7 @@ export function createArticleRoutes(db: DrizzleDB) {
   // DELETE /api/admin/articles/:id
   // Delete article and cascade: article2cat, article_tags, attachments, files
   // -------------------------------------------------------------------------
-  router.delete('/:id', async (c) => {
+  router.delete('/:id', requireDeleteArticles, async (c) => {
     const id = parseInt(c.req.param('id'), 10)
     if (isNaN(id) || id <= 0) {
       return c.json({ error: 'Article not found' }, 404)
@@ -657,7 +663,7 @@ export function createArticleRoutes(db: DrizzleDB) {
   // DELETE /api/admin/articles/:id/attachments/:attachId
   // Delete a specific attachment (DB record + file)
   // -------------------------------------------------------------------------
-  router.delete('/:id/attachments/:attachId', async (c) => {
+  router.delete('/:id/attachments/:attachId', requireDeleteArticles, async (c) => {
     const articleId = parseInt(c.req.param('id'), 10)
     const attachId = parseInt(c.req.param('attachId'), 10)
 
