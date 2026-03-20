@@ -1,22 +1,40 @@
 {
   "featureId": "failed-login-tracking",
-  "reviewedAt": "2026-03-20T16:31:29Z",
-  "commitId": "c55d206",
-  "transcriptSkeletonReviewed": false,
-  "diffReviewed": false,
-  "status": "pass",
+  "reviewedAt": "2026-03-20T17:12:29Z",
+  "commitId": "b96fdbb",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
   "codeReview": {
-    "summary": "Failed-login recording, progressive delay/lockout, and admin IP summary endpoint are implemented and covered by milestone integration tests. One reporting accuracy limitation exists but is non-blocking for milestone gate criteria.",
+    "summary": "Failed-login recording exists, but throttling behavior does not match the feature/contract requirements. The implementation enforces a 30s/60s/lockout policy (3/5/10 attempts) instead of the required 1s/2s/5s policy (3/10/20 attempts), and tests codify the wrong behavior.",
     "issues": [
       {
-        "file": "app/apps/server/src/routes/users.ts",
-        "line": 76,
-        "severity": "non_blocking",
-        "description": "`GET /api/admin/users/failed-logins` applies `limit` to raw failed-login rows before grouping by IP. On noisy single-IP traffic, this can underrepresent other IPs in the summarized output and skew attempts/status visibility for operators."
+        "file": "app/apps/server/src/routes/auth.ts",
+        "line": 34,
+        "severity": "blocking",
+        "description": "Throttle thresholds and durations are incorrect for this feature: code uses 3->30s, 5->60s, 10->lockout (`LOGIN_THROTTLE_DELAY_1_SECONDS = 30`, `LOGIN_THROTTLE_DELAY_2_ATTEMPTS = 5`, `LOGIN_THROTTLE_DELAY_2_SECONDS = 60`, `LOGIN_LOCKOUT_ATTEMPTS = 10`) instead of required 3->1s, 10->2s, 20->5s in a 24h window."
+      },
+      {
+        "file": "app/apps/server/src/routes/auth.ts",
+        "line": 132,
+        "severity": "blocking",
+        "description": "Throttled requests are rejected immediately with 429 + retry metadata; no timed server delay is applied before response. Contract verification for VAL-USER-071/072/073 is based on measured response timing (~1s/~2s/~5s)."
+      },
+      {
+        "file": "app/apps/server/src/__tests__/milestone4.test.ts",
+        "line": 348,
+        "severity": "blocking",
+        "description": "Milestone tests validate a 30-second throttle and 10-attempt lockout (`applies 30-second progressive throttle...`, `applies lockout after 10 failed attempts...`) rather than the required 1s/2s/5s at 3/10/20 attempts, so test coverage is misaligned with the feature contract."
       }
     ]
   },
-  "sharedStateObservations": [],
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "Feature provenance is not traceable in mission state: this feature is marked completed but has no worker session linkage/handoff, making it unclear which transcript corresponds to the final implementation under review.",
+      "evidence": "features.json shows failed-login-tracking with `workerSessionIds: []` and `completedWorkerSessionId: null` (lines 124, 153, 155), and `handoffs/` has no file matching failed-login-tracking."
+    }
+  ],
   "addressesFailureFrom": null,
-  "summary": "PASS with one non-blocking observation: failed-login aggregation limit is row-first, which can bias admin summary visibility under high-volume conditions."
+  "summary": "FAIL — failed-login tracking exists, but throttling policy and tests do not satisfy the specified/contracted behavior for VAL-USER-071 through VAL-USER-073."
 }

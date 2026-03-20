@@ -1,15 +1,45 @@
 {
   "featureId": "rbac-enforcement",
-  "reviewedAt": "2026-03-20T16:31:29Z",
-  "commitId": "c55d206",
-  "transcriptSkeletonReviewed": false,
-  "diffReviewed": false,
-  "status": "pass",
+  "reviewedAt": "2026-03-20T17:13:44Z",
+  "commitId": "b96fdbb",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
   "codeReview": {
-    "summary": "Admin route composition applies `requireAdmin` at `/api/admin/*` and module-specific `requireRole` checks in route handlers, matching the Milestone 4 permission-gating objective.",
-    "issues": []
+    "summary": "Core admin permission gates are largely in place (articles/users/groups/categories/settings/themes/modules are wired through requireRole under global requireAdmin), and top-level admin nav is permission-filtered. However, two required RBAC behaviors are not implemented as specified: banned users are not rejected at login and can_view_site is not enforced on authentication/session establishment.",
+    "issues": [
+      {
+        "file": "app/apps/server/src/routes/auth.ts",
+        "line": 154,
+        "severity": "blocking",
+        "description": "Login fetches the user from `users` only and proceeds to create a session after password verification (`session.set(...)` at lines 191-193) without checking group state (banned/group 4) or `can_view_site`. This violates feature requirements \"Banned=rejected\" and \"can_view_site enforced\"."
+      },
+      {
+        "file": "app/apps/client/src/components/AdminLayout.tsx",
+        "line": 120,
+        "severity": "non_blocking",
+        "description": "Top nav is permission-filtered, but sub-nav is selected directly from `SUB_NAV[section]` with no permission filtering. If a limited admin lands on a restricted section URL, unauthorized section links still render in sub-nav, which is weaker than the stated \"Admin nav conditionally renders\" behavior."
+      },
+      {
+        "file": "app/apps/server/src/middleware/auth.ts",
+        "line": 71,
+        "severity": "non_blocking",
+        "description": "`createRequireRole` has no explicit super-admin bypass check; behavior depends on group-1 permissions staying all-'y' in data. This currently works via group invariants, but it does not implement an explicit code-level \"Super Admin bypasses all\" rule."
+      }
+    ]
   },
-  "sharedStateObservations": [],
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "Feature-level provenance is incomplete for this reviewed feature: it is marked completed but has no worker session linkage/handoff, which makes it hard to trace exact implementation steps and commit boundary for scrutiny.",
+      "evidence": "features.json marks `rbac-enforcement` as completed with `workerSessionIds: []` and `completedWorkerSessionId: null` (lines 45, 82, 84)."
+    },
+    {
+      "area": "knowledge",
+      "observation": "Existing milestone RBAC tests focus on limited-admin API 403 checks, but do not exercise banned-user login rejection or can_view_site enforcement. This gap likely allowed the missing requirements to ship undetected.",
+      "evidence": "milestone4.test.ts RBAC block (lines 251-271) validates permission-gated module access only; no assertion covers banned login denial or can_view_site auth enforcement."
+    }
+  ],
   "addressesFailureFrom": null,
-  "summary": "PASS: RBAC enforcement for admin modules is implemented and validated by existing integration tests."
+  "summary": "FAIL — permission gating for core admin modules is mostly implemented, but required banned/can_view_site authentication enforcement is missing, so the feature does not fully satisfy its expected behavior."
 }

@@ -1,15 +1,51 @@
 {
   "featureId": "public-profile-account",
-  "reviewedAt": "2026-03-20T16:31:29Z",
-  "commitId": "c55d206",
-  "transcriptSkeletonReviewed": false,
-  "diffReviewed": false,
-  "status": "pass",
+  "reviewedAt": "2026-03-20T17:12:36Z",
+  "commitId": "b96fdbbc5f8d5c026fa467098292ab7733876b4f",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
   "codeReview": {
-    "summary": "Public profile lookup and authenticated account settings update flows are implemented with username validation, can-view-site filtering, uniqueness checks, optional password updates, and session username synchronization.",
-    "issues": []
+    "summary": "Core profile/account functionality exists, but several contract-critical behaviors are not implemented at the required routes/flows.",
+    "issues": [
+      {
+        "file": "app/apps/client/src/App.tsx",
+        "line": 61,
+        "severity": "blocking",
+        "description": "VAL-USER-051 requires empty username redirect from /users/profile to home, but only /users/profile/:username is defined; /users/profile falls through to the global 404 route (App.tsx:177) instead of redirecting."
+      },
+      {
+        "file": "app/apps/client/src/App.tsx",
+        "line": 101,
+        "severity": "blocking",
+        "description": "Feature contract specifies account modification at /users/account, but the implemented authenticated route is /account (and PublicLayout links non-admin users there), so the required URL is missing."
+      },
+      {
+        "file": "app/apps/server/src/routes/profiles.ts",
+        "line": 17,
+        "severity": "blocking",
+        "description": "Feature contract specifies GET /api/users/:username, but the implemented API is GET /api/users/profile/:username (also consumed by client at PublicUserProfilePage.tsx:35), so the contracted endpoint is absent."
+      },
+      {
+        "file": "app/apps/server/src/routes/profiles.ts",
+        "line": 24,
+        "severity": "blocking",
+        "description": "Feature is mapped to VAL-USER-052 (extra profile fields with date formatting), but profile API/UI only expose fixed fields (username/group/joined/last login) with no extra field retrieval/rendering path."
+      }
+    ]
   },
-  "sharedStateObservations": [],
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "Traceability gap: feature is marked completed but has no worker session linkage, so no feature-specific handoff/transcript skeleton could be reviewed for procedure adherence.",
+      "evidence": "features.json:118-121 shows status=completed with workerSessionIds=[], currentWorkerSessionId=null, completedWorkerSessionId=null; no 'public-profile-account' matches in mission handoffs/ or worker-transcripts.jsonl."
+    },
+    {
+      "area": "conventions",
+      "observation": "Shared state documents contain conflicting route expectations for account/profile flows, increasing risk of implementation drift.",
+      "evidence": "Mission feature description requires /users/account and /api/users/:username (features.json:88), implementation uses /account (App.tsx:101) and /api/users/profile/:username (routes/profiles.ts:17), while library guidance states account edit is /admin/account (./.factory/library/architecture.md:56)."
+    }
+  ],
   "addressesFailureFrom": null,
-  "summary": "PASS: public-profile-account functionality is present and behaves consistently with Milestone 4 requirements."
+  "summary": "FAIL: public-profile-account does not satisfy required URL contracts and empty-username redirect behavior, and VAL-USER-052 coverage is missing."
 }

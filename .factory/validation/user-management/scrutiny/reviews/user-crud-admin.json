@@ -1,34 +1,39 @@
 {
   "featureId": "user-crud-admin",
-  "reviewedAt": "2026-03-20T16:31:29Z",
-  "commitId": "c55d206",
-  "transcriptSkeletonReviewed": false,
-  "diffReviewed": false,
+  "reviewedAt": "2026-03-20T17:13:27Z",
+  "commitId": "0c17a1b",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
   "status": "fail",
   "codeReview": {
-    "summary": "Core user list/add/edit/delete behavior is implemented and broadly covered, but two blocking integrity issues remain in admin user CRUD: invalid group IDs surface as unhandled 500s, and deleting the last admin account is currently allowed.",
+    "summary": "The feature delivers the primary CRUD UI/API flow, but two blocking integrity gaps remain in the submitted commit: invalid user-group IDs are not validated against existing groups before writes, and deleting the final admin user is allowed.",
     "issues": [
       {
         "file": "app/apps/server/src/routes/users.ts",
-        "line": 312,
+        "line": 225,
         "severity": "blocking",
-        "description": "Create/update validation only checks that `userGroup` is numeric and does not verify the group exists before write. Requests like `POST /api/admin/users` or `PUT /api/admin/users/:id` with `userGroup: 999` hit foreign-key errors at insert/update (lines 349-374 and 489-502) and return 500 Internal Server Error instead of a controlled 4xx validation response."
+        "description": "Create/update only validate `userGroup` as numeric (`POST` lines 225-228, `PUT` lines 347-350) and then write directly (`POST` lines 263-268, `PUT` lines 392-396/403-406) without verifying the group exists. Because `users.user_group` has a foreign-key reference to `user_groups.group_id`, non-existent group IDs can surface as unhandled DB errors instead of controlled 4xx validation responses."
       },
       {
         "file": "app/apps/server/src/routes/users.ts",
-        "line": 523,
+        "line": 437,
         "severity": "blocking",
-        "description": "`DELETE /api/admin/users/:id` deletes any existing user without protecting the last admin account. The code has a last-admin demotion guard in PUT, but DELETE lacks the same invariant check, so removing the only group-1 user succeeds and can strand the system without any admin principal."
+        "description": "`DELETE /api/admin/users/:id` deletes any existing user (lines 443-448) and does not enforce the same last-admin invariant already enforced in `PUT` (lines 379-388). This permits deleting the only remaining admin account and can leave the system without an admin principal."
       }
     ]
   },
   "sharedStateObservations": [
     {
       "area": "tests",
-      "observation": "Current user-route tests cover last-admin demotion protection but do not include regression tests for last-admin deletion or invalid-group 500 behavior.",
-      "evidence": "`app/apps/server/src/__tests__/users.test.ts` has `prevents demoting the last admin` and happy-path delete tests, but no case for deleting the only admin account or for create/update with non-existent `userGroup`."
+      "observation": "The feature test suite checks last-admin demotion but misses adjacent integrity cases for last-admin deletion and invalid-group writes.",
+      "evidence": "`app/apps/server/src/__tests__/users.test.ts` includes `prevents demoting the last admin` (line 639 in commit snapshot) and basic delete tests (lines 664-709), but no test for deleting the final admin and no create/update case using a non-existent `userGroup` id."
+    },
+    {
+      "area": "conventions",
+      "observation": "Shared state docs do not explicitly capture the invariant that at least one admin account must always remain, despite this being critical to user-management safety.",
+      "evidence": "`/Users/nbbaier/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be/AGENTS.md` and `/Users/nbbaier/68kb/.factory/library/architecture.md` describe auth and route protection patterns but do not state an explicit last-admin preservation rule for user mutations."
     }
   ],
   "addressesFailureFrom": null,
-  "summary": "FAIL: user-crud-admin contains two blocking integrity defects (invalid-group 500s and last-admin deletion) that must be fixed before Milestone 4 can pass scrutiny."
+  "summary": "FAIL: user-crud-admin is functionally broad but has two blocking admin-integrity defects (missing existing-group validation before writes and no last-admin deletion protection) in commit 0c17a1b."
 }

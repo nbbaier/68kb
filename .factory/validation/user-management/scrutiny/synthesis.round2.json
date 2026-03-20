@@ -1,0 +1,33 @@
+{
+  "milestone": "user-management",
+  "round": 2,
+  "status": "pass",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "cd /Users/nbbaier/68kb/app && bun run --filter @68kb/server test && bun run --filter @68kb/client test",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "cd /Users/nbbaier/68kb/app && bunx tsc --noEmit -p apps/server/tsconfig.json && bunx tsc --noEmit -p apps/client/tsconfig.json",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "N/A (no lint command is currently defined in /Users/nbbaier/68kb/.factory/services.yaml)",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [],
+  "rejectedObservations": [],
+  "previousRound": "/Users/nbbaier/68kb/.factory/validation/user-management/scrutiny/synthesis.round1.json"
+}

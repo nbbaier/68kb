@@ -1,15 +1,21 @@
 {
   "featureId": "user-notes",
-  "reviewedAt": "2026-03-20T16:31:29Z",
-  "commitId": "c55d206",
-  "transcriptSkeletonReviewed": false,
-  "diffReviewed": false,
+  "reviewedAt": "2026-03-20T17:10:44Z",
+  "commitId": "fbf0ac5",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
   "status": "pass",
   "codeReview": {
-    "summary": "Admin note CRUD endpoints and UI integration are implemented with expected auth/validation behavior, ordering important notes first, and appropriate user-scoped note operations.",
+    "summary": "Implementation covers the requested user-notes scope: user-scoped note CRUD endpoints with required note text validation, session-derived noteAddedBy, important-first ordering, and edit-page modal UI for add/edit/delete with important notes highlighted at the top.",
     "issues": []
   },
-  "sharedStateObservations": [],
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The fullstack-worker skill procedure requires UI component tests, but this feature shipped UI changes without client test additions while still marking followedProcedure=true. The skill guidance appears stricter than actual accepted workflow.",
+      "evidence": "Skill file: .factory/skills/fullstack-worker/SKILL.md (Step 6: 'Write UI component tests'). Commit fbf0ac5 --stat changed app/apps/client/src/pages/AdminUserFormPage.tsx, app/apps/server/src/routes/users.ts, and app/apps/server/src/__tests__/users.test.ts only; handoff.tests.added lists only server tests."
+    }
+  ],
   "addressesFailureFrom": null,
-  "summary": "PASS: user-notes behavior is implemented as required with no blocking defects identified in this review."
+  "summary": "PASS: user-notes satisfies described and expected behavior with no blocking defects found; one skill-procedure mismatch was recorded for shared-state triage."
 }
