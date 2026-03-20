@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 type PermissionValue = 'y' | 'n'
 
@@ -40,6 +40,11 @@ const DEFAULT_STATE: UserGroupFormState = {
   canManageModules: 'n',
 }
 
+const CORE_PERMISSION_FIELDS: Array<{ key: keyof UserGroupFormState; label: string }> = [
+  { key: 'canViewSite', label: 'Can View Site' },
+  { key: 'canAccessAdmin', label: 'Can Access Admin' },
+]
+
 const ADMIN_PERMISSION_FIELDS: Array<{ key: keyof UserGroupFormState; label: string }> = [
   { key: 'canManageArticles', label: 'Manage Articles' },
   { key: 'canDeleteArticles', label: 'Delete Articles' },
@@ -52,6 +57,54 @@ const ADMIN_PERMISSION_FIELDS: Array<{ key: keyof UserGroupFormState; label: str
   { key: 'canManageModules', label: 'Manage Modules' },
 ]
 
+// ---------------------------------------------------------------------------
+// Permission radio row component
+// ---------------------------------------------------------------------------
+
+function PermissionRadio({
+  fieldKey,
+  label,
+  value,
+  disabled,
+  onChange,
+}: {
+  fieldKey: string
+  label: string
+  value: PermissionValue
+  disabled?: boolean
+  onChange: (val: PermissionValue) => void
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-1">
+      <span className="text-sm">{label}</span>
+      <RadioGroup
+        value={value}
+        onValueChange={(v) => onChange(v as PermissionValue)}
+        disabled={disabled}
+        className="flex flex-row gap-4"
+        aria-label={label}
+      >
+        <div className="flex items-center gap-1.5">
+          <RadioGroupItem value="y" id={`${fieldKey}-yes`} />
+          <Label htmlFor={`${fieldKey}-yes`} className="cursor-pointer font-normal">
+            Yes
+          </Label>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <RadioGroupItem value="n" id={`${fieldKey}-no`} />
+          <Label htmlFor={`${fieldKey}-no`} className="cursor-pointer font-normal">
+            No
+          </Label>
+        </div>
+      </RadioGroup>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Main form page
+// ---------------------------------------------------------------------------
+
 export function AdminUserGroupFormPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -62,6 +115,7 @@ export function AdminUserGroupFormPage() {
   const [groupId, setGroupId] = useState<number | null>(null)
 
   const isSystemAdminsGroup = useMemo(() => groupId === 1, [groupId])
+  const showAdminOptions = form.canAccessAdmin === 'y' || isSystemAdminsGroup
 
   useEffect(() => {
     if (!isEdit || !id) return
@@ -104,8 +158,8 @@ export function AdminUserGroupFormPage() {
       .finally(() => setIsLoading(false))
   }, [id, isEdit, navigate])
 
-  function setPermission(key: keyof UserGroupFormState, checked: boolean) {
-    setForm((prev) => ({ ...prev, [key]: checked ? 'y' : 'n' }))
+  function setPermission(key: keyof UserGroupFormState, val: PermissionValue) {
+    setForm((prev) => ({ ...prev, [key]: val }))
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -165,8 +219,11 @@ export function AdminUserGroupFormPage() {
         <p className="text-sm text-muted-foreground">Loading user group…</p>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-5 rounded-lg border bg-card p-4" noValidate>
+          {/* Name */}
           <div className="grid gap-2">
-            <Label htmlFor="groupName">Group Name</Label>
+            <Label htmlFor="groupName">
+              Group Name <em className="text-destructive">*</em>
+            </Label>
             <Input
               id="groupName"
               value={form.groupName}
@@ -175,8 +232,11 @@ export function AdminUserGroupFormPage() {
             />
           </div>
 
+          {/* Description */}
           <div className="grid gap-2">
-            <Label htmlFor="groupDescription">Description</Label>
+            <Label htmlFor="groupDescription">
+              Description <em className="text-destructive">*</em>
+            </Label>
             <Input
               id="groupDescription"
               value={form.groupDescription}
@@ -185,50 +245,46 @@ export function AdminUserGroupFormPage() {
             />
           </div>
 
-          <div className="space-y-2">
-            <h2 className="font-semibold">Core Permissions</h2>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="canViewSite"
-                checked={form.canViewSite === 'y'}
-                onCheckedChange={(checked) => setPermission('canViewSite', checked === true)}
-                disabled={isSystemAdminsGroup}
-              />
-              <Label htmlFor="canViewSite">Can View Site</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="canAccessAdmin"
-                checked={form.canAccessAdmin === 'y'}
-                onCheckedChange={(checked) => setPermission('canAccessAdmin', checked === true)}
-                disabled={isSystemAdminsGroup}
-              />
-              <Label htmlFor="canAccessAdmin">Can Access Admin</Label>
-            </div>
-          </div>
-
-          {(form.canAccessAdmin === 'y' || isSystemAdminsGroup) && (
-            <div className="space-y-2">
-              <h2 className="font-semibold">Admin Permissions</h2>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {ADMIN_PERMISSION_FIELDS.map((field) => (
-                  <div key={field.key} className="flex items-center gap-2">
-                    <Checkbox
-                      id={field.key}
-                      checked={form[field.key] === 'y'}
-                      onCheckedChange={(checked) => setPermission(field.key, checked === true)}
-                      disabled={isSystemAdminsGroup}
-                    />
-                    <Label htmlFor={field.key}>{field.label}</Label>
-                  </div>
+          {/* Permissions — only shown for non-system-admin groups */}
+          {!isSystemAdminsGroup && (
+            <>
+              {/* Core permissions */}
+              <div className="space-y-1 rounded-md border p-3">
+                <h2 className="mb-2 text-sm font-semibold">Core Permissions</h2>
+                {CORE_PERMISSION_FIELDS.map((field) => (
+                  <PermissionRadio
+                    key={field.key}
+                    fieldKey={field.key}
+                    label={field.label}
+                    value={form[field.key] as PermissionValue}
+                    onChange={(val) => setPermission(field.key, val)}
+                  />
                 ))}
               </div>
-            </div>
+
+              {/* Admin-specific permissions — visible only when can_access_admin = y */}
+              {showAdminOptions && (
+                <div id="admin_options" className="space-y-1 rounded-md border p-3">
+                  <h2 className="mb-2 text-sm font-semibold">Admin Permissions</h2>
+                  {ADMIN_PERMISSION_FIELDS.map((field) => (
+                    <PermissionRadio
+                      key={field.key}
+                      fieldKey={field.key}
+                      label={field.label}
+                      value={form[field.key] as PermissionValue}
+                      onChange={(val) => setPermission(field.key, val)}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
 
+          {/* Note for group 1 */}
           {isSystemAdminsGroup && (
-            <p className="text-xs text-muted-foreground">
-              Site Admins (group 1) can only update name and description.
+            <p className="text-sm text-muted-foreground">
+              Site Admins (group 1) have all permissions and cannot be modified. Only the name and
+              description can be updated.
             </p>
           )}
 

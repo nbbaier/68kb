@@ -106,14 +106,16 @@ export function AdminUserGroupsPage() {
                     <Button size="sm" variant="outline" asChild>
                       <Link to={`/admin/usergroups/${group.groupId}/edit`}>Edit</Link>
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      disabled={group.groupId <= 5 || deletingGroupId === group.groupId}
-                      onClick={() => handleDelete(group)}
-                    >
-                      {deletingGroupId === group.groupId ? 'Deleting…' : 'Delete'}
-                    </Button>
+                    {group.groupId > 5 && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        disabled={deletingGroupId === group.groupId}
+                        onClick={() => handleDelete(group)}
+                      >
+                        {deletingGroupId === group.groupId ? 'Deleting…' : 'Delete'}
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
