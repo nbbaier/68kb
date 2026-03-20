@@ -259,6 +259,7 @@ describe('Milestone 4 — RBAC enforcement', () => {
     const glossaryRes = await app.request('/api/admin/glossary', { headers: { Cookie: cookie } })
     const settingsRes = await app.request('/api/admin/settings', { headers: { Cookie: cookie } })
     const modulesRes = await app.request('/api/admin/modules', { headers: { Cookie: cookie } })
+    const utilitiesRes = await app.request('/api/admin/utilities', { headers: { Cookie: cookie } })
 
     expect(articleRes.status).toBe(403)
     expect(userRes.status).toBe(403)
@@ -267,6 +268,7 @@ describe('Milestone 4 — RBAC enforcement', () => {
     expect(glossaryRes.status).toBe(403)
     expect(settingsRes.status).toBe(403)
     expect(modulesRes.status).toBe(403)
+    expect(utilitiesRes.status).toBe(403)
   })
 })
 

@@ -62,10 +62,17 @@ const SUB_NAV: Record<string, SubNavItem[]> = {
   settings: [
     { label: 'Settings', path: '/admin/settings' },
     { label: 'Themes', path: '/admin/themes' },
+    { label: 'Utilities', path: '/admin/utilities' },
   ],
   themes: [
     { label: 'Settings', path: '/admin/settings' },
     { label: 'Themes', path: '/admin/themes' },
+    { label: 'Utilities', path: '/admin/utilities' },
+  ],
+  utilities: [
+    { label: 'Settings', path: '/admin/settings' },
+    { label: 'Themes', path: '/admin/themes' },
+    { label: 'Utilities', path: '/admin/utilities' },
   ],
 }
 
@@ -125,7 +132,7 @@ export function AdminLayout() {
                       : item.key === 'users'
                         ? section === 'users' || section === 'usergroups'
                         : item.key === 'settings'
-                          ? section === 'settings' || section === 'themes'
+                          ? section === 'settings' || section === 'themes' || section === 'utilities'
                         : section === item.key
                 return (
                   <li key={item.label}>

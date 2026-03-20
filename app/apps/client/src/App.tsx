@@ -36,6 +36,7 @@ import { AdminFailedLoginsPage } from '@/pages/AdminFailedLoginsPage'
 import { AdminSettingsPage } from '@/pages/AdminSettingsPage'
 import { AdminThemesPage } from '@/pages/AdminThemesPage'
 import { AdminModulesPage } from '@/pages/AdminModulesPage'
+import { AdminUtilitiesPage } from '@/pages/AdminUtilitiesPage'
 
 function App() {
   return (
@@ -152,6 +153,10 @@ function App() {
             <Route
               path="settings"
               element={<AdminSettingsPage />}
+            />
+            <Route
+              path="utilities"
+              element={<AdminUtilitiesPage />}
             />
             <Route
               path="account"
