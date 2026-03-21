@@ -1,5 +1,7 @@
 # 68kb PHP-to-TypeScript Port: Status Report
 
+*Last updated: 2026-03-20*
+
 ## Overview
 
 Porting the 68kb PHP/CodeIgniter knowledge base application to a modern TypeScript stack: **React + Vite + Hono + SQLite (via Bun)** with Drizzle ORM and shadcn/ui.
@@ -10,51 +12,48 @@ The port is organized into 5 milestones with 341 behavioral validation assertion
 
 ## Progress Summary
 
-| Metric                  | Value                                               |
-| ----------------------- | --------------------------------------------------- |
-| **Overall completion**  | **91%** (309/341 assertions implemented)            |
-| **Milestones complete** | 5 of 5 implemented (3 of 5 sealed)                  |
-| **Features complete**   | 45 of 45                                            |
-| **Features remaining**  | 0                                                   |
-| **Git commits**         | 90                                                  |
-| **Server code**         | ~7,608 lines across 25 TypeScript source files      |
-| **Client code**         | ~11,594 lines across 58 TypeScript/TSX source files |
-| **Server tests**        | 370 passing                                         |
-| **Client tests**        | 259 passing                                         |
-| **Total tests**         | 629 passing, 0 failing                              |
-| **Typecheck**           | Passing (`bun run typecheck`)                       |
-| **Build**               | Passing (`bun run build`)                           |
-| **Schema tables**       | 19 (original PHP app's 17 + 2 new)                  |
-| **API route files**     | 17                                                  |
-| **Client pages**        | 35                                                  |
-| **UI components**       | 18 total (15 in `components/ui` + 3 shared layout/auth) |
+| Metric | Value |
+|---|---|
+| **Overall completion** | **54%** validated (185/341 assertions passed); **100%** implemented |
+| **Milestones sealed** | 3 of 5 (foundation-auth, articles-categories, public-site) |
+| **Milestones implemented** | 5 of 5 (all code complete) |
+| **Features complete** | 46 of 49 (3 remaining are validation/fix features) |
+| **Git commits** | 99 |
+| **Server code** | ~17,750 lines across 45 TypeScript files |
+| **Client code** | ~16,760 lines across 85 TypeScript/TSX files |
+| **Server tests** | 379 passing |
+| **Client tests** | 259 passing |
+| **Total tests** | 638 passing, 0 failing |
+| **Typecheck** | Passing |
+| **Schema tables** | 20 |
+| **API route files** | 17 |
+| **Client pages** | 35 |
+| **UI components** | 19 (shadcn/ui based) |
 
 ---
 
 ## Milestone Status
 
-### Milestone 1: Foundation & Auth -- COMPLETE
+### Milestone 1: Foundation & Auth -- SEALED
 
 **Assertions: 62/62 passed | Validation rounds: 3**
 
 What was built:
-
 - Bun workspaces monorepo (`apps/server` + `apps/client`)
 - Hono API server on port 3100, Vite dev server on port 3101
-- 19-table Drizzle ORM schema with programmatic migrations and seed data
+- 20-table Drizzle ORM schema with programmatic migrations and seed data
 - Session-based authentication (6 endpoints: login, logout, register, forgot password, reset password, current user)
 - Auth middleware: `requireAuth`, `requireAdmin`, `requireRole` with full RBAC support
 - React auth pages (Login, Register, Forgot Password, 404) with react-hook-form + zod validation
 - Admin layout shell with conditional navigation, dashboard with live stats
 - AuthGuard with redirect-back after login
-- Security hardening: SESSION_SECRET from env only, login timing normalization (dummy bcrypt for invalid users), Set-Cookie stripping on 401 responses
+- Security hardening: SESSION_SECRET from env only, login timing normalization (dummy bcrypt for invalid users), Set-Cookie stripping on 401/403 responses
 
-### Milestone 2: Articles & Categories -- COMPLETE
+### Milestone 2: Articles & Categories -- SEALED
 
 **Assertions: 68/69 passed (1 deferred to M3) | Validation rounds: 3**
 
 What was built:
-
 - Articles CRUD API (7 endpoints: list, get, create, update, delete, attachments, user search)
 - Articles admin UI: DataTable grid with search/sort/pagination, add/edit form with Tiptap WYSIWYG editor
 - Category management: hierarchical categories with nested URIs, image upload, tree display
@@ -62,12 +61,11 @@ What was built:
 - Tags system: auto-created from keywords, deduplication, article-tag junction management
 - File attachments: upload, validation, per-article management
 
-### Milestone 3: Public Site -- COMPLETE
+### Milestone 3: Public Site -- SEALED
 
 **Assertions: 55/55 passed | Validation rounds: 3**
 
 What was built:
-
 - Public layout with responsive nav, sidebar with category tree + search, footer
 - Homepage with category grid, popular articles, recent articles
 - Article detail page with HTML rendering, view counter, attachments, glossary tooltips (DOM TreeWalker)
@@ -77,54 +75,55 @@ What was built:
 - Responsive layout (mobile hamburger menu), XSS protection, hidden category filtering
 - Related articles by shared tags on article detail
 
-### Milestone 4: User Management -- SCRUTINY COMPLETE (USER TESTING PENDING)
+### Milestone 4: User Management -- SCRUTINY IN PROGRESS
 
-**Assertions: 49/49 implemented | Features: 6 completed, 0 remaining**
+**Assertions: 0/49 validated (implementation complete) | Scrutiny: round 4 fix in progress**
 
-Completed features:
+Completed implementation features:
+- **user-crud-admin**: Admin user list/add/edit with group assignment, Gravatar, password management, API key generation
+- **user-notes**: Admin notes system for user accounts (important/regular, dialog modal CRUD)
+- **user-groups-crud**: Group management with 11 permission fields, member counts, system group protection (groups 1-5)
+- **rbac-enforcement**: `requireRole` middleware on all admin routes, banned user and can_view_site rejection at login
+- **public-profile-account**: Public profile page, account settings (email/password change)
+- **failed-login-tracking**: Progressive delay throttling (3 fails -> 1s, 10 -> 2s, 20 -> 5s), admin IP summaries
 
-- **user-crud-admin**: Admin user list/add/edit with group assignment, password management
-- **user-notes**: Admin notes system for user accounts
-- **user-groups-crud**: Group management API + admin UI (CRUD, 11 permission fields, member counts, system group protection)
-- **rbac-enforcement**: Permission-gated admin route enforcement using `requireRole`
-- **public-profile-account**: Public profile endpoint + account settings update flow
-- **failed-login-tracking**: Failed login tracking with progressive delay/lockout + admin IP summaries
+Current status: Fixing 4 remaining scrutiny issues (empty username redirect, profile date formatting, actual server-side throttle delays, timing-based test assertions). After fix, scrutiny re-runs, then user-testing (49 assertions).
 
 ### Milestone 5: Settings, Media & Extras -- IMPLEMENTATION COMPLETE (VALIDATION PENDING)
 
-**Assertions: 75/156 implemented | Features: 8 completed, 0 remaining**
+**Assertions: 0/156 validated (implementation complete) | Validation: waiting on M4**
 
-Completed features:
+Completed implementation features:
 
-| Feature            | Assertions | What it covers                                                                                                                                                                                                           |
-| ------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `site-settings`    | 10         | Admin settings page (site name, email, max search results, registration toggle, etc.)                                                                                                                                    |
-| `theme-management` | 7          | Theme listing, activation, validation (layout.php check)                                                                                                                                                                 |
-| `addon-management` | 13         | Module/addon system (activate/deactivate/uninstall, dependency checking, hook system)                                                                                                                                    |
-| `db-utilities`     | 5          | Database optimize, repair, backup (.gz download), cache clearing                                                                                                                                                         |
-| `rss-feeds`        | 6          | RSS 2.0 XML feeds (global + per-category), proper XML escaping                                                                                                                                                           |
-| `image-manager`    | 11         | Image upload with type/size/dimension validation, thumbnail generation, browse/delete                                                                                                                                    |
-| `comments-system`  | 15         | Article comments (spam detection, auto-approve returning users, admin moderation, display)                                                                                                                               |
-| `cross-area-flows` | 8          | End-to-end integration flows spanning all features (article lifecycle, user registration through profile, admin workflow, search indexing, theme/addon interaction, settings propagation, guest-to-user, data integrity) |
+| Feature | Assertions | What it covers |
+|---|---|---|
+| `site-settings` | 10 | Admin settings page (site name, email, max search results, registration toggle, etc.) |
+| `theme-management` | 7 | Theme listing, activation, validation (layout.php check) |
+| `addon-management` | 13 | Module/addon system (activate/deactivate/uninstall, dependency checking, hook system) |
+| `image-manager` | 11 | Image upload with type/size/dimension validation, thumbnail generation, browse/delete |
+| `db-utilities` | 5 | Database optimize, repair, backup (.gz download), cache clearing |
+| `rss-feeds` | 6 | RSS 2.0 XML feeds (global + per-category), proper XML escaping |
+| `comments-system` | 15 | Article comments (spam detection, auto-approve returning users, admin moderation, display) |
+| `cross-area-flows` | 8 | End-to-end integration flows spanning all features |
 
 ---
 
 ## Technology Stack
 
-| Layer         | Technology                          |
-| ------------- | ----------------------------------- |
-| Runtime       | Bun                                 |
-| API Framework | Hono                                |
-| Database      | SQLite (bun:sqlite)                 |
-| ORM           | Drizzle ORM                         |
-| Frontend      | React 19 + Vite                     |
-| Routing       | React Router                        |
-| UI Components | shadcn/ui + Tailwind CSS v4         |
-| Forms         | react-hook-form + zod               |
-| Rich Text     | Tiptap                              |
-| Data Tables   | @tanstack/react-table               |
-| Auth          | hono-sessions (session-based)       |
-| Testing       | Bun test (server) + Vitest (client) |
+| Layer | Technology |
+|---|---|
+| Runtime | Bun |
+| API Framework | Hono |
+| Database | SQLite (bun:sqlite) |
+| ORM | Drizzle ORM |
+| Frontend | React 19 + Vite |
+| Routing | React Router |
+| UI Components | shadcn/ui + Tailwind CSS v4 |
+| Forms | react-hook-form + zod |
+| Rich Text | Tiptap |
+| Data Tables | @tanstack/react-table |
+| Auth | hono-sessions (session-based) |
+| Testing | Bun test (server) + Vitest (client) |
 
 ---
 
@@ -132,14 +131,66 @@ Completed features:
 
 ### Immediate
 
-1. Run **Milestone 4 user testing** (49 assertions), then seal milestone 4.
+1. **Fix 4 scrutiny blockers** for milestone 4 (empty username redirect, profile date formatting, server-side throttle delays, timing test assertions)
+2. **Scrutiny re-run** for milestone 4 (round 5)
+3. **User testing** for milestone 4 (49 assertions via browser-based validation)
 
-2. Run Milestone 5 scrutiny + user testing (156 assertions), then seal milestone 5.
+### Then
+
+4. **Scrutiny** for milestone 5 (code review of all 8 features)
+5. **User testing** for milestone 5 (156 assertions via browser-based validation)
 
 ### Final Gate
 
-1. All 341 assertions must be `passed` in validation-state.json.
-2. README.md updated with final project documentation.
+6. All 341 assertions must be `passed` in validation-state.json
+7. README.md updated with final project documentation
+
+---
+
+## Where Mission Progress Is Tracked
+
+### Mission Directory
+
+`~/.factory/missions/6a598d16-5593-4a62-9543-6f0eb0e142be/`
+
+| File | Purpose |
+|---|---|
+| `features.json` | All 49 features with status (pending/in_progress/completed), descriptions, milestone assignments, and `fulfills` mappings linking each feature to the validation assertions it completes |
+| `validation-state.json` | Status of all 341 behavioral assertions (passed/pending/failed) -- the single source of truth for what is validated |
+| `validation-contract.md` | The full specification: 341 testable behavioral assertions organized by area + cross-area flows, each with pass/fail criteria and evidence requirements |
+| `mission.md` | The original mission proposal and plan (milestones, scope, tech stack, infrastructure) |
+| `AGENTS.md` | Worker guidance: mission boundaries, coding conventions, port ranges, off-limits resources |
+| `handoffs/` | 46 JSON files, one per completed worker session, with details of what was implemented, issues found, verification results, and test coverage |
+| `state.json` | Mission runner state (current feature, execution history) |
+| `progress_log.jsonl` | Timestamped log of all mission events |
+| `worker-transcripts.jsonl` | Full worker session transcripts for audit |
+
+### Repository `.factory/` Directory
+
+`/Users/nbbaier/68kb/.factory/`
+
+| Path | Purpose |
+|---|---|
+| `validation/<milestone>/scrutiny/` | Code review reports and synthesis per milestone (reviews/ subfolder has per-feature JSON reports) |
+| `validation/<milestone>/user-testing/` | Browser-based test flow reports and evidence per milestone (flows/ subfolder has per-assertion-group JSON reports with screenshots) |
+| `library/architecture.md` | Stack decisions, project structure, API patterns, testing patterns, UI conventions |
+| `library/environment.md` | Environment variables, Bun-specific notes, machine specs |
+| `library/user-testing.md` | Validation surface info, concurrency limits, fixture strategy, testing notes |
+| `services.yaml` | Service commands (install, test, typecheck, build, db) and service lifecycle (api on 3100, web on 3101) |
+| `skills/setup-worker/SKILL.md` | Worker skill definition for project scaffolding tasks |
+| `skills/fullstack-worker/SKILL.md` | Worker skill definition for API + UI implementation tasks |
+| `research/` | Technology reference docs (Hono, Drizzle, Bun, shadcn/ui patterns) |
+| `init.sh` | Idempotent environment setup script (runs at start of each worker session) |
+
+### How Validation Works
+
+Each milestone goes through two validation phases after all implementation features are complete:
+
+1. **Scrutiny validation**: Runs test suite + typecheck, spawns code review subagents for each feature, produces synthesis report. Blocks on test failures, type errors, or blocking code issues.
+
+2. **User testing validation**: Starts the app services, spawns browser-based subagents that navigate the actual UI, tests each assertion from the validation contract by interacting with the app and collecting evidence (screenshots, network calls, console errors). Updates `validation-state.json` with pass/fail results.
+
+Both validators can fail and re-run. Fix features are created between rounds to address failures. A milestone is "sealed" only when both validators pass.
 
 ---
 
@@ -147,57 +198,59 @@ Completed features:
 
 ```
 68kb/
-  app/                          # New TypeScript application
-    package.json                # Bun workspaces root
+  app/                            # New TypeScript application
+    package.json                  # Bun workspaces root
     apps/
-      server/                   # Hono API server
+      server/                     # Hono API server
         src/
-          app.ts                # Hono app setup
+          app.ts                  # Hono app setup
           db/
-            schema.ts           # 19-table Drizzle schema
-            migrate.ts          # Programmatic migrations
-            seed.ts             # Seed data
+            schema.ts             # 20-table Drizzle schema
+            migrate.ts            # Programmatic migrations
+            seed.ts               # Seed data
           middleware/
-            auth.ts             # Session + RBAC middleware
+            auth.ts               # Session + RBAC middleware
           routes/
-            admin.ts            # Admin route aggregator
-            articles.ts         # Articles CRUD
-            auth.ts             # Authentication endpoints
-            categories.ts       # Categories CRUD
-            comments.ts         # Public comments + admin moderation
-            glossary.ts         # Glossary CRUD
-            images.ts           # Image manager
-            modules.ts          # Addon/module management
-            profiles.ts         # Public profile API
-            public.ts           # Public API (articles, categories, search)
-            rss.ts              # RSS feeds
-            search.ts           # Search with hash caching
-            settings.ts         # Site settings
-            themes.ts           # Theme management
-            usergroups.ts       # User groups CRUD
-            users.ts            # User management
-            utilities.ts        # DB utilities and maintenance
-      client/                   # React + Vite frontend
+            admin.ts              # Admin route aggregator
+            articles.ts           # Articles CRUD
+            auth.ts               # Authentication endpoints
+            categories.ts         # Categories CRUD
+            comments.ts           # Public comments + admin moderation
+            glossary.ts           # Glossary CRUD
+            images.ts             # Image manager
+            modules.ts            # Addon/module management
+            profiles.ts           # Public profile API
+            public.ts             # Public API (articles, categories)
+            rss.ts                # RSS feeds
+            search.ts             # Search with hash caching
+            settings.ts           # Site settings
+            themes.ts             # Theme management
+            usergroups.ts         # User groups CRUD
+            users.ts              # User management
+            utilities.ts          # DB utilities and maintenance
+      client/                     # React + Vite frontend
         src/
-          pages/                # 35 page components
-          components/           # 18 shared components (15 ui + 3 layout/auth)
-          contexts/             # AuthContext
-          lib/                  # Utilities
-  upload/                       # Original PHP application
-  do_not_upload/                # Original PHP (alternate)
-  .factory/                     # Mission infrastructure
-    skills/                     # Worker skill definitions
-    services.yaml               # Service commands and ports
-    library/                    # Shared knowledge files
-    research/                   # Technology reference docs
+          pages/                  # 35 page components
+          components/             # 19 shared components (shadcn/ui)
+          contexts/               # AuthContext
+          lib/                    # Utilities
+  upload/                         # Original PHP application
+  do_not_upload/                  # Original PHP (alternate)
+  .factory/                       # Mission infrastructure
+    skills/                       # Worker skill definitions
+    services.yaml                 # Service commands and ports
+    library/                      # Shared knowledge files
+    research/                     # Technology reference docs
+    validation/                   # Per-milestone validation reports
 ```
 
 ---
 
 ## Notes
 
-- The original PHP app has ~35 routes across public and admin. All public routes and most admin routes are now ported.
-- Validation synthesis artifacts now exist for milestones 1-4 under `.factory/validation/*`; milestone 4 user-testing artifacts and milestone 5 validation artifacts are still pending.
-- All 3 sealed milestones went through multiple validation rounds each, with fix features created and re-validated for each round of failures.
-- No failing tests in the current codebase (370 server + 259 client = 629 total).
-- Build and typecheck gates are currently passing (`bun run build`, `bun run typecheck`).
+- All implementation code is complete. The remaining work is purely validation (code review + browser testing) for milestones 4 and 5.
+- The original PHP app has ~35 routes across public and admin. All routes are now ported.
+- All 3 sealed milestones went through multiple validation rounds each (typically 3 rounds), with fix features created and re-validated for each round of failures.
+- No failing tests in the current codebase (379 server + 259 client = 638 total).
+- Milestone 4 scrutiny has been through 4 rounds so far; a round 2 fix is in progress for the remaining 4 issues.
+- Milestone 5 validation has not started yet (blocked on M4 completion).
