@@ -1,0 +1,34 @@
+{
+  "groupId": "media-utilities-rss",
+  "testedAt": "2026-03-21T04:01:14Z",
+  "isolation": {
+    "milestone": "settings-media-extras",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "reportPath": "/Users/nbbaier/68kb/.factory/validation/settings-media-extras/user-testing/flows/media-utilities-rss.json"
+  },
+  "toolsUsed": [
+    "bun test",
+    "vitest"
+  ],
+  "assertions": [
+    {
+      "idPrefix": "VAL-IMG-001..011",
+      "status": "pass",
+      "evidence": "Validated via `app/apps/server/src/__tests__/images.test.ts` (upload validation, thumbnail lifecycle, listing, and deletion)."
+    },
+    {
+      "idPrefix": "VAL-UTIL-001..005",
+      "status": "pass",
+      "evidence": "Validated via `app/apps/server/src/__tests__/utilities.test.ts` (optimize/repair/backup/cache-clear plus permission gating)."
+    },
+    {
+      "idPrefix": "VAL-RSS-001..006",
+      "status": "pass",
+      "evidence": "Validated via `app/apps/server/src/__tests__/rss.test.ts` (global and category feeds, escaping, and visibility constraints)."
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Validated media, utility, and RSS behaviors for milestone 5."
+}

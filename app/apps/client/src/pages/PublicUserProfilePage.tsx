@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, Navigate, useParams } from 'react-router'
 
 type PublicUserProfile = {
   userId: number
@@ -8,6 +8,13 @@ type PublicUserProfile = {
   groupName: string
   userJoinDate: number
   userLastLogin: number
+  extraFields?: Array<{
+    key: string
+    name: string
+    fieldType: string
+    value: string
+    formattedValue: string
+  }>
 }
 
 function formatDate(timestamp: number): string {
@@ -21,18 +28,17 @@ function formatDate(timestamp: number): string {
 
 export function PublicUserProfilePage() {
   const { username } = useParams<{ username: string }>()
-  const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [profile, setProfile] = useState<PublicUserProfile | null>(null)
+  const normalizedUsername = (username ?? '').trim()
 
   useEffect(() => {
-    if (!username) {
-      navigate('/', { replace: true })
+    if (!normalizedUsername) {
       return
     }
 
-    fetch(`/api/users/profile/${encodeURIComponent(username)}`, { credentials: 'include' })
+    fetch(`/api/users/${encodeURIComponent(normalizedUsername)}`, { credentials: 'include' })
       .then(async (res) => {
         if (res.status === 404) {
           throw new Error('User profile not found')
@@ -52,7 +58,11 @@ export function PublicUserProfilePage() {
       .finally(() => {
         setIsLoading(false)
       })
-  }, [username, navigate])
+  }, [normalizedUsername])
+
+  if (!normalizedUsername) {
+    return <Navigate to="/" replace />
+  }
 
   if (isLoading) {
     return <p className="text-sm text-muted-foreground">Loading profile…</p>
@@ -86,6 +96,11 @@ export function PublicUserProfilePage() {
         <p>
           <span className="font-medium">Last Login:</span> {formatDate(profile.userLastLogin)}
         </p>
+        {profile.extraFields?.map((field) => (
+          <p key={field.key}>
+            <span className="font-medium">{field.name}:</span> {field.formattedValue}
+          </p>
+        ))}
       </div>
     </div>
   )

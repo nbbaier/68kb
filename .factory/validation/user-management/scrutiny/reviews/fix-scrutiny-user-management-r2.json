@@ -1,0 +1,15 @@
+{
+  "featureId": "fix-scrutiny-user-management-r2",
+  "reviewedAt": "2026-03-21T03:13:37Z",
+  "commitId": "3e297b4",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "All four round-4 blockers are now addressed. `/users/profile` with empty username deterministically redirects to home, profile API/UI now support extra profile fields with date-type formatting output, login throttling enforces observed server-side delays, and milestone tests assert elapsed delay timing for the 1s/2s/5s thresholds.",
+    "issues": []
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": "/Users/nbbaier/68kb/.factory/validation/user-management/scrutiny/synthesis.round4.json",
+  "summary": "PASS — `fix-scrutiny-user-management-r2` resolves all remaining blocking scrutiny findings for user-management round 4."
+}

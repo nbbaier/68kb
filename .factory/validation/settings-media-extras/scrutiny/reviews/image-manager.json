@@ -1,0 +1,15 @@
+{
+  "featureId": "image-manager",
+  "reviewedAt": "2026-03-21T04:01:14Z",
+  "commitId": "3e297b4",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Image manager behaviors (type/size/dimension validation, upload, listing, thumbnail generation, deletion) are implemented and covered by `images.test.ts`, including authorization and error-path checks.",
+    "issues": []
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": null,
+  "summary": "PASS — `image-manager` behavior passed scrutiny."
+}

@@ -1,28 +1,75 @@
-# 68KB
+# 68kb TypeScript Port
 
-A lightweight knowledge base application — forked from [68kb/68kb](https://github.com/68kb/68kb) with improved accessibility, modern UI, and SQLite support.
+68kb has been ported from PHP/CodeIgniter to a TypeScript stack:
 
-## What's Different
+- API: Hono + Drizzle ORM + SQLite (`bun:sqlite`)
+- Web: React + Vite + TypeScript
+- Runtime/package manager: Bun
 
-- **SQLite support** — no MySQL dependency; the database is a single file
-- **Improved UI and accessibility** — cleaner interface with better usability
-- **PHP 7.2+ compatibility** — updated constructors, removed deprecated functions
-- **Summernote WYSIWYG editor** — replaces the old js-quicktags toolbar
+Current mission status: `341/341` validation assertions passed, `5/5` milestones sealed.
+
+## Active App
+
+The active application is under [`app/`](app):
+
+- [`app/apps/server`](app/apps/server): Hono API (default `http://localhost:3100`)
+- [`app/apps/client`](app/apps/client): React app (default `http://localhost:3101`)
+- SQLite DB default: `app/data/68kb.db`
 
 ## Quick Start
 
-**Requirements:** PHP 7.2+ with the PDO SQLite extension enabled.
+Requirements:
 
-1. Upload the contents of the `upload/` directory to your web server
-2. Point your web server's document root to the uploaded directory
-3. Visit your site and follow the setup wizard at `/index.php/setup`
+- Bun `1.3+`
 
-No MySQL needed — the database is a single SQLite file created automatically during setup.
+Install and run:
 
-## Credits
+```bash
+cd app
+bun install
 
-Originally forked from [68kb/68kb](https://github.com/68kb/68kb). The original project referenced a license at `http://68kb.com/user_guide/license.html` (now defunct).
+# Required (32+ chars)
+export SESSION_SECRET='replace-with-at-least-32-characters'
 
-### Bundled Third-Party Software
+bun run db:migrate
+bun run db:seed
+bun run dev
+```
 
-- [Summernote](https://github.com/summernote/summernote) — MIT License
+Open:
+
+- Web UI: `http://localhost:3101`
+- API health: `http://localhost:3100/api/health`
+
+Default seeded admin credentials:
+
+- Username: `admin`
+- Password: `admin123`
+
+## Useful Commands
+
+From `app/`:
+
+- `bun run dev`: start server + client
+- `bun run test`: run server and client tests
+- `bun run typecheck`: typecheck server and client
+- `bun run build`: build client + server type build
+- `bun run db:migrate`: run Drizzle migrations
+- `bun run db:seed`: seed baseline data
+
+## Environment Variables
+
+Common server env vars:
+
+- `SESSION_SECRET` (required, minimum 32 chars)
+- `PORT` (default `3100`)
+- `CLIENT_ORIGIN` (default `http://localhost:3101`)
+- `DB_FILE_NAME` (default `app/data/68kb.db`)
+- `UPLOADS_DIR` (default `app/uploads`)
+
+Additional feature-specific overrides are documented in [`PORT_STATUS.md`](PORT_STATUS.md) and `.factory/library/environment.md`.
+
+## Repository Notes
+
+- [`upload/`](upload) and [`do_not_upload/`](do_not_upload) contain legacy PHP-era material/reference assets.
+- Port progress, validation model, and mission tracking details are in [`PORT_STATUS.md`](PORT_STATUS.md).

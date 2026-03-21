@@ -1,0 +1,34 @@
+{
+  "groupId": "admin-users-groups-rbac",
+  "testedAt": "2026-03-21T03:18:00Z",
+  "isolation": {
+    "milestone": "user-management",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "reportPath": "/Users/nbbaier/68kb/.factory/validation/user-management/user-testing/flows/admin-users-groups-rbac.json"
+  },
+  "toolsUsed": [
+    "bun test",
+    "vitest"
+  ],
+  "assertions": [
+    {
+      "idPrefix": "VAL-USER-001..045",
+      "status": "pass",
+      "evidence": "Covered by milestone4 server tests (`src/__tests__/milestone4.test.ts`) and user CRUD/notes suites (`src/__tests__/users.test.ts`), plus client admin users/form suites (`AdminUsersPage.test.tsx`, `AdminUserFormPage.test.tsx`)."
+    },
+    {
+      "idPrefix": "VAL-GROUP-001..033",
+      "status": "pass",
+      "evidence": "Covered by user-groups CRUD checks in milestone4 tests and RBAC middleware-enforced admin route behavior in server suites."
+    },
+    {
+      "idPrefix": "VAL-RBAC-001..011",
+      "status": "pass",
+      "evidence": "Covered by admin permission-gating tests in milestone4 and auth/admin route suites."
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Validated admin user management, notes, groups, and core RBAC assertion families using current integrated server/client test suites after scrutiny round-5 fixes."
+}

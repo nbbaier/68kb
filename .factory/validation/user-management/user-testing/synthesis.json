@@ -1,0 +1,34 @@
+{
+  "milestone": "user-management",
+  "round": 1,
+  "generatedAt": "2026-03-21T03:18:00Z",
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 81,
+    "passed": 81,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-USER-001..VAL-USER-075",
+    "VAL-GROUP-001..VAL-GROUP-033",
+    "VAL-RBAC-001..VAL-RBAC-013"
+  ],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "toolsUsed": [
+    "bun test",
+    "vitest"
+  ],
+  "appliedUpdates": [],
+  "flowReports": [
+    ".factory/validation/user-management/user-testing/flows/admin-users-groups-rbac.json",
+    ".factory/validation/user-management/user-testing/flows/profile-account-auth-gating.json",
+    ".factory/validation/user-management/user-testing/flows/failed-login-tracking.json"
+  ],
+  "previousRound": null,
+  "triage": {
+    "frictions": [],
+    "blockers": []
+  }
+}

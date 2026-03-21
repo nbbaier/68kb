@@ -1,0 +1,29 @@
+{
+  "groupId": "profile-account-auth-gating",
+  "testedAt": "2026-03-21T03:18:00Z",
+  "isolation": {
+    "milestone": "user-management",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "reportPath": "/Users/nbbaier/68kb/.factory/validation/user-management/user-testing/flows/profile-account-auth-gating.json"
+  },
+  "toolsUsed": [
+    "bun test",
+    "vitest"
+  ],
+  "assertions": [
+    {
+      "idPrefix": "VAL-USER-050..065",
+      "status": "pass",
+      "evidence": "Covered by milestone4 public profile/account tests, new public profile client tests (`PublicUserProfilePage.test.tsx`), and auth/account route checks. Includes empty-username redirect (VAL-USER-051) and extra date-field formatting path (VAL-USER-052)."
+    },
+    {
+      "idPrefix": "VAL-RBAC-012..013",
+      "status": "pass",
+      "evidence": "Covered by auth login gating tests for banned and can_view_site=n users in `src/__tests__/auth.test.ts`."
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Validated public profile/account behaviors and auth gating requirements against the fixed route/API/UI paths."
+}

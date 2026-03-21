@@ -1,6 +1,6 @@
 {
-  "milestone": "user-management",
-  "round": 5,
+  "milestone": "settings-media-extras",
+  "round": 1,
   "status": "pass",
   "validatorsRun": {
     "test": {
@@ -20,8 +20,8 @@
     }
   },
   "reviewsSummary": {
-    "total": 1,
-    "passed": 1,
+    "total": 8,
+    "passed": 8,
     "failed": 0,
     "failedFeatures": []
   },
@@ -29,5 +29,5 @@
   "appliedUpdates": [],
   "suggestedGuidanceUpdates": [],
   "rejectedObservations": [],
-  "previousRound": "/Users/nbbaier/68kb/.factory/validation/user-management/scrutiny/synthesis.round4.json"
+  "previousRound": null
 }

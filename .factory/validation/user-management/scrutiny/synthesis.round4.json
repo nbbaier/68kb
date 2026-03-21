@@ -1,0 +1,69 @@
+{
+  "milestone": "user-management",
+  "round": 4,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "cd /Users/nbbaier/68kb/app && bun run --filter @68kb/server test && bun run --filter @68kb/client test",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "cd /Users/nbbaier/68kb/app && bunx tsc --noEmit -p apps/server/tsconfig.json && bunx tsc --noEmit -p apps/client/tsconfig.json",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "N/A (no lint command is currently defined in /Users/nbbaier/68kb/.factory/services.yaml)",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "failedFeatures": [
+      "fix-scrutiny-user-management"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "fix-scrutiny-user-management",
+      "severity": "blocking",
+      "description": "`/users/profile` with empty username still renders an error state instead of redirecting as required by VAL-USER-051."
+    },
+    {
+      "featureId": "fix-scrutiny-user-management",
+      "severity": "blocking",
+      "description": "Public profile behavior still does not satisfy VAL-USER-052 (extra profile fields/date formatting path remains unimplemented in API/UI)."
+    },
+    {
+      "featureId": "fix-scrutiny-user-management",
+      "severity": "blocking",
+      "description": "Failed-login throttling still responds immediately with 429 metadata instead of enforcing observed timing delays (~1s/~2s/~5s) required by VAL-USER-071/072/073."
+    },
+    {
+      "featureId": "fix-scrutiny-user-management",
+      "severity": "blocking",
+      "description": "Throttle tests assert `retryAfterSeconds` values only and still do not verify elapsed response timing, leaving contract behavior unverified."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": ".factory/library/architecture.md",
+      "suggestion": "Update account/profile route guidance to match current client routing aliases (`/users/account`, `/users/profile`) so implementation references do not drift.",
+      "evidence": "Current architecture guidance warns against `/users/*` links while app routes now include these aliases (`app/apps/client/src/App.tsx`).",
+      "isSystemic": true
+    },
+    {
+      "target": ".factory/skills/fullstack-worker/SKILL.md",
+      "suggestion": "Clarify how strict TDD/manual-browser steps should be enforced and evaluated for refinement/fix tasks, including handoff scoring expectations.",
+      "evidence": "Review observed mismatch between required skill procedure steps and accepted worker behavior in the fix session transcript/handoff.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [],
+  "previousRound": "/Users/nbbaier/68kb/.factory/validation/user-management/scrutiny/synthesis.round3.json"
+}

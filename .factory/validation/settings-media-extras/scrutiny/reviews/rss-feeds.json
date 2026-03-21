@@ -1,0 +1,15 @@
+{
+  "featureId": "rss-feeds",
+  "reviewedAt": "2026-03-21T04:01:14Z",
+  "commitId": "3e297b4",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "RSS feed endpoints for site-wide and category feeds produce expected XML output, enforce category visibility boundaries, and correctly escape content; verified in `rss.test.ts`.",
+    "issues": []
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": null,
+  "summary": "PASS — `rss-feeds` passed scrutiny."
+}

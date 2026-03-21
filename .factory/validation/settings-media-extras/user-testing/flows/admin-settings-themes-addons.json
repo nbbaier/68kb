@@ -1,0 +1,34 @@
+{
+  "groupId": "admin-settings-themes-addons",
+  "testedAt": "2026-03-21T04:01:14Z",
+  "isolation": {
+    "milestone": "settings-media-extras",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "reportPath": "/Users/nbbaier/68kb/.factory/validation/settings-media-extras/user-testing/flows/admin-settings-themes-addons.json"
+  },
+  "toolsUsed": [
+    "bun test",
+    "vitest"
+  ],
+  "assertions": [
+    {
+      "idPrefix": "VAL-SET-001..010",
+      "status": "pass",
+      "evidence": "Validated via `app/apps/server/src/__tests__/settings.test.ts` and milestone 5 integration checks for settings propagation and search limit behavior."
+    },
+    {
+      "idPrefix": "VAL-THEME-001..007",
+      "status": "pass",
+      "evidence": "Validated via `app/apps/server/src/__tests__/themes.test.ts` and milestone 5 integration checks for active theme updates."
+    },
+    {
+      "idPrefix": "VAL-ADDON-001..013",
+      "status": "pass",
+      "evidence": "Validated via `app/apps/server/src/__tests__/modules.test.ts` including dependency handling and activation/deactivation paths."
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Validated admin settings, theme management, and addon/module flows against milestone 5 assertion families."
+}

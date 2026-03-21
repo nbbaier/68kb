@@ -1,0 +1,29 @@
+{
+  "groupId": "comments-cross-area",
+  "testedAt": "2026-03-21T04:01:14Z",
+  "isolation": {
+    "milestone": "settings-media-extras",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "reportPath": "/Users/nbbaier/68kb/.factory/validation/settings-media-extras/user-testing/flows/comments-cross-area.json"
+  },
+  "toolsUsed": [
+    "bun test",
+    "vitest"
+  ],
+  "assertions": [
+    {
+      "idPrefix": "VAL-COMMENT-001..015",
+      "status": "pass",
+      "evidence": "Validated via `app/apps/server/src/__tests__/comments.test.ts` including moderation, spam filtering, auto-approval, and admin management paths."
+    },
+    {
+      "idPrefix": "VAL-CROSS-001..008",
+      "status": "pass",
+      "evidence": "Validated via `app/apps/server/src/__tests__/milestone5.test.ts` cross-area flows spanning articles, auth/profile updates, comments, settings propagation, theme/addon interplay, and cleanup invariants."
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Validated comments and cross-area milestone 5 integration flows."
+}

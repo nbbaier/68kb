@@ -1,0 +1,15 @@
+{
+  "featureId": "theme-management",
+  "reviewedAt": "2026-03-21T04:01:14Z",
+  "commitId": "3e297b4",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Theme listing and activation behavior aligns with the contract: admin-only access, layout file validation, active marker updates, and persisted `site_theme` setting are covered in `themes.test.ts` and milestone 5 flow checks.",
+    "issues": []
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": null,
+  "summary": "PASS — `theme-management` passed scrutiny with no blocking findings."
+}

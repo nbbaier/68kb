@@ -1,0 +1,15 @@
+{
+  "featureId": "db-utilities",
+  "reviewedAt": "2026-03-21T04:01:14Z",
+  "commitId": "3e297b4",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Database utility endpoints (optimize, repair/integrity check, backup download, cache clear, summary) are present and permission-gated as required; behavior is covered in `utilities.test.ts`.",
+    "issues": []
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": null,
+  "summary": "PASS — `db-utilities` passed scrutiny with no defects recorded."
+}

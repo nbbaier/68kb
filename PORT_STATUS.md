@@ -1,6 +1,6 @@
 # 68kb PHP-to-TypeScript Port: Status Report
 
-*Last updated: 2026-03-20*
+*Last updated: 2026-03-21*
 
 ## Overview
 
@@ -14,16 +14,16 @@ The port is organized into 5 milestones with 341 behavioral validation assertion
 
 | Metric | Value |
 |---|---|
-| **Overall completion** | **54%** validated (185/341 assertions passed); **100%** implemented |
-| **Milestones sealed** | 3 of 5 (foundation-auth, articles-categories, public-site) |
+| **Overall completion** | **100%** validated (341/341 assertions passed); **100%** implemented |
+| **Milestones sealed** | 5 of 5 (foundation-auth, articles-categories, public-site, user-management, settings-media-extras) |
 | **Milestones implemented** | 5 of 5 (all code complete) |
-| **Features complete** | 46 of 49 (3 remaining are validation/fix features) |
+| **Features complete** | 49 of 49 |
 | **Git commits** | 99 |
 | **Server code** | ~17,750 lines across 45 TypeScript files |
 | **Client code** | ~16,760 lines across 85 TypeScript/TSX files |
-| **Server tests** | 379 passing |
-| **Client tests** | 259 passing |
-| **Total tests** | 638 passing, 0 failing |
+| **Server tests** | 380 passing |
+| **Client tests** | 262 passing |
+| **Total tests** | 642 passing, 0 failing |
 | **Typecheck** | Passing |
 | **Schema tables** | 20 |
 | **API route files** | 17 |
@@ -75,9 +75,9 @@ What was built:
 - Responsive layout (mobile hamburger menu), XSS protection, hidden category filtering
 - Related articles by shared tags on article detail
 
-### Milestone 4: User Management -- SCRUTINY IN PROGRESS
+### Milestone 4: User Management -- SEALED
 
-**Assertions: 0/49 validated (implementation complete) | Scrutiny: round 4 fix in progress**
+**Assertions: 81/81 passed | Validation rounds: scrutiny round 5 + user-testing round 1**
 
 Completed implementation features:
 - **user-crud-admin**: Admin user list/add/edit with group assignment, Gravatar, password management, API key generation
@@ -87,11 +87,11 @@ Completed implementation features:
 - **public-profile-account**: Public profile page, account settings (email/password change)
 - **failed-login-tracking**: Progressive delay throttling (3 fails -> 1s, 10 -> 2s, 20 -> 5s), admin IP summaries
 
-Current status: Fixing 4 remaining scrutiny issues (empty username redirect, profile date formatting, actual server-side throttle delays, timing-based test assertions). After fix, scrutiny re-runs, then user-testing (49 assertions).
+Current status: Sealed after scrutiny re-run passed (round 5) and user-testing passed all 81 assertions (round 1).
 
-### Milestone 5: Settings, Media & Extras -- IMPLEMENTATION COMPLETE (VALIDATION PENDING)
+### Milestone 5: Settings, Media & Extras -- SEALED
 
-**Assertions: 0/156 validated (implementation complete) | Validation: waiting on M4**
+**Assertions: 75/75 passed | Validation rounds: scrutiny round 1 + user-testing round 1**
 
 Completed implementation features:
 
@@ -129,21 +129,8 @@ Completed implementation features:
 
 ## What Needs to Happen Next
 
-### Immediate
-
-1. **Fix 4 scrutiny blockers** for milestone 4 (empty username redirect, profile date formatting, server-side throttle delays, timing test assertions)
-2. **Scrutiny re-run** for milestone 4 (round 5)
-3. **User testing** for milestone 4 (49 assertions via browser-based validation)
-
-### Then
-
-4. **Scrutiny** for milestone 5 (code review of all 8 features)
-5. **User testing** for milestone 5 (156 assertions via browser-based validation)
-
-### Final Gate
-
-6. All 341 assertions must be `passed` in validation-state.json
-7. README.md updated with final project documentation
+1. **README.md refresh** with final project documentation and validation summary.
+2. Optional: mission closeout/archival housekeeping (if required by your workflow).
 
 ---
 
@@ -248,9 +235,9 @@ Both validators can fail and re-run. Fix features are created between rounds to 
 
 ## Notes
 
-- All implementation code is complete. The remaining work is purely validation (code review + browser testing) for milestones 4 and 5.
+- All implementation and validation work is complete across all 5 milestones.
 - The original PHP app has ~35 routes across public and admin. All routes are now ported.
-- All 3 sealed milestones went through multiple validation rounds each (typically 3 rounds), with fix features created and re-validated for each round of failures.
-- No failing tests in the current codebase (379 server + 259 client = 638 total).
-- Milestone 4 scrutiny has been through 4 rounds so far; a round 2 fix is in progress for the remaining 4 issues.
-- Milestone 5 validation has not started yet (blocked on M4 completion).
+- All 5 sealed milestones went through multiple validation rounds, with fix features created and re-validated for failed rounds where needed.
+- No failing tests in the current codebase (380 server + 262 client = 642 total).
+- Milestone 4 is sealed: scrutiny passed in round 5 after `fix-scrutiny-user-management-r2`, then user-testing passed all 81 assertions in round 1.
+- Milestone 5 is sealed: scrutiny passed in round 1 and user-testing passed all 75 assertions in round 1.

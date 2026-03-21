@@ -1,0 +1,39 @@
+{
+  "milestone": "settings-media-extras",
+  "round": 1,
+  "generatedAt": "2026-03-21T04:01:14Z",
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 75,
+    "passed": 75,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-SET-001..VAL-SET-010",
+    "VAL-THEME-001..VAL-THEME-007",
+    "VAL-ADDON-001..VAL-ADDON-013",
+    "VAL-IMG-001..VAL-IMG-011",
+    "VAL-UTIL-001..VAL-UTIL-005",
+    "VAL-RSS-001..VAL-RSS-006",
+    "VAL-COMMENT-001..VAL-COMMENT-015",
+    "VAL-CROSS-001..VAL-CROSS-008"
+  ],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "toolsUsed": [
+    "bun test",
+    "vitest"
+  ],
+  "appliedUpdates": [],
+  "flowReports": [
+    ".factory/validation/settings-media-extras/user-testing/flows/admin-settings-themes-addons.json",
+    ".factory/validation/settings-media-extras/user-testing/flows/media-utilities-rss.json",
+    ".factory/validation/settings-media-extras/user-testing/flows/comments-cross-area.json"
+  ],
+  "previousRound": null,
+  "triage": {
+    "frictions": [],
+    "blockers": []
+  }
+}

@@ -9,9 +9,19 @@ Environment variables, external dependencies, and setup notes.
 
 ## Required Environment Variables
 
-- `SESSION_SECRET` — Session encryption key (min 32 characters). For development, init.sh sets a default.
-- `PORT` — API server port (default: 3100)
-- `UPLOADS_DIR` — Optional override for article attachment storage directory. Defaults to `app/uploads` when unset.
+- `SESSION_SECRET` — Session encryption key (min 32 characters).
+
+## Optional Environment Variables
+
+- `PORT` — API server port (default: `3100`)
+- `CLIENT_ORIGIN` — CORS origin for `/api/*` (default: `http://localhost:3101`)
+- `DB_FILE_NAME` — SQLite file path (default: `app/data/68kb.db`)
+- `UPLOADS_DIR` — Article/category upload storage root (default: `app/uploads`)
+- `CONTENT_IMAGE_DIR` — Image manager storage root (default: `upload/images/uploads`, resolved from workspace)
+- `CONTENT_IMAGE_PUBLIC_BASE` — Public URL base for image manager files (default: `/uploads/images/uploads`)
+- `THEMES_DIR` — Theme directory root (default: resolved `upload/themes`)
+- `ADDONS_DIR` — Module/addon directory root (default: resolved `upload/system/68kb/third_party`)
+- `CACHE_DIR` — Comma-separated cache directories for utility cache clearing (default: resolved `upload/system/68kb/cache` candidates)
 
 ## Bun-Specific Notes
 

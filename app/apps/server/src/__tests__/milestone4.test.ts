@@ -175,6 +175,13 @@ async function login(username: string, password: string, ip = '127.0.0.1'): Prom
   return cookies[cookies.length - 1].split(';')[0]
 }
 
+function ensureUsersExtraFieldColumn(columnName: string): void {
+  const cols = testSqlite.query('PRAGMA table_info(users)').all() as Array<{ name: string }>
+  if (!cols.some((col) => col.name === columnName)) {
+    testSqlite.exec(`ALTER TABLE users ADD COLUMN "${columnName}" TEXT NOT NULL DEFAULT ''`)
+  }
+}
+
 describe('Milestone 4 — User Groups CRUD', () => {
   it('creates, reads, updates, and deletes a non-system user group', async () => {
     const cookie = await login('admin', 'admin123')
@@ -273,8 +280,8 @@ describe('Milestone 4 — RBAC enforcement', () => {
 })
 
 describe('Milestone 4 — Public profile and account', () => {
-  it('returns public profile by username', async () => {
-    const res = await app.request('/api/users/profile/admin')
+  it('returns public profile by username (alias endpoint)', async () => {
+    const res = await app.request('/api/users/admin')
     expect(res.status).toBe(200)
     const json = await res.json() as { data: { username: string; groupName: string } }
     expect(json.data.username).toBe('admin')
@@ -282,8 +289,32 @@ describe('Milestone 4 — Public profile and account', () => {
   })
 
   it('returns 400 for invalid public profile username', async () => {
-    const res = await app.request('/api/users/profile/invalid!name')
+    const res = await app.request('/api/users/invalid!name')
     expect(res.status).toBe(400)
+  })
+
+  it('returns and formats date-type extra profile fields', async () => {
+    ensureUsersExtraFieldColumn('extra_field_birthday')
+    // 2000-01-01 12:00:00 UTC
+    const birthdayTimestamp = '946728000'
+    testSqlite.query('UPDATE users SET extra_field_birthday = ? WHERE user_username = ?').run(
+      birthdayTimestamp,
+      'admin',
+    )
+
+    const res = await app.request('/api/users/admin')
+    expect(res.status).toBe(200)
+    const json = await res.json() as {
+      data: {
+        extraFields?: Array<{ key: string; fieldType: string; value: string; formattedValue: string }>
+      }
+    }
+    const birthday = json.data.extraFields?.find((field) => field.key === 'birthday')
+    expect(birthday).toBeDefined()
+    expect(birthday?.fieldType).toBe('date')
+    expect(birthday?.value).toBe(birthdayTimestamp)
+    // Must not expose raw timestamp as the display value.
+    expect(birthday?.formattedValue).not.toBe(birthdayTimestamp)
   })
 
   it('gets and updates authenticated account settings', async () => {
@@ -356,16 +387,19 @@ describe('Milestone 4 — Failed login tracking', () => {
       ])
       .run()
 
+    const startedAt = Date.now()
     const res = await app.request('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-real-ip': '20.0.0.1' },
       body: JSON.stringify({ username: 'admin', password: 'wrong' }),
     })
+    const elapsedMs = Date.now() - startedAt
 
     expect(res.status).toBe(429)
     const json = await res.json() as { retryAfterSeconds: number }
     expect(json.retryAfterSeconds).toBe(1)
-  })
+    expect(elapsedMs).toBeGreaterThanOrEqual(900)
+  }, 10_000)
 
   it('applies 2s delay after 10 failed attempts (no hard lockout)', async () => {
     const now = Math.floor(Date.now() / 1000)
@@ -376,17 +410,20 @@ describe('Milestone 4 — Failed login tracking', () => {
     }))
     testDb.insert(schema.failedLogins).values(rows).run()
 
+    const startedAt = Date.now()
     const res = await app.request('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-real-ip': '30.0.0.1' },
       body: JSON.stringify({ username: 'admin', password: 'wrong' }),
     })
+    const elapsedMs = Date.now() - startedAt
 
     expect(res.status).toBe(429)
     const json = await res.json() as { retryAfterSeconds: number }
     // 2s delay (not locked out indefinitely)
     expect(json.retryAfterSeconds).toBe(2)
-  })
+    expect(elapsedMs).toBeGreaterThanOrEqual(1900)
+  }, 15_000)
 
   it('applies 5s delay after 20 failed attempts (no hard lockout)', async () => {
     const now = Math.floor(Date.now() / 1000)
@@ -397,15 +434,18 @@ describe('Milestone 4 — Failed login tracking', () => {
     }))
     testDb.insert(schema.failedLogins).values(rows).run()
 
+    const startedAt = Date.now()
     const res = await app.request('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-real-ip': '40.0.0.1' },
       body: JSON.stringify({ username: 'admin', password: 'wrong' }),
     })
+    const elapsedMs = Date.now() - startedAt
 
     expect(res.status).toBe(429)
     const json = await res.json() as { retryAfterSeconds: number }
     // 5s delay (no indefinite lockout)
     expect(json.retryAfterSeconds).toBe(5)
+    expect(elapsedMs).toBeGreaterThanOrEqual(4900)
   }, 20_000)
 })

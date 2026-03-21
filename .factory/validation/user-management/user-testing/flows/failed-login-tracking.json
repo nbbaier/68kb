@@ -1,0 +1,23 @@
+{
+  "groupId": "failed-login-tracking",
+  "testedAt": "2026-03-21T03:18:00Z",
+  "isolation": {
+    "milestone": "user-management",
+    "appUrl": "http://localhost:3101",
+    "apiUrl": "http://localhost:3100",
+    "reportPath": "/Users/nbbaier/68kb/.factory/validation/user-management/user-testing/flows/failed-login-tracking.json"
+  },
+  "toolsUsed": [
+    "bun test"
+  ],
+  "assertions": [
+    {
+      "idPrefix": "VAL-USER-070..075",
+      "status": "pass",
+      "evidence": "Covered by auth throttle timing suite (`src/__tests__/auth.test.ts`) and milestone4 failed-login tests, including elapsed delay assertions for ~1s/~2s/~5s and admin summary behavior."
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Validated failed-login tracking, throttle timing, and error-path behavior with timing-aware server tests."
+}

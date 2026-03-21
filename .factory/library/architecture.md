@@ -12,7 +12,7 @@ Architectural decisions and patterns for the 68kb TypeScript port.
 - **Backend**: Hono (native Bun support, no adapter needed)
 - **ORM**: Drizzle ORM with `bun:sqlite` driver
 - **Database**: SQLite (file: `app/data/68kb.db`)
-- **Frontend**: React 19 + Vite 7 + TypeScript
+- **Frontend**: React 19 + Vite 6 + TypeScript
 - **UI Library**: shadcn/ui + Tailwind CSS v4
 - **Auth**: Cookie-based sessions via hono-sessions CookieStore
 - **Password hashing**: Bun.password built-in (bcrypt, cost 12)
