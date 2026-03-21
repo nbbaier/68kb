@@ -372,6 +372,102 @@ describe('POST /api/auth/login', () => {
     })
     expect(meAfterRes.status).toBe(200)
   })
+
+})
+
+// ---------------------------------------------------------------------------
+// POST /api/auth/login — throttle timing (VAL-USER-071/072/073)
+// These tests pre-seed failed_logins to trigger each throttle stage and
+// measure that the response takes at least the expected delay duration.
+// Each test runs in its own isolated context with beforeEach + afterEach
+// cleanup to prevent failed_logins from leaking into subsequent tests.
+// ---------------------------------------------------------------------------
+describe('POST /api/auth/login — throttle timing', () => {
+  beforeEach(() => {
+    testDb.delete(schema.failedLogins).run()
+  })
+  afterEach(() => {
+    // Always clean up after timing tests so subsequent tests are not throttled
+    testDb.delete(schema.failedLogins).run()
+  })
+
+  it('applies actual 1s server-side delay after 3+ failed attempts (VAL-USER-071)', async () => {
+    const now = Math.floor(Date.now() / 1000)
+    // Pre-seed 3 failures from test IP (127.0.0.1) to reach the 1s throttle threshold
+    for (let i = 0; i < 3; i++) {
+      testDb.insert(schema.failedLogins).values({
+        failedUsername: 'admin',
+        failedIp: '127.0.0.1',
+        failedDate: now,
+      }).run()
+    }
+
+    const start = Date.now()
+    const res = await app.request('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'admin', password: 'wrongpassword' }),
+    })
+    const elapsed = Date.now() - start
+
+    expect(res.status).toBe(429)
+    const json = await res.json() as { retryAfterSeconds: number }
+    expect(json.retryAfterSeconds).toBe(1)
+    // Response must have taken at least 900ms (1s delay with 100ms tolerance)
+    expect(elapsed).toBeGreaterThanOrEqual(900)
+  }, 10_000)
+
+  it('applies actual 2s server-side delay after 10+ failed attempts (VAL-USER-072)', async () => {
+    const now = Math.floor(Date.now() / 1000)
+    // Pre-seed 10 failures to reach the 2s throttle threshold
+    for (let i = 0; i < 10; i++) {
+      testDb.insert(schema.failedLogins).values({
+        failedUsername: 'admin',
+        failedIp: '127.0.0.1',
+        failedDate: now,
+      }).run()
+    }
+
+    const start = Date.now()
+    const res = await app.request('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'admin', password: 'wrongpassword' }),
+    })
+    const elapsed = Date.now() - start
+
+    expect(res.status).toBe(429)
+    const json = await res.json() as { retryAfterSeconds: number }
+    expect(json.retryAfterSeconds).toBe(2)
+    // Response must have taken at least 1900ms (2s delay with 100ms tolerance)
+    expect(elapsed).toBeGreaterThanOrEqual(1900)
+  }, 15_000)
+
+  it('applies actual 5s server-side delay after 20+ failed attempts (VAL-USER-073)', async () => {
+    const now = Math.floor(Date.now() / 1000)
+    // Pre-seed 20 failures to reach the 5s throttle threshold
+    for (let i = 0; i < 20; i++) {
+      testDb.insert(schema.failedLogins).values({
+        failedUsername: 'admin',
+        failedIp: '127.0.0.1',
+        failedDate: now,
+      }).run()
+    }
+
+    const start = Date.now()
+    const res = await app.request('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'admin', password: 'wrongpassword' }),
+    })
+    const elapsed = Date.now() - start
+
+    expect(res.status).toBe(429)
+    const json = await res.json() as { retryAfterSeconds: number }
+    expect(json.retryAfterSeconds).toBe(5)
+    // Response must have taken at least 4900ms (5s delay with 100ms tolerance)
+    expect(elapsed).toBeGreaterThanOrEqual(4900)
+  }, 20_000)
 })
 
 // ---------------------------------------------------------------------------

@@ -128,6 +128,11 @@ export function createAuthRoutes(db: DrizzleDB) {
     const throttle = getLoginThrottleState(db, ip, now)
 
     if (throttle.blocked) {
+      // Apply actual server-side delay before responding.
+      // This ensures throttled clients wait the full delay duration
+      // rather than just receiving metadata about the delay.
+      await Bun.sleep(throttle.retryAfterSeconds * 1000)
+
       recordFailedLogin(db, username, ip, now)
 
       // Delete session to ensure no session cookie is set/retained on blocked login responses

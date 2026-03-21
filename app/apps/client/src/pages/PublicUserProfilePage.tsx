@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 
 type PublicUserProfile = {
   userId: number
@@ -21,14 +21,14 @@ function formatDate(timestamp: number): string {
 
 export function PublicUserProfilePage() {
   const { username } = useParams<{ username: string }>()
+  const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [profile, setProfile] = useState<PublicUserProfile | null>(null)
 
   useEffect(() => {
     if (!username) {
-      setError('User not found')
-      setIsLoading(false)
+      navigate('/', { replace: true })
       return
     }
 
@@ -52,7 +52,7 @@ export function PublicUserProfilePage() {
       .finally(() => {
         setIsLoading(false)
       })
-  }, [username])
+  }, [username, navigate])
 
   if (isLoading) {
     return <p className="text-sm text-muted-foreground">Loading profile…</p>

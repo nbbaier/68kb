@@ -407,5 +407,5 @@ describe('Milestone 4 — Failed login tracking', () => {
     const json = await res.json() as { retryAfterSeconds: number }
     // 5s delay (no indefinite lockout)
     expect(json.retryAfterSeconds).toBe(5)
-  })
+  }, 20_000)
 })
